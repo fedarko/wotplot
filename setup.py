@@ -56,10 +56,7 @@ setup(
             # hacky solution pinning black is fine
             "black < 22.10",
         ],
-        "viz": [
-            "matplotlib",
-            "opencv-python"
-        ]
+        "viz": ["matplotlib", "opencv-python"],
     },
     classifiers=classifiers,
     python_requires=">=3.6",

@@ -3,11 +3,12 @@ from collections import defaultdict
 from ._matrix import DotPlotMatrix
 
 NT2COMP = {"A": "T", "C": "G", "T": "A", "G": "C"}
-    
+
 MATCH = 1
 FWD = 1
 REV = -1
 BOTH = 2
+
 
 def rc(seq):
     out = ""
@@ -29,17 +30,20 @@ def _validate_seq(seq):
     if len(seq) == 0:
         raise ValueError("Input sequence must have length > 0")
 
+
 def _validate_k(k):
     if k < 1:
         raise ValueError("k must be >= 1")
+
 
 def _validate_yorder(yorder):
     if yorder not in ("BT", "TB"):
         raise ValueError("yorder must be 'BT' or 'TB'")
 
+
 def make(s1, s2, k, yorder="BT", binary=True):
     """Computes a dot plot matrix.
-    
+
     Parameters
     ----------
     s1: str
@@ -73,7 +77,7 @@ def make(s1, s2, k, yorder="BT", binary=True):
         If "binary" is True, then the output matrix will represent 1,
         -1, and 2 as just 1; if "binary" is False, then the matrix will include
         1, -1, and 2 as distinct values.
-    
+
     References
     ----------
     Based on the Shared k-mers Problem in the Bioinformatics Algorithms
@@ -96,7 +100,7 @@ def make(s1, s2, k, yorder="BT", binary=True):
     # NOTE: If s1 and s2 are both long, this is going to require a horrendous
     # amount of memory. See https://github.com/fedarko/wotplot/issues/2.
     mat = np.zeros((len(s2) - k + 1, len(s1) - k + 1))
-    
+
     def get_row(s2p):
         if yorder == "TB":
             return s2p
@@ -105,7 +109,7 @@ def make(s1, s2, k, yorder="BT", binary=True):
         else:
             # should never happen
             raise ValueError(f"Unrecognized yorder: {yorder}")
-    
+
     # Find k-mers that are shared between both strings (not considering
     # reverse-complementing)
     s1_set = set(s1_kmers.keys())
@@ -118,7 +122,7 @@ def make(s1, s2, k, yorder="BT", binary=True):
                     mat[get_row(s2p)][s1p] = MATCH
                 else:
                     mat[get_row(s2p)][s1p] = FWD
-                
+
     # Find k-mers that are shared between both strings, but
     # reverse-complemented
     for s1k in s1_kmers:

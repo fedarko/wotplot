@@ -14,7 +14,7 @@ def _tidy_dotplot_viz_ax(ax, m):
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 
-    # Hide the ticks / tick labels. 
+    # Hide the ticks / tick labels.
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_xticklabels([])
@@ -23,12 +23,19 @@ def _tidy_dotplot_viz_ax(ax, m):
     # Based on the mutation matrix drawn in
     # https://nbviewer.org/github/fedarko/strainFlye/blob/main/docs/SheepGutExample.ipynb
     ax.tick_params(
-        top=True, bottom=True, left=True, right=True,
-        labeltop=True, labelbottom=True, labelleft=True, labelright=True
+        top=True,
+        bottom=True,
+        left=True,
+        right=True,
+        labeltop=True,
+        labelbottom=True,
+        labelleft=True,
+        labelright=True,
     )
 
     ax.set_xlabel(f"$s_1$ ({len(m.s1):,} nt)", fontsize=18)
     ax.set_ylabel(f"$s_2$ ({len(m.s2):,} nt)", fontsize=18)
+
 
 def viz_binary(m, num_dilation_iterations="auto", title=None, ax=None):
     """Visualizes a DotPlotMatrix object.
@@ -59,7 +66,9 @@ def viz_binary(m, num_dilation_iterations="auto", title=None, ax=None):
             num_dilation_iterations = 4 + ceil((maxlen - 2500) / 2500)
 
     if num_dilation_iterations > 0:
-        matrix_to_show = cv2.dilate(m.mat, DILATION_KERNEL, iterations=num_dilation_iterations)
+        matrix_to_show = cv2.dilate(
+            m.mat, DILATION_KERNEL, iterations=num_dilation_iterations
+        )
     else:
         matrix_to_show = m.mat
 
