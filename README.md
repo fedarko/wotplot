@@ -17,7 +17,7 @@ k = 3
 m = wotplot.make(s1, s2, k)
 
 # Visualize the matrix
-wotplot.viz_binary(mat)
+wotplot.viz_binary(m)
 ```
 
 ![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/example_dotplot.png)
@@ -28,7 +28,7 @@ This example is adapted from Figure 6.20 (bottom right) in
 ## Installation
 
 ```
-pip install git+https://github.com/fedarko/wotplot.git#egg=project[viz]
+pip install git+https://github.com/fedarko/wotplot.git#egg=wotplot[viz]
 ```
 
 I'll probably put this on PyPI / conda eventually.
