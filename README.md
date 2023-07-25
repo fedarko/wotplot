@@ -14,7 +14,7 @@ s2 = "AGCAGGTTATCTACCTGT"
 k = 3
 
 # Create the dotplot matrix
-mat = wotplot.make(s1, s2, k)
+m = wotplot.make(s1, s2, k)
 
 # Visualize the matrix
 wotplot.viz(mat)
