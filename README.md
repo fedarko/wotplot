@@ -3,6 +3,8 @@
 wotplot is a simple Python 3 package for creating and visualizing
 [dot plot matrices](https://en.wikipedia.org/wiki/Dot_plot_(bioinformatics)).
 
+It's not very efficient, but it works well enough with relatively small sequences.
+
 ## Quick example
 
 ```python
