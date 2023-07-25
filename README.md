@@ -25,6 +25,14 @@ wotplot.viz_binary(mat)
 This example is adapted from Figure 6.20 (bottom right) in
 [_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org), edition 2.
 
+## Installation
+
+```
+pip install git+https://github.com/fedarko/wotplot.git#egg=project[viz]
+```
+
+I'll probably put this on PyPI / conda eventually.
+
 ## Why does this package exist?
 
 1. This package separates the creation of a dot plot matrix from the visualization. Other tools that I tried produced pretty visualizations, but didn't give me easy access to the original matrix.

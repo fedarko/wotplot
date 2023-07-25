@@ -5,6 +5,7 @@ from math import ceil
 from matplotlib import pyplot
 from matplotlib.ticker import MaxNLocator
 
+# Based on the opencv tutorial linked in viz_binary()'s docstring
 DILATION_KERNEL = np.ones((5, 5), np.uint8)
 
 
@@ -37,6 +38,11 @@ def viz_binary(m, num_dilation_iterations="auto", title=None, ax=None):
     References
     ----------
     https://docs.opencv.org/4.x/d9/d61/tutorial_py_morphological_ops.html
+        OpenCV tutorial on dilation and other morphological operations.
+
+    https://stackoverflow.com/q/44618675
+        The answers to this question showed me the light (of image processing
+        101) (I didn't know what a dilation was)
     """
     if not m.binary:
         raise ValueError(
