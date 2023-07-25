@@ -22,9 +22,10 @@ wotplot.viz_matrix(mat)
 
 (TODO show screenshot of the above)
 
-This example is borrowed from Figure 6.20 (bottom right) in _Bioinformatics Algorithms_, edition 2.
+This example is borrowed from Figure 6.20 (bottom right) in
+[_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org), edition 2.
 
-## Why does this exist?
+## Why does this package exist?
 
 1. This package separates the creation of a dot plot matrix from the visualization. Other tools that I tried produced pretty visualizations, but didn't give me easy access to the original matrix.
 
