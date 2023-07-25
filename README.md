@@ -37,6 +37,14 @@ pip install git+https://github.com/fedarko/wotplot.git#egg=wotplot[viz]
 
 I'll probably put this on PyPI / conda eventually.
 
+## Performance
+
+This code is not very optimized, so I don't recommend using it for sequences
+longer than a few thousand nucleotides. (On a high-memory system, I've used it
+with sequences up to ~50,000 nt; on a laptop, I've used it with sequences up to
+~2,000 nt.) See [this issue](https://github.com/fedarko/wotplot/issues/2) for
+some discussion of this.
+
 ## Why does this package exist?
 
 1. This package separates the creation of a dot plot matrix from the visualization. Other tools that I tried produced pretty visualizations, but didn't give me easy access to the original matrix.

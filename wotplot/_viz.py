@@ -55,8 +55,8 @@ def viz_binary(m, num_dilation_iterations="auto", title=None, ax=None):
         if maxlen < 500:
             num_dilation_iterations = 0
         else:
-            # sloppy stuff, todo replace (also check stuff in [500, 2500))
-            num_dilation_iterations = 4 + ceil(maxlen - 2500) / 2500
+            # sloppy stuff, TODO replace (also check stuff in [500, 2500))
+            num_dilation_iterations = 4 + ceil((maxlen - 2500) / 2500)
 
     if num_dilation_iterations > 0:
         matrix_to_show = cv2.dilate(m.mat, DILATION_KERNEL, iterations=num_dilation_iterations)

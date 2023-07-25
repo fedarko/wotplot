@@ -92,6 +92,9 @@ def make(s1, s2, k, yorder="BT", binary=True):
     # final row or column). Interestingly, Figure 6.20 in Bioinformatics
     # Algorithms does actually include this extra empty space, but I think here
     # it is okay to omit it.
+    #
+    # NOTE: If s1 and s2 are both long, this is going to require a horrendous
+    # amount of memory. See https://github.com/fedarko/wotplot/issues/2.
     mat = np.zeros((len(s2) - k + 1, len(s1) - k + 1))
     
     def get_row(s2p):
