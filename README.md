@@ -25,6 +25,10 @@ wotplot.viz_binary(m)
 This example is adapted from Figure 6.20 (bottom right) in
 [_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org), edition 2.
 
+## More detailed tutorial
+
+Please see [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/blob/main/docs/Tutorial.ipynb).
+
 ## Installation
 
 ```
@@ -38,3 +42,8 @@ I'll probably put this on PyPI / conda eventually.
 1. This package separates the creation of a dot plot matrix from the visualization. Other tools that I tried produced pretty visualizations, but didn't give me easy access to the original matrix.
 
 2. I wanted something that worked well with [matplotlib](https://matplotlib.org), so that I could create and tile lots of dotplots at once in complicated ways.
+
+## Contact
+
+Feel free to [open an issue](https://github.com/fedarko/wotplot/issues) if you
+have any questions, suggestions, comments, or anything else.
