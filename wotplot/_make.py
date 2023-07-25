@@ -133,4 +133,4 @@ def make(s1, s2, k, yorder="BT", binary=True):
                         else:
                             mat[get_row(s2p)][s1p] = REV
 
-    return DotPlotMatrix(mat, s1, s2, k)
+    return DotPlotMatrix(mat, s1, s2, k, binary)

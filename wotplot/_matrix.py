@@ -7,15 +7,19 @@ class DotPlotMatrix:
     much but store this information in one convenient place.
     """
 
-    def __init__(self, mat, s1, s2, k):
+    def __init__(self, mat, s1, s2, k, binary):
         self.mat = mat
         self.s1 = s1
         self.s2 = s2
         self.k = k
+        self.binary = binary
 
     def __str__(self):
+        bs = ""
+        if self.binary:
+            bs = ", binary"
         return (
-            f"DotPlotMatrix(k = {self.k:,}): "
+            f"DotPlotMatrix(k = {self.k:,}{bs}): "
             f"{self.mat.shape[0]:,} x {self.mat.shape[1]:,}"
         )
 
@@ -24,5 +28,6 @@ class DotPlotMatrix:
         # https://stackoverflow.com/a/2626364.
         return (
             f"DotPlotMatrix(mat={repr(self.mat)}, "
-            f's1="{self.s1}", s2="{self.s2}", k={self.k})'
+            f's1="{self.s1}", s2="{self.s2}", k={self.k}, '
+            f"binary={self.binary})"
         )

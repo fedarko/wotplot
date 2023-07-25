@@ -17,12 +17,12 @@ k = 3
 m = wotplot.make(s1, s2, k)
 
 # Visualize the matrix
-wotplot.viz(mat)
+wotplot.viz_binary(mat)
 ```
 
-(TODO show screenshot of the above)
+![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/example_dotplot.png)
 
-This example is borrowed from Figure 6.20 (bottom right) in
+This example is adapted from Figure 6.20 (bottom right) in
 [_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org), edition 2.
 
 ## Why does this package exist?
