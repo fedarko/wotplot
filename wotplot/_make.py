@@ -18,7 +18,7 @@ def rc(seq):
 
 
 def get_kmer_dd(s, k):
-    """Maps each k-mer in a string to a list of start positions of this k-mer."""
+    """Maps each k-mer in a string to a list of start positions."""
     kmers = defaultdict(list)
     for i in range(len(s) - k + 1):
         kmer = s[i : i + k]
@@ -55,9 +55,10 @@ def make(s1, s2, k, yorder="BT", binary=True):
     k: int
         The value of k to use when creating the dot plot.
     yorder: str
-        Should be either "BT" or "TB". "BT" means that s2 will be ordered from bottom to top
-        (like how the Bioinformatics Algorithms textbook draws dot plots); "TB" means that
-        s2 will be ordered from top to bottom (like how Gepard draws dot plots).
+        Should be either "BT" or "TB". "BT" means that s2 will be ordered from
+        bottom to top (like how the Bioinformatics Algorithms textbook draws
+        dot plots); "TB" means that s2 will be ordered from top to bottom (like
+        how Gepard draws dot plots).
     binary: bool
         If True, then the output matrix won't distinguish between forward and
         reverse-complementary matches; if False, it will. See the "Returns"
@@ -66,17 +67,18 @@ def make(s1, s2, k, yorder="BT", binary=True):
     Returns
     -------
     np.ndarray
-        A matrix containing len(s2) rows and len(s1) columns. For a cell in the c-th column
-        and r-th row, there are four possible values:
+        A matrix containing len(s2) rows and len(s1) columns. For a cell in the
+        c-th column and r-th row, there are four possible values (describing
+        k-mers at position c in s1 and at position r in s2):
 
-            -  0: No shared k-mers exist that begin at position c in s1 and at position r in s2
-            -  1: There is a shared k-mer that begins at position c in s1 and at position r in s2
-            - -1: There is a shared k-mer whose RC begins at position c in s1 and at position r in s2
-            -  2: There is a palindromic shared k-mer that begins at position c in s1 and at position r in s2
+            -  0: No shared k-mers exist
+            -  1: There is a shared k-mer
+            - -1: There is a shared reverse-complementary k-mer
+            -  2: There is a shared palindromic k-mer
 
-        If "binary" is True, then the output matrix will represent 1,
-        -1, and 2 as just 1; if "binary" is False, then the matrix will include
-        1, -1, and 2 as distinct values.
+        If "binary" is True, then the output matrix will represent 1, -1, and 2
+        as just 1; if "binary" is False, then the matrix will include 1, -1,
+        and 2 as distinct values.
 
     References
     ----------
@@ -134,8 +136,8 @@ def make(s1, s2, k, yorder="BT", binary=True):
                         mat[get_row(s2p)][s1p] = MATCH
                     else:
                         if mat[get_row(s2p)][s1p] == FWD:
-                            # If there's both a FWD and RC match here, give it a
-                            # unique value
+                            # If there's both a FWD and RC match here, give it
+                            # a unique value
                             mat[get_row(s2p)][s1p] = BOTH
                         else:
                             mat[get_row(s2p)][s1p] = REV

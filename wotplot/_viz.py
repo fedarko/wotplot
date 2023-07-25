@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import matplotlib
 from math import ceil
 from matplotlib import pyplot
 from matplotlib.ticker import MaxNLocator
@@ -10,7 +9,8 @@ DILATION_KERNEL = np.ones((5, 5), np.uint8)
 
 
 def _tidy_dotplot_viz_ax(ax, m):
-    # Force matplotlib to only use integer ticks: https://stackoverflow.com/a/38096332
+    # Force matplotlib to only use integer ticks:
+    # https://stackoverflow.com/a/38096332
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 
