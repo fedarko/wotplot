@@ -5,7 +5,7 @@ wotplot is a simple Python 3 package for creating and visualizing
 
 ## Quick example
 
-```
+```python
 import wotplot
 
 # Define our dataset
