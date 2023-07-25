@@ -14,10 +14,10 @@ s2 = "AGCAGGTTATCTACCTGT"
 k = 3
 
 # Create the dotplot matrix
-mat = wotplot.get_matrix(s1, s2, k)
+mat = wotplot.make(s1, s2, k)
 
 # Visualize the matrix
-wotplot.viz_matrix(mat)
+wotplot.viz(mat)
 ```
 
 (TODO show screenshot of the above)
