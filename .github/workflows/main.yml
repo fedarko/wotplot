@@ -32,17 +32,21 @@ jobs:
           create-args: python=${{ matrix.python-version }}
           init-shell: bash
 
-      - name: Sanity check: echo python version
+      - name: Sanity check echo python version
         run: python --version
+        shell: bash
 
-      - name: Sanity check: echo python location
+      - name: Sanity check echo python location
         run: which python
+        shell: bash
 
-      - name: Sanity check: echo pip version
+      - name: Sanity check echo pip version
         run: pip --version
+        shell: bash
 
-      - name: Sanity check: echo pip location
+      - name: Sanity check echo pip location
         run: which pip
+        shell: bash
 
       - name: Install wotplot (and pip dependencies)
         run: pip install -e .[dev,viz]
