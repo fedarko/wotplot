@@ -26,9 +26,21 @@ def get_kmer_dd(s, k):
     return kmers
 
 
-def _validate_seq(seq):
+def _validate_and_stringify_seq(seq):
     if len(seq) == 0:
         raise ValueError("Input sequence must have length > 0")
+    strseq = str(seq)
+    for c in strseq:
+        # We cooould get fancy and allow e.g. Uracil, but then that raises the
+        # silly question of what if a string contains both T and U??? It's
+        # easiest to just mandate that we only take in A/C/G/T strings -- this
+        # forces the user to do the conversion, so they can decide what to do.
+        if c not in NT2COMP:
+            raise ValueError(
+                f"Input sequence contains character {c}; only DNA nucleotides "
+                "(A, C, G, T) are currently allowed."
+            )
+    return str(seq)
 
 
 def _validate_k(k):
@@ -46,12 +58,15 @@ def make(s1, s2, k, yorder="BT", binary=True):
 
     Parameters
     ----------
-    s1: str
-    s2: str
-        The strings from which we'll create a dot plot. s1 will be on the
+    s1: str or other str-like object
+    s2: str or other str-like object
+        The sequences from which we'll create a dot plot. s1 will be on the
         horizontal axis (left to right) and s2 will be on the vertical axis
         (either bottom to top or top to bottom; the order is determined by
-        the "yorder" parameter).
+        the "yorder" parameter). s1 and s2 can be non-str objects (e.g.
+        skbio.DNA), but they both must: have length > 0, be convertable to
+        str using str(), and -- in their converted-to-str forms -- only contain
+        DNA nucleotides (A, C, G, T).
     k: int
         The value of k to use when creating the dot plot.
     yorder: str
@@ -66,32 +81,20 @@ def make(s1, s2, k, yorder="BT", binary=True):
 
     Returns
     -------
-    np.ndarray
-        A matrix containing len(s2) rows and len(s1) columns. For a cell in the
-        c-th column and r-th row, there are four possible values (describing
-        k-mers at position c in s1 and at position r in s2):
-
-            -  0: No shared k-mers exist
-            -  1: There is a shared k-mer
-            - -1: There is a shared reverse-complementary k-mer
-            -  2: There is a shared palindromic k-mer
-
-        If "binary" is True, then the output matrix will represent 1, -1, and 2
-        as just 1; if "binary" is False, then the matrix will include 1, -1,
-        and 2 as distinct values.
+    wotplot.DotPlotMatrix
 
     References
     ----------
     Based on the Shared k-mers Problem in the Bioinformatics Algorithms
     textbook (https://www.bioinformaticsalgorithms.org/) by Compeau & Pevzner.
     """
-    _validate_seq(s1)
-    _validate_seq(s2)
+    ss1 = _validate_and_stringify_seq(s1)
+    ss2 = _validate_and_stringify_seq(s2)
     _validate_k(k)
     _validate_yorder(yorder)
 
-    s1_kmers = get_kmer_dd(s1, k)
-    s2_kmers = get_kmer_dd(s2, k)
+    ss1_kmers = get_kmer_dd(ss1, k)
+    ss2_kmers = get_kmer_dd(ss2, k)
 
     # We could remove the "- k + 1" parts here, but then we'd have empty space
     # for all plots where k > 1 (since you can't have e.g. a 2-mer begin in the
@@ -99,9 +102,9 @@ def make(s1, s2, k, yorder="BT", binary=True):
     # Algorithms does actually include this extra empty space, but I think here
     # it is okay to omit it.
     #
-    # NOTE: If s1 and s2 are both long, this is going to require a horrendous
+    # NOTE: If ss1 and ss2 are both long, this is going to require a horrendous
     # amount of memory. See https://github.com/fedarko/wotplot/issues/2.
-    mat = np.zeros((len(s2) - k + 1, len(s1) - k + 1))
+    mat = np.zeros((len(ss2) - k + 1, len(ss1) - k + 1))
 
     def get_row(s2p):
         if yorder == "TB":
@@ -114,32 +117,32 @@ def make(s1, s2, k, yorder="BT", binary=True):
 
     # Find k-mers that are shared between both strings (not considering
     # reverse-complementing)
-    s1_set = set(s1_kmers.keys())
-    s2_set = set(s2_kmers.keys())
-    shared_set = s1_set & s2_set
+    ss1_set = set(ss1_kmers.keys())
+    ss2_set = set(ss2_kmers.keys())
+    shared_set = ss1_set & ss2_set
     for shared_kmer in shared_set:
-        for s1p in s1_kmers[shared_kmer]:
-            for s2p in s2_kmers[shared_kmer]:
+        for ss1p in ss1_kmers[shared_kmer]:
+            for ss2p in ss2_kmers[shared_kmer]:
                 if binary:
-                    mat[get_row(s2p)][s1p] = MATCH
+                    mat[get_row(ss2p)][ss1p] = MATCH
                 else:
-                    mat[get_row(s2p)][s1p] = FWD
+                    mat[get_row(ss2p)][ss1p] = FWD
 
     # Find k-mers that are shared between both strings, but
     # reverse-complemented
-    for s1k in s1_kmers:
-        rc_s1k = rc(s1k)
-        if rc_s1k in s2_kmers:
-            for s1p in s1_kmers[s1k]:
-                for s2p in s2_kmers[rc_s1k]:
+    for ss1k in ss1_kmers:
+        rc_ss1k = rc(ss1k)
+        if rc_ss1k in ss2_kmers:
+            for ss1p in ss1_kmers[ss1k]:
+                for ss2p in ss2_kmers[rc_ss1k]:
                     if binary:
-                        mat[get_row(s2p)][s1p] = MATCH
+                        mat[get_row(ss2p)][ss1p] = MATCH
                     else:
-                        if mat[get_row(s2p)][s1p] == FWD:
+                        if mat[get_row(ss2p)][ss1p] == FWD:
                             # If there's both a FWD and RC match here, give it
                             # a unique value
-                            mat[get_row(s2p)][s1p] = BOTH
+                            mat[get_row(ss2p)][ss1p] = BOTH
                         else:
-                            mat[get_row(s2p)][s1p] = REV
+                            mat[get_row(ss2p)][ss1p] = REV
 
-    return DotPlotMatrix(mat, s1, s2, k, binary)
+    return DotPlotMatrix(mat, ss1, ss2, k, yorder, binary)
