@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
 
     steps:
 
@@ -31,6 +31,13 @@ jobs:
           environment-file: environment.yml
           create-args: python=${{ matrix.python-version }}
           init-shell: bash
+
+      # If we don't do this, then -- as of writing -- installing opencv-python
+      # for python 3.6 takes a very long time (~30 minutes). from
+      # https://stackoverflow.com/questions/63669752#comment112590614_63669919
+      - name: Upgrade pip due to opencv-python issue
+        if: ${{ matrix.python-version == '3.6' }}
+        run: pip install --upgrade pip
 
       # We've gotta use "bash -el {0}" in order to actually use the shell that
       # has the environment activated. I am not 100% clear on why this is the
