@@ -55,7 +55,7 @@ jobs:
         shell: bash -el {0}
 
       - name: Install wotplot (and pip dependencies)
-        run: pip install -e .[dev,viz]
+        run: pip install -vvv -e .[dev,viz]
         shell: bash -el {0}
 
       - name: Lint and stylecheck
