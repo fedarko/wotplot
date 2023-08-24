@@ -22,12 +22,14 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
+      # Set up a conda env using mamba (which is much faster than conda).
+      # We can use "create-args" to adjust the python version; based on
+      # https://github.com/mamba-org/setup-micromamba/issues/51#issue-1688507017
       - name: Install conda dependencies
         uses: mamba-org/setup-micromamba@v1
         with:
-          activate-environment: wotplot
           environment-file: environment.yml
-          python-version: ${{ matrix.python-version }}
+          create-args: python=${{ matrix.python-version }}
 
       # We need to keep saying "run this command from within the new conda
       # environment", and we can do this easily by prefixing commands with
