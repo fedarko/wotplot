@@ -32,14 +32,6 @@ jobs:
           create-args: python=${{ matrix.python-version }}
           init-shell: bash
 
-      # If we don't do this, then -- as of writing -- installing opencv-python
-      # for python 3.6 takes a very long time (~30 minutes). from
-      # https://stackoverflow.com/a/66055610
-      - name: Upgrade pip due to opencv-python issue (Python 3.6 builds only)
-        if: ${{ matrix.python-version == '3.6' }}
-        run: pip install --upgrade pip setuptools wheel
-        shell: bash -el {0}
-
       # We've gotta use "bash -el {0}" in order to actually use the shell that
       # has the environment activated. I am not 100% clear on why this is the
       # case (I'm just following what github.com/mamba-org/setup-micromamba
@@ -62,7 +54,18 @@ jobs:
         run: which pip
         shell: bash -el {0}
 
-      - name: Install wotplot (and pip dependencies)
+      # use a specific opencv-python version to prevent wasting ~30 minutes
+      # building opencv; from https://stackoverflow.com/a/63669919
+      - name: Install wotplot and pip dependencies (Python = 3.6)
+        if: ${{ matrix.python-version == '3.6' }}
+        run: |
+          pip install -e .[dev]
+          pip install matplotlib
+          pip install opencv-python==4.3.0.38
+        shell: bash -el {0}
+
+      - name: Install wotplot and pip dependencies (Python > 3.6)
+        if: ${{ matrix.python-version != '3.6' }}
         run: pip install -e .[dev,viz]
         shell: bash -el {0}
 
