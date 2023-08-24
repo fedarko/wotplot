@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
 
     steps:
 
@@ -54,13 +54,7 @@ jobs:
         run: which pip
         shell: bash -el {0}
 
-      - name: Install wotplot and pip dependencies (Python 3.6 only; no OpenCV)
-        if: ${{ matrix.python-version == '3.6' }}
-        run: pip install -e .[dev]
-        shell: bash -el {0}
-
-      - name: Install wotplot and pip dependencies (Python > 3.6, with OpenCV)
-        if: ${{ matrix.python-version != '3.6' }}
+      - name: Install wotplot (and pip dependencies)
         run: pip install -e .[dev,viz]
         shell: bash -el {0}
 
