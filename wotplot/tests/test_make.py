@@ -34,3 +34,10 @@ def test_make_bad_chars():
     with pytest.raises(ValueError) as e:
         make("ACXTC", "ACDTC", 2)
     assert "Input sequence contains character X" in str(e.value)
+
+
+def test_make_bad_k():
+    for b in (-1, 0, 0.5, 5.4):
+        with pytest.raises(ValueError) as e:
+            make("ACGTC", "ACCTC", b)
+        assert str(e.value) == "k must be an integer >= 1"
