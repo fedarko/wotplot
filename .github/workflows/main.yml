@@ -1,0 +1,54 @@
+# Based on
+# https://github.com/fedarko/strainFlye/blob/main/.github/workflows/main.yml,
+# which was in turn "[based] roughly on the main.yml and standalone.yml 
+# workflows in
+# https://github.com/biocore/empress/blob/master/.github/workflows/,
+# and on https://docs.github.com/en/actions/quickstart". It's copy-and-paste
+# all the way down baybee
+name: wotplot CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
+
+    steps:
+
+      # Updating from v2 to v3 to match, as of writing,
+      # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      # https://github.com/conda-incubator/setup-miniconda#example-3-other-options
+      - name: Install conda dependencies
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: wotplot
+          environment-file: environment.yml
+          python-version: ${{ matrix.python-version }}
+
+      # We need to keep saying "run this command from within the new conda
+      # environment", and we can do this easily by prefixing commands with
+      # "conda run -n" (as done in EMPress' main.yml file, linked above).
+      #
+      # I don't know of a more elegant way to do this; I do know that
+      # installing everything into the "base" environment (as done in, e.g.,
+      # https://autobencoder.com/2020-08-24-conda-actions) would remove the
+      # need to keep re-activating the new environment, but it'd have
+      # the effect of polluting the base environment (which is not ideal
+      # practice, according to
+      # https://github.com/marketplace/actions/setup-miniconda#environment-activation).
+      - name: Install wotplot (and pip dependencies)
+        run: conda run -n wotplot pip install -e .[dev,viz]
+
+      - name: Lint and stylecheck
+        run: conda run -n wotplot make stylecheck
+
+      - name: Run tests
+        run: conda run -n wotplot make test
+
+      - name: Upload code coverage information to Codecov
+        uses: codecov/codecov-action@v2

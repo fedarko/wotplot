@@ -59,16 +59,15 @@ some discussion of this.
 
 ## Setting up a development environment
 
-Something like the following should work. This assumes that you have mamba and
-conda installed already. (You could also replace `mamba` in the first command
-with `conda` if you only have conda installed, but I recommend using mamba;
-it's a lot faster.)
+First, fork wotplot. Then download the code from your fork.
+Something like the following should work; this assumes that you have conda
+installed.
 
 ```bash
-mamba create -n wotplot "python>=3.6" numpy cython
-conda activate wotplot
-git clone https://github.com/fedarko/wotplot.git
+git clone https://github.com/your-github-username-goes-here/wotplot.git
 cd wotplot
+conda env create -f environment.yml
+conda activate wotplot
 pip install -e .[dev,viz]
 ```
 
