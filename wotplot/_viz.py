@@ -33,8 +33,16 @@ def _tidy_dotplot_viz_ax(ax, m):
         labelright=True,
     )
 
-    ax.set_xlabel(f"$s_1$ ({len(m.s1):,} nt)", fontsize=18)
-    ax.set_ylabel(f"$s_2$ ({len(m.s2):,} nt)", fontsize=18)
+    ax.set_xlabel(f"$s_1$ ({len(m.s1):,} nt) \u2192", fontsize=18)
+    if m.yorder == "BT":
+        # -->, which gets turned into an up arrow when we rotate the yax label
+        yarr = "\u2192"
+    elif m.yorder == "TB":
+        # <--, which gets turned into a down arrow when we rotate the yax label
+        yarr = "\u2190"
+    else:
+        raise ValueError(f"Unrecognized yorder?: {m.yorder}")
+    ax.set_ylabel(f"$s_2$ ({len(m.s2):,} nt) {yarr}", fontsize=18)
 
 
 def viz_binary(m, num_dilation_iterations="auto", title=None, ax=None):
