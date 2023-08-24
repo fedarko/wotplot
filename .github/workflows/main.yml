@@ -34,10 +34,10 @@ jobs:
 
       # If we don't do this, then -- as of writing -- installing opencv-python
       # for python 3.6 takes a very long time (~30 minutes). from
-      # https://stackoverflow.com/questions/63669752#comment112590614_63669919
+      # https://stackoverflow.com/a/66055610
       - name: Upgrade pip due to opencv-python issue
         if: ${{ matrix.python-version == '3.6' }}
-        run: pip install --upgrade pip
+        run: pip install --upgrade pip setuptools wheel
 
       # We've gotta use "bash -el {0}" in order to actually use the shell that
       # has the environment activated. I am not 100% clear on why this is the
