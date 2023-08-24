@@ -41,10 +41,25 @@ If you have already installed these dependencies, you can install
 wotplot using the following command:
 
 ```
-pip install git+https://github.com/fedarko/wotplot.git#egg=wotplot[viz]
+pip install git+https://github.com/fedarko/wotplot.git
 ```
 
 I'll try to put this on PyPI / conda eventually.
+
+### Installation notes
+
+#### Speeding up the installation of `opencv-python`
+
+If you're using Python 3.6, installing `opencv-python` through pip can take a
+long time (upwards of 30 minutes), because it can involve compiling OpenCV's
+code. see [this Stack Overflow thread](https://stackoverflow.com/q/63669752)
+for some details.
+
+If really you need to use Python 3.6, then I've found that
+[specifically running `pip install opencv-python==4.3.0.38`](https://stackoverflow.com/a/63669919)
+avoids this problem. See
+[our GitHub Actions workflow](https://github.com/fedarko/wotplot/blob/0debb9c76216524a43327492eb1981a5013716d1/.github/workflows/main.yml#L62-L64)
+for an example of using this in practice.
 
 ## Performance
 
@@ -73,7 +88,7 @@ git clone https://github.com/your-github-username-goes-here/wotplot.git
 cd wotplot
 conda env create -f environment.yml
 conda activate wotplot
-pip install -e .[dev,viz]
+pip install -e .[dev]
 ```
 
 ## Contact
