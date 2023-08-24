@@ -1,5 +1,8 @@
 # wotplot
 
+<a href="https://github.com/fedarko/wotplot/actions/workflows/main.yml"><img src="https://github.com/fedarko/wotplot/actions/workflows/main.yml/badge.svg" alt="wotplot CI" /></a>
+<a href="https://codecov.io/gh/fedarko/wotplot"><img src="https://codecov.io/gh/fedarko/wotplot/branch/main/graph/badge.svg" alt="Code Coverage" /></a>
+
 wotplot is a simple Python 3 package for creating and visualizing
 [dot plot matrices](https://en.wikipedia.org/wiki/Dot_plot_(bioinformatics)).
 
