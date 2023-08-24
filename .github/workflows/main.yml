@@ -59,9 +59,8 @@ jobs:
       - name: Install wotplot and pip dependencies (Python = 3.6)
         if: ${{ matrix.python-version == '3.6' }}
         run: |
-          pip install -e .[dev]
-          pip install matplotlib
           pip install opencv-python==4.3.0.38
+          pip install -e .[dev]
         shell: bash -el {0}
 
       - name: Install wotplot and pip dependencies (Python > 3.6)

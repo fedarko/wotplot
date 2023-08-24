@@ -57,8 +57,8 @@ for some details.
 
 If really you need to use Python 3.6, then I've found that
 [specifically running `pip install opencv-python==4.3.0.38`](https://stackoverflow.com/a/63669919)
-avoids this problem. See
-[our GitHub Actions workflow](https://github.com/fedarko/wotplot/blob/0debb9c76216524a43327492eb1981a5013716d1/.github/workflows/main.yml#L62-L64)
+before you install wotplot fixes this problem. See
+[our GitHub Actions workflow](https://github.com/fedarko/wotplot/blob/main/.github/workflows/main.yml)
 for an example of using this in practice.
 
 ## Performance
