@@ -79,4 +79,4 @@ pip install -e .[dev,viz]
 ## Contact
 
 Feel free to [open an issue](https://github.com/fedarko/wotplot/issues) if you
-have any questions, suggestions, comments, or anything else.
+have questions, suggestions, comments, or anything else.
