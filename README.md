@@ -33,11 +33,15 @@ Please see [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/b
 
 ## Installation
 
+Before installation, wotplot requires a Python version ≥ 3.6; NumPy; and
+Cython. If you have already installed these dependencies, you can install
+wotplot using the following command:
+
 ```
 pip install git+https://github.com/fedarko/wotplot.git#egg=wotplot[viz]
 ```
 
-I'll probably put this on PyPI / conda eventually.
+I'll try to put this on PyPI / conda eventually.
 
 ## Performance
 
@@ -52,6 +56,21 @@ some discussion of this.
 1. This package separates the creation of a dot plot matrix from the visualization. Other tools that I tried produced pretty visualizations, but didn't give me easy access to the original matrix.
 
 2. I wanted something that worked well with [matplotlib](https://matplotlib.org), so that I could create and tile lots of dotplots at once in complicated ways.
+
+## Setting up a development environment
+
+Something like the following should work. This assumes that you have mamba and
+conda installed already. (You could also replace `mamba` in the first command
+with `conda` if you only have conda installed, but I recommend using mamba;
+it's a lot faster.)
+
+```bash
+mamba create -n wotplot "python>=3.6" numpy cython
+conda activate wotplot
+git clone https://github.com/fedarko/wotplot.git
+cd wotplot
+pip install -e .[dev,viz]
+```
 
 ## Contact
 
