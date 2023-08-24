@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class DotPlotMatrix:
     """Stores a constructed dot plot matrix.
 
@@ -77,3 +80,16 @@ class DotPlotMatrix:
             f's1="{self.s1}", s2="{self.s2}", k={self.k}, '
             f'yorder="{self.yorder}", binary={self.binary})'
         )
+
+    def __eq__(self, obj):
+        # https://www.pythontutorial.net/python-oop/python-__eq__/
+        if isinstance(obj, DotPlotMatrix):
+            return (
+                np.array_equal(self.mat, obj.mat)
+                and self.s1 == obj.s1
+                and self.s2 == obj.s2
+                and self.k == obj.k
+                and self.yorder == obj.yorder
+                and self.binary == obj.binary
+            )
+        return False
