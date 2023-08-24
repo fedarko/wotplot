@@ -39,11 +39,10 @@ setup(
     packages=find_packages(),
     install_requires=[
         "numpy",
+        "matplotlib",
+        "opencv-python",
     ],
-    setup_requires=[
-        "cython",
-        "numpy",
-    ],
+    setup_requires=["numpy"],
     # Based on how Altair splits up its requirements:
     # https://github.com/altair-viz/altair/blob/master/setup.py
     extras_require={
