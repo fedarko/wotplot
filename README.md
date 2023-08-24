@@ -62,9 +62,11 @@ some discussion of this.
 
 ## Setting up a development environment
 
-First, fork wotplot. Then download the code from your fork.
-Something like the following should work; this assumes that you have conda
-installed.
+First, fork wotplot. Then you can download a copy of the code from your fork and
+install wotplot from this code.
+
+The following commands should work on a Unix system; this assumes that you have
+conda installed.
 
 ```bash
 git clone https://github.com/your-github-username-goes-here/wotplot.git
