@@ -32,25 +32,29 @@ jobs:
           create-args: python=${{ matrix.python-version }}
           init-shell: bash
 
-      # We need to keep saying "run this command from within the new conda
-      # environment", and we can do this easily by prefixing commands with
-      # "conda run -n" (as done in EMPress' main.yml file, linked above).
-      #
-      # I don't know of a more elegant way to do this; I do know that
-      # installing everything into the "base" environment (as done in, e.g.,
-      # https://autobencoder.com/2020-08-24-conda-actions) would remove the
-      # need to keep re-activating the new environment, but it'd have
-      # the effect of polluting the base environment (which is not ideal
-      # practice, according to
-      # https://github.com/marketplace/actions/setup-miniconda#environment-activation).
+      - name: Sanity check: echo python version
+        run: python --version
+
+      - name: Sanity check: echo python location
+        run: which python
+
+      - name: Sanity check: echo pip version
+        run: pip --version
+
+      - name: Sanity check: echo pip location
+        run: which pip
+
       - name: Install wotplot (and pip dependencies)
         run: pip install -e .[dev,viz]
+        shell: bash
 
       - name: Lint and stylecheck
         run: make stylecheck
+        shell: bash
 
       - name: Run tests
         run: make test
+        shell: bash
 
       - name: Upload code coverage information to Codecov
         uses: codecov/codecov-action@v2
