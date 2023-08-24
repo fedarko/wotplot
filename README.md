@@ -55,9 +55,9 @@ long time (upwards of 30 minutes).
 See [this Stack Overflow thread](https://stackoverflow.com/q/63669752)
 for details.
 
-The easiest solution to this is just using a newer Python version. However,
+The easiest solution to this is using a more recent Python version than 3.6. However,
 if you need to use Python 3.6, then I've found that
-[specifically running `pip install opencv-python==4.3.0.38`](https://stackoverflow.com/a/63669919)
+[running `pip install opencv-python==4.3.0.38`](https://stackoverflow.com/a/63669919)
 before you install wotplot fixes this problem. See
 [our GitHub Actions workflow](https://github.com/fedarko/wotplot/blob/ce702b63bf790c41d02b0493e3a7eebda6fcec70/.github/workflows/main.yml#L62-L63)
 for an example of this.
