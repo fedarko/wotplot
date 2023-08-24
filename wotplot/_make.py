@@ -46,7 +46,10 @@ def _validate_and_stringify_seq(seq):
 def _validate_k(k):
     # NOTE: this should be ok even if k is super huge, since python 3 combined
     # "long" and "int" into just "int"; see https://stackoverflow.com/a/2104947
-    if k < 1 or type(k) != int:
+    # We could use "not isinstance(k, int)" if we wanted to be super
+    # accommodating, but I don't wanna risk subtle problems since we do pass k
+    # over to DotPlotMatrix later
+    if k < 1 or type(k) is not int:
         raise ValueError("k must be an integer >= 1")
 
 
