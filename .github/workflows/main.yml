@@ -30,6 +30,7 @@ jobs:
         with:
           environment-file: environment.yml
           create-args: python=${{ matrix.python-version }}
+          init-shell: bash
 
       # We need to keep saying "run this command from within the new conda
       # environment", and we can do this easily by prefixing commands with
