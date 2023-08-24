@@ -22,9 +22,8 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      # https://github.com/conda-incubator/setup-miniconda#example-3-other-options
       - name: Install conda dependencies
-        uses: conda-incubator/setup-miniconda@v2
+        uses: mamba-org/setup-micromamba@v1
         with:
           activate-environment: wotplot
           environment-file: environment.yml
@@ -42,13 +41,13 @@ jobs:
       # practice, according to
       # https://github.com/marketplace/actions/setup-miniconda#environment-activation).
       - name: Install wotplot (and pip dependencies)
-        run: conda run -n wotplot pip install -e .[dev,viz]
+        run: pip install -e .[dev,viz]
 
       - name: Lint and stylecheck
-        run: conda run -n wotplot make stylecheck
+        run: make stylecheck
 
       - name: Run tests
-        run: conda run -n wotplot make test
+        run: make test
 
       - name: Upload code coverage information to Codecov
         uses: codecov/codecov-action@v2
