@@ -1,6 +1,5 @@
 name: wotplot
 dependencies:
     - python >= 3.6
-    - cython
     - pip
     - numpy
