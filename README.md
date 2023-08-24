@@ -48,15 +48,14 @@ I'll try to put this on PyPI / conda eventually.
 
 ### Installation notes
 
-#### Speeding up the installation of `opencv-python`
+#### Speeding up the installation of `opencv-python` in Python 3.6 environments
 
 If you're using Python 3.6, installing `opencv-python` through pip can take a
-long time (upwards of 30 minutes).
+long time (~30 minutes).
 See [this Stack Overflow thread](https://stackoverflow.com/q/63669752)
 for details.
 
-The easiest solution to this is using a more recent Python version than 3.6. However,
-if you need to use Python 3.6, then I've found that
+I've found that
 [running `pip install opencv-python==4.3.0.38`](https://stackoverflow.com/a/63669919)
 before you install wotplot fixes this problem. See
 [our GitHub Actions workflow](https://github.com/fedarko/wotplot/blob/ce702b63bf790c41d02b0493e3a7eebda6fcec70/.github/workflows/main.yml#L62-L63)
