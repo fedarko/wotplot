@@ -1,6 +1,39 @@
-from scipy.sparse import bsr_array
+import scipy
 from collections import defaultdict
 from ._matrix import DotPlotMatrix
+
+
+# Figure out what sparse matrix init function to use based on the version of
+# SciPy installed (bruh)
+sv = scipy.__version__
+vnum_parts = sv.split(".")
+
+
+def bail():
+    raise RuntimeError(
+        f"Hey, the SciPy version installed is {sv}, and I don't know "
+        "how to parse that. Please open a GitHub issue. Sorry!"
+    )
+
+
+sm_initter = None
+if len(vnum_parts) >= 2:
+    try:
+        major_num = int(vnum_parts[0])
+        minor_num = int(vnum_parts[1])
+    except ValueError:
+        bail()
+    if major_num >= 2 or (major_num == 1 and minor_num >= 8):
+        from scipy.sparse import bsr_array
+
+        sm_initter = bsr_array
+    else:
+        from scipy.sparse import bsr_matrix
+
+        sm_initter = bsr_matrix
+else:
+    bail()
+
 
 NT2COMP = {"A": "T", "C": "G", "T": "A", "G": "C"}
 
