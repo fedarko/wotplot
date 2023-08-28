@@ -6,7 +6,7 @@ from wotplot import make
 def test_make_simple_default():
     dpm = make("ACGTC", "AAGTC", 2)
     assert np.array_equal(
-        dpm.mat,
+        dpm.mat.toarray(),
         # The use of a trailing comma on the last line tells black to keep this
         # as a matrix, rather than compress it into a single line. From
         # https://stackoverflow.com/a/66839521.
@@ -24,7 +24,7 @@ def test_make_simple_default():
 def test_make_simple_yorder_TB():
     dpm = make("ACGTC", "AAGTC", 2, yorder="TB")
     assert np.array_equal(
-        dpm.mat,
+        dpm.mat.toarray(),
         np.array(
             [
                 [0, 0, 0, 0],
@@ -39,7 +39,7 @@ def test_make_simple_yorder_TB():
 def test_make_simple_not_binary():
     dpm = make("ACGTC", "AAGTC", 2, binary=False)
     assert np.array_equal(
-        dpm.mat,
+        dpm.mat.toarray(),
         np.array(
             [
                 [0, 0, 0, 1],
@@ -54,7 +54,7 @@ def test_make_simple_not_binary():
 def test_make_simple_yorder_TB_and_not_binary():
     dpm = make("ACGTC", "AAGTC", 2, yorder="TB", binary=False)
     assert np.array_equal(
-        dpm.mat,
+        dpm.mat.toarray(),
         np.array(
             [
                 [0, 0, 0, 0],

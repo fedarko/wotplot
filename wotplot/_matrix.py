@@ -1,6 +1,3 @@
-import numpy as np
-
-
 class DotPlotMatrix:
     """Stores a constructed dot plot matrix.
 
@@ -11,7 +8,7 @@ class DotPlotMatrix:
 
     Attributes
     ==========
-    mat (np.ndarray)
+    mat (scipy.sparse.bsr_array)
         Representation of the dot plot matrix.
 
     s1 (str)
@@ -69,27 +66,16 @@ class DotPlotMatrix:
             bs += ", bottom \u2192 top"
         return (
             f"DotPlotMatrix(k = {self.k:,}{bs}): "
-            f"{self.mat.shape[0]:,} x {self.mat.shape[1]:,}"
+            f"{self.mat.shape[0]:,}x{self.mat.shape[1]:,}"
         )
 
     def __repr__(self):
-        # This satisfies eval(repr(m)) == m; see
-        # https://stackoverflow.com/a/2626364.
+        # This used to satisfy eval(repr(m)) == m (see
+        # https://stackoverflow.com/a/2626364), but our use of a SciPy sparse
+        # matrix now means that it doesn't. Oh well! Performance is much more
+        # important than this one silly little use case lol
         return (
             f"DotPlotMatrix(mat={repr(self.mat)}, "
             f's1="{self.s1}", s2="{self.s2}", k={self.k}, '
             f'yorder="{self.yorder}", binary={self.binary})'
         )
-
-    def __eq__(self, obj):
-        # https://www.pythontutorial.net/python-oop/python-__eq__/
-        if isinstance(obj, DotPlotMatrix):
-            return (
-                np.array_equal(self.mat, obj.mat)
-                and self.s1 == obj.s1
-                and self.s2 == obj.s2
-                and self.k == obj.k
-                and self.yorder == obj.yorder
-                and self.binary == obj.binary
-            )
-        return False

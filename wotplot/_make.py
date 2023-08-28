@@ -1,4 +1,4 @@
-import numpy as np
+from scipy.sparse import bsr_array
 from collections import defaultdict
 from ._matrix import DotPlotMatrix
 
@@ -106,19 +106,41 @@ def make(s1, s2, k, yorder="BT", binary=True):
     # final row or column). Interestingly, Figure 6.20 in Bioinformatics
     # Algorithms does actually include this extra empty space, but I think here
     # it is okay to omit it.
-    #
-    # NOTE: If ss1 and ss2 are both long, this is going to require a horrendous
-    # amount of memory. See https://github.com/fedarko/wotplot/issues/2.
-    mat = np.zeros((len(ss2) - k + 1, len(ss1) - k + 1))
+    mat_shape = (len(ss2) - k + 1, len(ss1) - k + 1)
 
     def get_row(s2p):
         if yorder == "TB":
             return s2p
         elif yorder == "BT":
-            return mat.shape[0] - s2p - 1
+            return mat_shape[0] - s2p - 1
         else:
             # should never happen
             raise ValueError(f"Unrecognized yorder: {yorder}")
+
+    # We'll populate the sparse matrix all at once -- I think this should be
+    # faster than populating it bit by bit as we loop through the k-mers.
+    # We can do this by keeping track of all non-zero values and their row/col
+    # coordinates, then providing them to the sparse matrix constructor.
+    # Later on we'll provide this data to SciPy in the form of three lists
+    # (values, rows, and columns), but for now we store this data as a dict
+    # (to make it easier to overwrite the same cell, etc.)
+    cell2val = {}
+
+    def set_nz_val(val, ss1p, ss2p):
+        cell2val[(get_row(ss2p), ss1p)] = val
+
+    def cell_already_fwd(ss1p, ss2p):
+        coords = (get_row(ss2p), ss1p)
+        # abuse boolean short-circuiting to avoid a KeyError.
+        #
+        # We coooould make cell2val a defaultdict(int) in order to make this
+        # check easier, but then every time we'd try to access a cell that
+        # doesn't have a nonzero value assigned yet that cell would get
+        # assigned a zero value entry in the defaultdict -- which could
+        # unnecessarily increase memory in the sparse matrix (I think "explicit
+        # zeroes" take up space). SO ANYWAY using a normal dict avoids this
+        # problem
+        return coords in cell2val and cell2val[coords] == FWD
 
     # Find k-mers that are shared between both strings (not considering
     # reverse-complementing)
@@ -129,9 +151,9 @@ def make(s1, s2, k, yorder="BT", binary=True):
         for ss1p in ss1_kmers[shared_kmer]:
             for ss2p in ss2_kmers[shared_kmer]:
                 if binary:
-                    mat[get_row(ss2p)][ss1p] = MATCH
+                    set_nz_val(MATCH, ss1p, ss2p)
                 else:
-                    mat[get_row(ss2p)][ss1p] = FWD
+                    set_nz_val(FWD, ss1p, ss2p)
 
     # Find k-mers that are shared between both strings, but
     # reverse-complemented
@@ -141,13 +163,24 @@ def make(s1, s2, k, yorder="BT", binary=True):
             for ss1p in ss1_kmers[ss1k]:
                 for ss2p in ss2_kmers[rc_ss1k]:
                     if binary:
-                        mat[get_row(ss2p)][ss1p] = MATCH
+                        set_nz_val(MATCH, ss1p, ss2p)
                     else:
-                        if mat[get_row(ss2p)][ss1p] == FWD:
+                        if cell_already_fwd(ss1p, ss2p):
                             # If there's both a FWD and RC match here, give it
                             # a unique value
-                            mat[get_row(ss2p)][ss1p] = BOTH
+                            set_nz_val(BOTH, ss1p, ss2p)
                         else:
-                            mat[get_row(ss2p)][ss1p] = REV
+                            set_nz_val(REV, ss1p, ss2p)
 
+    # Match the input data format expected by SciPy of (vals, (rows, cols)):
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.bsr_array.html
+    mat_vals = []
+    mat_rows = []
+    mat_cols = []
+    for (r, c) in cell2val:
+        mat_vals.append(cell2val[(r, c)])
+        mat_rows.append(r)
+        mat_cols.append(c)
+
+    mat = bsr_array((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
     return DotPlotMatrix(mat, ss1, ss2, k, yorder, binary)
