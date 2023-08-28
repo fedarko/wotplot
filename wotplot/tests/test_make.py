@@ -51,6 +51,20 @@ def test_make_simple_not_binary():
     )
 
 
+def test_make_simple_yorder_TB_and_not_binary():
+    dpm = make("ACGTC", "AAGTC", 2, yorder="TB", binary=False)
+    assert np.array_equal(
+        dpm.mat,
+        np.array(
+            [
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [-1, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]
+        ),
+    )
+
 def test_make_bad_chars():
     # bad char in s2
     with pytest.raises(ValueError) as e:
