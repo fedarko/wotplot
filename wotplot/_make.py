@@ -50,7 +50,7 @@ def _validate_k(k):
     # accommodating, but I don't wanna risk subtle problems since we do pass k
     # over to DotPlotMatrix later
     if k < 1 or type(k) is not int:
-        raise ValueError("k must be an integer >= 1")
+        raise ValueError("k must be an integer \u2265 1")
 
 
 def _validate_yorder(yorder):

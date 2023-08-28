@@ -1,6 +1,11 @@
 import pytest
 from collections import defaultdict
-from wotplot._make import rc, get_kmer_dd, _validate_and_stringify_seq
+from wotplot._make import (
+    rc,
+    get_kmer_dd,
+    _validate_and_stringify_seq,
+    _validate_k,
+)
 
 
 def test_rc_simple():
@@ -57,3 +62,10 @@ def test_validate_and_stringify_badchar():
         "Input sequence contains character -; only DNA nucleotides (A, C, G, "
         "T) are currently allowed."
     )
+
+
+def test_validate_k():
+    for bk in (-1, 0, 1.5, -124324234):
+        with pytest.raises(ValueError) as ei:
+            _validate_k(bk)
+        assert str(ei.value) == "k must be an integer \u2265 1"
