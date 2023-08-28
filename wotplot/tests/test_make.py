@@ -65,6 +65,7 @@ def test_make_simple_yorder_TB_and_not_binary():
         ),
     )
 
+
 def test_make_bad_chars():
     # bad char in s2
     with pytest.raises(ValueError) as e:
