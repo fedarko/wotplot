@@ -39,10 +39,15 @@ setup(
     packages=find_packages(),
     install_requires=[
         "numpy",
+        "scipy",
         "matplotlib",
         "opencv-python",
     ],
-    setup_requires=["numpy"],
+    # you know tbh i'm not sure if you NEED to have already installed scipy
+    # before installing wotplot. i remember that trying to pip install numpy
+    # would cause unspeakable problems a few years ago, but idk if this is also
+    # the case for scipy. i should really figure this out one of these days
+    setup_requires=["numpy", "scipy"],
     # Based on how Altair splits up its requirements:
     # https://github.com/altair-viz/altair/blob/master/setup.py
     extras_require={

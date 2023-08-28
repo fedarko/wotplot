@@ -36,7 +36,7 @@ Please see [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/b
 
 ## Installation
 
-Before installation, wotplot requires a Python version ≥ 3.6 and NumPy.
+Before installation, wotplot requires a Python version ≥ 3.6, NumPy, and SciPy.
 If you have already installed these dependencies, you can install
 wotplot using the following command:
 
