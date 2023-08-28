@@ -3,7 +3,7 @@ import pytest
 from wotplot import make
 
 
-def test_make_simple():
+def test_make_simple_default():
     dpm = make("ACGTC", "AAGTC", 2)
     assert np.array_equal(
         dpm.mat,
@@ -14,6 +14,36 @@ def test_make_simple():
             [
                 [0, 0, 0, 1],
                 [1, 0, 1, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+            ]
+        ),
+    )
+
+
+def test_make_simple_yorder_TB():
+    dpm = make("ACGTC", "AAGTC", 2, yorder="TB")
+    assert np.array_equal(
+        dpm.mat,
+        np.array(
+            [
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [1, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]
+        ),
+    )
+
+
+def test_make_simple_not_binary():
+    dpm = make("ACGTC", "AAGTC", 2, binary=False)
+    assert np.array_equal(
+        dpm.mat,
+        np.array(
+            [
+                [0, 0, 0, 1],
+                [-1, 0, 1, 0],
                 [0, 0, 0, 0],
                 [0, 0, 0, 0],
             ]
