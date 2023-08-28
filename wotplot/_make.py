@@ -215,5 +215,5 @@ def make(s1, s2, k, yorder="BT", binary=True):
         mat_rows.append(r)
         mat_cols.append(c)
 
-    mat = bsr_array((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
+    mat = sm_initter((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
     return DotPlotMatrix(mat, ss1, ss2, k, yorder, binary)
