@@ -26,9 +26,9 @@ def get_kmer_dd(s, k):
     return kmers
 
 
-def _validate_and_stringify_seq(seq):
-    if len(seq) == 0:
-        raise ValueError("Input sequence must have length > 0")
+def _validate_and_stringify_seq(seq, k):
+    if len(seq) < k:
+        raise ValueError(f"Input sequence must have length \u2265 k = {k:,}")
     strseq = str(seq)
     for c in strseq:
         # We cooould get fancy and allow e.g. Uracil, but then that raises the
@@ -93,10 +93,10 @@ def make(s1, s2, k, yorder="BT", binary=True):
     Based on the Shared k-mers Problem in the Bioinformatics Algorithms
     textbook (https://www.bioinformaticsalgorithms.org/) by Compeau & Pevzner.
     """
-    ss1 = _validate_and_stringify_seq(s1)
-    ss2 = _validate_and_stringify_seq(s2)
     _validate_k(k)
     _validate_yorder(yorder)
+    ss1 = _validate_and_stringify_seq(s1, k)
+    ss2 = _validate_and_stringify_seq(s2, k)
 
     ss1_kmers = get_kmer_dd(ss1, k)
     ss2_kmers = get_kmer_dd(ss2, k)

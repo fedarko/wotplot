@@ -36,19 +36,23 @@ def test_get_kmer_dd_simple():
 
 
 def test_validate_and_stringify_good():
-    _validate_and_stringify_seq("A")
-    _validate_and_stringify_seq("CTG")
+    _validate_and_stringify_seq("A", 1)
+    _validate_and_stringify_seq("CTG", 2)
 
 
-def test_validate_and_stringify_empty():
+def test_validate_and_stringify_badlen():
     with pytest.raises(ValueError) as ei:
-        _validate_and_stringify_seq("")
-    assert str(ei.value) == "Input sequence must have length > 0"
+        _validate_and_stringify_seq("", 1)
+    assert str(ei.value) == "Input sequence must have length \u2265 k = 1"
+
+    with pytest.raises(ValueError) as ei:
+        _validate_and_stringify_seq("CCTGAC", 5678)
+    assert str(ei.value) == "Input sequence must have length \u2265 k = 5,678"
 
 
 def test_validate_and_stringify_badchar():
     with pytest.raises(ValueError) as ei:
-        _validate_and_stringify_seq("AC-T")
+        _validate_and_stringify_seq("AC-T", 3)
     assert str(ei.value) == (
         "Input sequence contains character -; only DNA nucleotides (A, C, G, "
         "T) are currently allowed."
