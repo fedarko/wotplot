@@ -1,6 +1,6 @@
 import pytest
 from collections import defaultdict
-from wotplot._make import rc, get_kmer_dd
+from wotplot._make import rc, get_kmer_dd, _validate_and_stringify_seq
 
 
 def test_rc_simple():
@@ -33,3 +33,23 @@ def test_get_kmer_dd_simple():
     }
     assert get_kmer_dd("", 4) == {}
     assert get_kmer_dd("CCT", 3) == {"CCT": [0]}
+
+
+def test_validate_and_stringify_good():
+    _validate_and_stringify_seq("A")
+    _validate_and_stringify_seq("CTG")
+
+
+def test_validate_and_stringify_empty():
+    with pytest.raises(ValueError) as ei:
+        _validate_and_stringify_seq("")
+    assert str(ei.value) == "Input sequence must have length > 0"
+
+
+def test_validate_and_stringify_badchar():
+    with pytest.raises(ValueError) as ei:
+        _validate_and_stringify_seq("AC-T")
+    assert str(ei.value) == (
+        "Input sequence contains character -; only DNA nucleotides (A, C, G, "
+        "T) are currently allowed."
+    )
