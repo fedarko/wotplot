@@ -1,14 +1,14 @@
 import pytest
-from collections import defaultdict
 from wotplot._make import (
     rc,
     get_kmer_dd,
     _validate_and_stringify_seq,
     _validate_k,
+    _validate_yorder,
 )
 
 
-def test_rc_simple():
+def test_rc_good():
     assert rc("ACGTAC") == "GTACGT"
     assert rc("") == ""
     assert rc("A") == "T"
@@ -19,11 +19,11 @@ def test_rc_simple():
 def test_rc_badchar():
     # in practice, bad characters should already have been caught when make()
     # validates input sequences. however, we may as well be careful here...
-    with pytest.raises(KeyError) as ei:
+    with pytest.raises(KeyError):
         rc("ACGTM")
 
 
-def test_get_kmer_dd_simple():
+def test_get_kmer_dd_good():
     dd = get_kmer_dd("ACGTTACTC", 2)
     # ACGTTACTC
     # 012345678
@@ -64,8 +64,25 @@ def test_validate_and_stringify_badchar():
     )
 
 
-def test_validate_k():
-    for bk in (-1, 0, 1.5, -124324234):
+def test_validate_k_good():
+    for k in (1, 2, 3, 1000, 5000, 10000000):
+        _validate_k(k)
+
+
+def test_validate_k_bad():
+    for k in (-1, 0, 1.5, -124324234):
         with pytest.raises(ValueError) as ei:
-            _validate_k(bk)
+            _validate_k(k)
         assert str(ei.value) == "k must be an integer \u2265 1"
+
+
+def test_validate_yorder_good():
+    _validate_yorder("BT")
+    _validate_yorder("TB")
+
+
+def test_validate_yorder_bad():
+    for b in ("BB", "TT", "", "asdf", 1, 0, None, True, False, "mongus"):
+        with pytest.raises(ValueError) as ei:
+            _validate_yorder(b)
+        assert str(ei.value) == "yorder must be 'BT' or 'TB'"
