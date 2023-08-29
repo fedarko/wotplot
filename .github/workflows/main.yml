@@ -55,7 +55,6 @@ jobs:
         shell: bash -el {0}
 
       - name: Install wotplot and pip dependencies
-        if: ${{ matrix.python-version != '3.6' }}
         run: pip install -e .[dev]
         shell: bash -el {0}
 
