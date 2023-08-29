@@ -3,7 +3,7 @@ import scipy
 
 def bail(sv):
     raise RuntimeError(
-        f"Hey, the SciPy version installed is {sv}, and I don't know "
+        f'Hey, the SciPy version installed is "{sv}", and I don\'t know '
         "how to parse that. Please open a GitHub issue -- sorry!"
     )
 
