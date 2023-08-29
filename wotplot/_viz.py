@@ -1,11 +1,7 @@
 import scipy
 from scipy.ndimage import binary_dilation
-import numpy as np
 from math import ceil
 from matplotlib import pyplot
-
-# Based on the opencv tutorial linked in viz_binary()'s docstring
-DILATION_KERNEL = np.ones((5, 5), np.uint8)
 
 
 def _draw_sparse_binary_matrix(ax, mat):
