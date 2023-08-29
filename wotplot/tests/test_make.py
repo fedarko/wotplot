@@ -66,6 +66,21 @@ def test_make_simple_yorder_TB_and_not_binary():
     )
 
 
+def test_make_palindrome_not_binary():
+    # AATCGATC
+    # 01234567
+    dpm = make("AATCGATC", "TATCGAT", 6, binary=False)
+    assert np.array_equal(
+        dpm.mat.toarray(),
+        np.array(
+            [
+                [0, 2, 0],
+                [0, 0, 0],
+            ]
+        ),
+    )
+
+
 def test_make_bad_chars():
     # bad char in s2
     with pytest.raises(ValueError) as e:

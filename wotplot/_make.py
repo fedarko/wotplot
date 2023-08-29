@@ -81,8 +81,8 @@ def make(s1, s2, k, yorder="BT", binary=True):
         how Gepard draws dot plots).
     binary: bool
         If True, then the output matrix won't distinguish between forward and
-        reverse-complementary matches; if False, it will. See the "Returns"
-        section for more detail.
+        reverse-complementary matches; if False, it will. See
+        help(wotplot.DotPlotMatrix) for more detail.
 
     Returns
     -------

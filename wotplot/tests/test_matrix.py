@@ -11,7 +11,7 @@ def test_matrix_str_TB_binary():
     assert str(d) == "DotPlotMatrix(k = 2, binary, top \u2192 bottom): 2x2"
 
 
-def test_matrix_str_TB_notbinary():
+def test_matrix_str_TB_not_binary():
     d = make("ACC", "CCA", 2, yorder="TB", binary=False)
     assert str(d) == "DotPlotMatrix(k = 2, top \u2192 bottom): 2x2"
 
