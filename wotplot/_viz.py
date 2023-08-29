@@ -3,7 +3,6 @@ from scipy.ndimage import binary_dilation
 import numpy as np
 from math import ceil
 from matplotlib import pyplot
-from matplotlib.ticker import MaxNLocator
 
 # Based on the opencv tutorial linked in viz_binary()'s docstring
 DILATION_KERNEL = np.ones((5, 5), np.uint8)
@@ -87,8 +86,9 @@ def _tidy_dotplot_viz_ax(ax, m):
     ax.set_ylabel(f"$s_2$ ({len(m.s2):,} nt) {yarr}", fontsize=18)
 
 
-def viz_binary(m, num_dilation_iterations="auto", title=None, ax=None,
-        size_inches=None):
+def viz_binary(
+    m, num_dilation_iterations="auto", title=None, ax=None, size_inches=None
+):
     """Visualizes a DotPlotMatrix object.
 
     This is intended to be used on binary DotPlotMatrix objects only.
@@ -151,9 +151,11 @@ def viz_binary(m, num_dilation_iterations="auto", title=None, ax=None,
     if num_dilation_iterations > 0:
         # scipy's dilation function doesn't seem to support sparse matrices...
         # TODO TODO
-        matrix_to_show = scipy.sparse.coo_matrix(binary_dilation(
-            m.mat.toarray(), iterations=num_dilation_iterations
-        ).astype(m.mat.dtype))
+        matrix_to_show = scipy.sparse.coo_matrix(
+            binary_dilation(
+                m.mat.toarray(), iterations=num_dilation_iterations
+            ).astype(m.mat.dtype)
+        )
     else:
         matrix_to_show = m.mat
 
