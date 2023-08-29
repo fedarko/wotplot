@@ -6,8 +6,6 @@
 wotplot is a simple Python 3 package for creating and visualizing
 [dot plot matrices](https://en.wikipedia.org/wiki/Dot_plot_(bioinformatics)).
 
-It's not very optimized (yet), but it works well enough with relatively small sequences.
-
 ## Quick example
 
 ```python
@@ -48,11 +46,9 @@ I'll try to put this on PyPI / conda eventually.
 
 ## Performance
 
-This code is not very optimized, so I don't recommend using it for sequences
-longer than a few thousand nucleotides. (On a high-memory system, I've used it
-with sequences up to ~50,000 nt; on a laptop, I've used it with sequences up to
-~2,000 nt.) See [this issue](https://github.com/fedarko/wotplot/issues/2) for
-some discussion of this.
+I haven't done strict benchmarking on this yet -- we now store dot plot
+matrices in a sparse format, which should make this tool scale reasonably well when
+comparing large sequences.
 
 ## Why does this package exist?
 
