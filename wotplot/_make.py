@@ -24,13 +24,13 @@ if len(vnum_parts) >= 2:
     except ValueError:
         bail()
     if major_num >= 2 or (major_num == 1 and minor_num >= 8):
-        from scipy.sparse import bsr_array
+        from scipy.sparse import coo_array
 
-        sm_initter = bsr_array
+        sm_initter = coo_array
     else:
-        from scipy.sparse import bsr_matrix
+        from scipy.sparse import coo_matrix
 
-        sm_initter = bsr_matrix
+        sm_initter = coo_matrix
 else:
     bail()
 
@@ -206,7 +206,7 @@ def make(s1, s2, k, yorder="BT", binary=True):
                             set_nz_val(REV, ss1p, ss2p)
 
     # Match the input data format expected by SciPy of (vals, (rows, cols)):
-    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.bsr_array.html
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
     mat_vals = []
     mat_rows = []
     mat_cols = []

@@ -8,8 +8,9 @@ class DotPlotMatrix:
 
     Attributes
     ==========
-    mat (scipy.sparse.bsr_array)
-        Representation of the dot plot matrix.
+    mat (scipy.sparse.coo_array or scipy.sparse.coo_matrix)
+        Representation of the dot plot matrix. The exact type will depend on
+        the version of SciPy installed.
 
     s1 (str)
         Sequence shown on the horizontal axis of the matrix.
