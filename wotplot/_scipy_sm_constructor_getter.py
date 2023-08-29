@@ -1,7 +1,7 @@
 import scipy
 
 
-def bail():
+def bail(sv):
     raise RuntimeError(
         f"Hey, the SciPy version installed is {sv}, and I don't know "
         "how to parse that. Please open a GitHub issue -- sorry!"
@@ -23,7 +23,7 @@ def get_sm_constructor():
             major_num = int(vnum_parts[0])
             minor_num = int(vnum_parts[1])
         except ValueError:
-            bail()
+            bail(sv)
         if major_num >= 2 or (major_num == 1 and minor_num >= 8):
             from scipy.sparse import coo_array
 
@@ -33,4 +33,4 @@ def get_sm_constructor():
 
             return coo_matrix
     else:
-        bail()
+        bail(sv)
