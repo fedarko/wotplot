@@ -67,16 +67,16 @@ class DotPlotMatrix:
             bs += ", bottom \u2192 top"
         return (
             f"DotPlotMatrix(k = {self.k:,}{bs}): "
-            f"{self.mat.shape[0]:,}x{self.mat.shape[1]:,}"
+            f"{self.mat.shape[0]:,} x {self.mat.shape[1]:,}"
         )
 
     def __repr__(self):
         # This used to satisfy eval(repr(m)) == m (see
         # https://stackoverflow.com/a/2626364), but our use of a SciPy sparse
-        # matrix now means that it doesn't. Oh well! Performance is much more
-        # important than this one silly little use case lol
+        # matrix now means that it doesn't. Also, I removed s1 and s2 in their
+        # entirety from this, since when these strings are large it overwhelms
+        # the output of this.
         return (
             f"DotPlotMatrix(mat={repr(self.mat)}, "
-            f's1="{self.s1}", s2="{self.s2}", k={self.k}, '
-            f'yorder="{self.yorder}", binary={self.binary})'
+            f'k={self.k}, yorder="{self.yorder}", binary={self.binary})'
         )
