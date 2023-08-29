@@ -54,16 +54,7 @@ jobs:
         run: which pip
         shell: bash -el {0}
 
-      # use a specific opencv-python version to prevent wasting ~30 minutes
-      # building opencv; from https://stackoverflow.com/a/63669919
-      - name: Install wotplot and pip dependencies (Python = 3.6)
-        if: ${{ matrix.python-version == '3.6' }}
-        run: |
-          pip install opencv-python==4.3.0.38
-          pip install -e .[dev]
-        shell: bash -el {0}
-
-      - name: Install wotplot and pip dependencies (Python > 3.6)
+      - name: Install wotplot and pip dependencies
         if: ${{ matrix.python-version != '3.6' }}
         run: pip install -e .[dev]
         shell: bash -el {0}

@@ -1,4 +1,5 @@
-import cv2
+import scipy
+from scipy.ndimage import binary_dilation
 import numpy as np
 from math import ceil
 from matplotlib import pyplot
@@ -148,9 +149,11 @@ def viz_binary(m, num_dilation_iterations="auto", title=None, ax=None,
             num_dilation_iterations = 4 + ceil((maxlen - 2500) / 2500)
 
     if num_dilation_iterations > 0:
-        matrix_to_show = cv2.dilate(
-            m.mat, DILATION_KERNEL, iterations=num_dilation_iterations
-        )
+        # scipy's dilation function doesn't seem to support sparse matrices...
+        # TODO TODO
+        matrix_to_show = scipy.sparse.coo_matrix(binary_dilation(
+            m.mat.toarray(), iterations=num_dilation_iterations
+        ).astype(m.mat.dtype))
     else:
         matrix_to_show = m.mat
 
