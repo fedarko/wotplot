@@ -1,13 +1,11 @@
-class DotPlotMatrix:
-    """Stores a constructed dot plot matrix.
+from ._make import _make
 
-    The main reason this object exists is that I got sick and tired of
-    constantly keeping track of the original sequences (and k values,
-    etc.) from which I constructed the dot plot matrix. This object doesn't do
-    much but store this information in one convenient place.
+
+class DotPlotMatrix:
+    """A dot plot matrix showing the relationship between two sequences.
 
     Attributes
-    ==========
+    ----------
     mat (scipy.sparse.coo_array or scipy.sparse.coo_matrix)
         Representation of the dot plot matrix. The exact type will depend on
         the version of SciPy installed.
@@ -19,7 +17,7 @@ class DotPlotMatrix:
         Sequence shown on the vertical axis of the matrix.
 
     k (int)
-        k-mer length.
+        k-mer size.
 
     yorder (str):
         Either "BT" or "TB", indicating the direction that s2 is ordered on the
@@ -27,32 +25,70 @@ class DotPlotMatrix:
         "top-to-bottom".
 
     binary (bool):
-        First, some definitions: a cell in the c-th column and r-th row of mat
-        describes the relationship between the k-mer starting at position c in
-        s1 and the k-mer starting at position r in s2 (although if yorder ==
-        "BT" then the positions in s2 will be flipped). Let's refer to these
-        k-mers as k1 and k2, respectively.
-
-        If binary is False, then each cell (c, r) in mat can have one of four
-        possible values:
-
-        -  2: k1 == k2, and ReverseComplement(k1) == k2
-        -  1: k1 == k2, and ReverseComplement(k1) != k2
-        - -1: k1 != k2, and ReverseComplement(k1) == k2
-        -  0: k1 != k2, and ReverseComplement(k1) != k2
-
-        If binary is True, then (c, r) can only have two possible values (2, 1,
-        and -1 are all all labelled as 1):
-
-        -  1: k1 == k2, and/or ReverseComplement(k1) == k2
-        -  0: k1 != k2, and ReverseComplement(k1) != k2
+        Whether or not mat is binary. If mat is not binary, then it encodes
+        forward, reverse-complementary, and palindromic matches separately; if
+        mat is binary, then all matches are represented identically.
     """
 
-    def __init__(self, mat, s1, s2, k, yorder, binary):
-        """Initializes the DotPlotMatrix."""
-        self.mat = mat
-        self.s1 = s1
-        self.s2 = s2
+    def __init__(self, s1, s2, k, yorder="BT", binary=True):
+        """Initializes the dot plot matrix.
+
+        Parameters
+        ----------
+        s1: str or other str-like object
+
+        s2: str or other str-like object
+            The sequences from which we'll create a dot plot. s1 will be on the
+            horizontal axis (left to right) and s2 will be on the vertical axis
+            (either bottom to top or top to bottom; the order is determined by
+            the "yorder" parameter).
+
+            s1 and s2 can be non-str objects (e.g. skbio.DNA), but they both
+            must: have length > 0, be convertable to str using str(), and -- in
+            their converted-to-str forms -- only contain DNA nucleotides (A, C,
+            G, T). We'll always store these sequences as string attributes of
+            the newly initialized object.
+
+        k: int
+            k-mer size to use when creating the dot plot.
+
+        yorder: str
+            Should be either "BT" or "TB". "BT" means that s2 will be ordered
+            from bottom to top (like how the Bioinformatics Algorithms textbook
+            draws dot plots); "TB" means that s2 will be ordered from top to
+            bottom (like how Gepard draws dot plots).
+
+        binary: bool
+            If True, then the matrix won't distinguish between forward and
+            reverse-complementary matches; if False, it will.
+
+            Some definitions: a cell in the c-th column and r-th row of the
+            matrix describes the relationship between the k-mer starting at
+            position c in s1 and the k-mer starting at position r in s2
+            (although if yorder == "BT" then the positions in s2 will be
+            flipped). Let's refer to these k-mers as k1 and k2, respectively.
+
+            If binary is False, then each cell (c, r) in the matrix can have
+            one of four possible values:
+
+            -  2: k1 == k2, and ReverseComplement(k1) == k2
+            -  1: k1 == k2, and ReverseComplement(k1) != k2
+            - -1: k1 != k2, and ReverseComplement(k1) == k2
+            -  0: k1 != k2, and ReverseComplement(k1) != k2
+
+            If binary is True, then (c, r) can only have two possible values
+            (2, 1, and -1 are all all labelled as 1):
+
+            -  1: k1 == k2, and/or ReverseComplement(k1) == k2
+            -  0: k1 != k2, and ReverseComplement(k1) != k2
+
+        References
+        ----------
+        Initial implementation based on the Shared k-mers Problem in the
+        Bioinformatics Algorithms textbook
+        (https://www.bioinformaticsalgorithms.org/) by Compeau & Pevzner.
+        """
+        self.mat, self.s1, self.s2 = _make(s1, s2, k, yorder, binary)
         self.k = k
         self.yorder = yorder
         self.binary = binary

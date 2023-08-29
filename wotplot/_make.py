@@ -1,5 +1,4 @@
 from collections import defaultdict
-from ._matrix import DotPlotMatrix
 from ._scipy_sm_constructor_getter import get_sm_constructor
 
 NT2COMP = {"A": "T", "C": "G", "T": "A", "G": "C"}
@@ -58,40 +57,27 @@ def _validate_yorder(yorder):
         raise ValueError("yorder must be 'BT' or 'TB'")
 
 
-def make(s1, s2, k, yorder="BT", binary=True):
+def _make(s1, s2, k, yorder="BT", binary=True):
     """Computes a dot plot matrix.
 
     Parameters
     ----------
     s1: str or other str-like object
     s2: str or other str-like object
-        The sequences from which we'll create a dot plot. s1 will be on the
-        horizontal axis (left to right) and s2 will be on the vertical axis
-        (either bottom to top or top to bottom; the order is determined by
-        the "yorder" parameter). s1 and s2 can be non-str objects (e.g.
-        skbio.DNA), but they both must: have length > 0, be convertable to
-        str using str(), and -- in their converted-to-str forms -- only contain
-        DNA nucleotides (A, C, G, T).
     k: int
-        The value of k to use when creating the dot plot.
     yorder: str
-        Should be either "BT" or "TB". "BT" means that s2 will be ordered from
-        bottom to top (like how the Bioinformatics Algorithms textbook draws
-        dot plots); "TB" means that s2 will be ordered from top to bottom (like
-        how Gepard draws dot plots).
     binary: bool
-        If True, then the output matrix won't distinguish between forward and
-        reverse-complementary matches; if False, it will. See
-        help(wotplot.DotPlotMatrix) for more detail.
+        See DotPlotMatrix.__init__() for details.
 
     Returns
     -------
-    wotplot.DotPlotMatrix
+    (mat, ss1, ss2): (sparse matrix, str, str)
+        mat is the main result -- it is the sparse representation of the newly
+        created dot plot matrix (the exact type varies depending on the version
+        of SciPy installed).
 
-    References
-    ----------
-    Based on the Shared k-mers Problem in the Bioinformatics Algorithms
-    textbook (https://www.bioinformaticsalgorithms.org/) by Compeau & Pevzner.
+        ss1 and ss2 are versions of s1 and s2, respectively, converted to
+        strings.
     """
     # First, verify that the SciPy version installed is good
     smc = get_sm_constructor()
@@ -188,4 +174,4 @@ def make(s1, s2, k, yorder="BT", binary=True):
         mat_cols.append(c)
 
     mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
-    return DotPlotMatrix(mat, ss1, ss2, k, yorder, binary)
+    return mat, ss1, ss2
