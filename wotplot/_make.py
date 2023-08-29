@@ -1,39 +1,6 @@
-import scipy
 from collections import defaultdict
 from ._matrix import DotPlotMatrix
-
-
-# Figure out what sparse matrix init function to use based on the version of
-# SciPy installed (bruh)
-sv = scipy.__version__
-vnum_parts = sv.split(".")
-
-
-def bail():
-    raise RuntimeError(
-        f"Hey, the SciPy version installed is {sv}, and I don't know "
-        "how to parse that. Please open a GitHub issue. Sorry!"
-    )
-
-
-sm_initter = None
-if len(vnum_parts) >= 2:
-    try:
-        major_num = int(vnum_parts[0])
-        minor_num = int(vnum_parts[1])
-    except ValueError:
-        bail()
-    if major_num >= 2 or (major_num == 1 and minor_num >= 8):
-        from scipy.sparse import coo_array
-
-        sm_initter = coo_array
-    else:
-        from scipy.sparse import coo_matrix
-
-        sm_initter = coo_matrix
-else:
-    bail()
-
+from ._scipy_sm_constructor_getter import get_sm_constructor
 
 NT2COMP = {"A": "T", "C": "G", "T": "A", "G": "C"}
 
@@ -126,11 +93,16 @@ def make(s1, s2, k, yorder="BT", binary=True):
     Based on the Shared k-mers Problem in the Bioinformatics Algorithms
     textbook (https://www.bioinformaticsalgorithms.org/) by Compeau & Pevzner.
     """
+    # First, verify that the SciPy version installed is good
+    smc = get_sm_constructor()
+
+    # Then validate the inputs
     _validate_k(k)
     _validate_yorder(yorder)
     ss1 = _validate_and_stringify_seq(s1, k)
     ss2 = _validate_and_stringify_seq(s2, k)
 
+    # Ok, things seem good. Record k-mer information now.
     ss1_kmers = get_kmer_dd(ss1, k)
     ss2_kmers = get_kmer_dd(ss2, k)
 
@@ -215,5 +187,5 @@ def make(s1, s2, k, yorder="BT", binary=True):
         mat_rows.append(r)
         mat_cols.append(c)
 
-    mat = sm_initter((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
+    mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
     return DotPlotMatrix(mat, ss1, ss2, k, yorder, binary)
