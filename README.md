@@ -20,7 +20,7 @@ k = 3
 m = wotplot.DotPlotMatrix(s1, s2, k)
 
 # Visualize the matrix
-wotplot.viz_binary(m)
+wotplot.viz_imshow(m)
 ```
 
 ![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/example_dotplot.png)

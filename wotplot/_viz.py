@@ -1,56 +1,36 @@
-import scipy
-from scipy.ndimage import binary_dilation
-from math import ceil
+import numpy as np
 from matplotlib import pyplot
 
-
-def _draw_sparse_binary_matrix(ax, mat):
-    # We don't need to worry about yorder here, since that should already have
-    # been "applied" to the matrix
-    ax.set_xlim(-0.5, mat.shape[1] - 0.5)
-    ax.set_ylim(mat.shape[0] - 0.5, -0.5)
-
-    ax.set_aspect("equal")
-    # if we don't do this then the bbox is wrong
-    ax.apply_aspect()
-
-    # Figure out how big each point in the visualization should be.
-    #
-    # ax.get_window_extent() gives us the dimensions of *just* the interior of
-    # the plot (ignoring ticks, etc.: https://stackoverflow.com/a/64355139),
-    # and we can use this to figure out the edge lengths of each cell's
-    # square in the plot.
-    bbox = ax.get_window_extent()
-    # We could also compute this using bbox.height / mat.shape[0] -- I've
-    # tested it, and these are equivalent.
-    cell_side_length = bbox.width / mat.shape[1]
-    # The "s" parameter of ax.scatter() is in terms of point area. This is why
-    # we need to square the side length in order to get a value of s that
-    # *just* fills up each cell's "square".
-    cell_area = cell_side_length**2
-
-    # Insane sidenote: to illustrate the "cell squares" that I'm talking about
-    # here, you can run the following lines after creating a visualization.
-    # (Run them after _tidy_dotplot_viz_ax(), since otherwise that'll override
-    # these ticks.)
-    #
-    # ax.set_xticks([x - 0.5 for x in range(0, mat.shape[1])])
-    # ax.set_yticks([x - 0.5 for x in range(0, mat.shape[0])])
-    # ax.grid()
-    #
-    # Note that the grid might look slightly misaligned from the points
-    # depending on your resolution -- I was really confused about this for a
-    # while, and then I tried adding the same ticks & grid lines for the output
-    # of ax.imshow() on the same matrix but dense, and whaddaya know the grid
-    # lines there were also slightly off (but in a different way). This was
-    # also the case with betterspy (https://github.com/nschloe/betterspy).
-    # In any case, I figure this current code is Good Enough (TM).
-
-    # The .col and .row attributes of mat refer to the nonzero entries' cells.
-    ax.scatter(mat.col, mat.row, marker="s", color="#000", s=cell_area)
+# Colormap based on Figure 6.20 in Chapter 6 of Bioinformatics Algorithms
+# (Compeau & Pevzner), ed. 2
+NBCMAP = {
+    0: [255, 255, 255],
+    1: [255, 0, 0],
+    -1: [0, 0, 255],
+    2: [100, 0, 100],
+}
 
 
-def _tidy_dotplot_viz_ax(ax, m):
+def style_viz_ax(ax, m, title=None):
+    """Adjusts the styling of a matplotlib Axes object to make it look nice.
+
+    Parameters
+    ----------
+    ax: matplotlib.axes.Axes
+    m: wotplot.DotPlotMatrix
+    title: str or None
+
+    Description
+    -----------
+    Makes the following changes:
+
+    - Hides ticks and tick labels.
+
+    - Adds axis labels formatted like "s1 (x nt)" and "s2 (y nt)", with arrows
+      indicating sequence directionality relative to the axis.
+
+    - If a title is provide, sets it as the title of the object.
+    """
     # Hide the ticks / tick labels.
     ax.set_xticks([])
     ax.set_yticks([])
@@ -81,28 +61,38 @@ def _tidy_dotplot_viz_ax(ax, m):
         raise ValueError(f"Unrecognized yorder?: {m.yorder}")
     ax.set_ylabel(f"$s_2$ ({len(m.s2):,} nt) {yarr}", fontsize=18)
 
+    if title is not None:
+        ax.set_title(title, fontsize=18)
 
-def viz_binary(
-    m, num_dilation_iterations="auto", title=None, ax=None, size_inches=None
-):
-    """Visualizes a DotPlotMatrix object.
 
-    This is intended to be used on binary DotPlotMatrix objects only.
+def _create_fig_and_ax_if_needed(ax=None):
+    if ax is None:
+        return pyplot.subplots()
+    return None, ax
+
+
+def viz_spy(m, markersize=0.5, color="black", title=None, ax=None, **kwargs):
+    """Visualizes a DotPlotMatrix object using matplotlib's spy().
+
+    This should be much more performant than viz_imshow(). However, there are
+    some limitations: match cells can only be drawn with a single color, even
+    for matrices that are not binary; and you may want to adjust the markersize
+    based on the size of your matrix and desired resolution.
 
     Parameters
     ----------
     m: wotplot.DotPlotMatrix
         Matrix object to visualize.
 
-    num_dilation_iterations: int or str
-        If this is an integer, then we'll perform this many dilations on the
-        matrix before visualization; if this is the string "auto", then we'll
-        figure out how many dilations seems right and then do that many.
+    markersize: float
+        Size of the markers drawn to represent each match cell. You may want to
+        adjust this depending on the size of your matrix.
 
-        For details on dilation, see the OpenCV tutorial linked below. Long
-        story short, you can probably leave this at "auto" -- we should only
-        need to perform dilations when the input strings get long (more than a
-        few hundred nucleotides).
+    color: color
+        The color to use for each match cell. This should be in a format
+        accepted by matplotlib; see
+        https://matplotlib.org/stable/gallery/color/color_demo.html for
+        details.
 
     title: str or None
         If this is not None, then it'll be set as the title of the plot.
@@ -111,62 +101,96 @@ def viz_binary(
         If this is not None, then we'll add the visualization within this
         Axes object.
 
-    size_inches: (float, float) or None
-        If this is not None, then we'll set the resulting visualization's
-        Figure to be this large. This will only be used if ax is None: if
-        we're drawing this visualization within an existing Axes object, then
-        we (as in, this function) don't have control over your plot's size.
-        You do ;)
+    **kwargs
+        Will be passed to spy().
+
+    Returns
+    -------
+    fig, ax: (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes object created by this function. These are only
+        returned if an axes object (the ax parameter above) was not provided;
+        if an axes object was provided (i.e. "ax is not None"), then we won't
+        return anything.
+    """
+
+    fig, ax = _create_fig_and_ax_if_needed(ax)
+    ax.spy(m.mat, markersize=markersize, color=color, **kwargs)
+    style_viz_ax(ax, m, title)
+    if fig is not None:
+        return fig, ax
+
+
+def _convert_to_colors(dm, nbcmap):
+    """Converts a (dense) ndarray representing a dot plot matrix to colors."""
+    # Based on https://stackoverflow.com/a/66821752
+    cm = np.ndarray(shape=(dm.shape[0], dm.shape[1], 3))
+    for i in range(dm.shape[0]):
+        for j in range(dm.shape[1]):
+            cm[i][j] = nbcmap[dm[i][j]]
+    # Without the .astype("uint8") thing here, I get a warning about
+    # "Clipping input data" from imshow().
+    # This gets rid of the warning: https://stackoverflow.com/a/58646678
+    return cm.astype("uint8")
+
+
+def viz_imshow(m, cmap="gray_r", nbcmap=NBCMAP, title=None, ax=None, **kwargs):
+    """Visualizes a DotPlotMatrix object using matplotlib's imshow().
+
+    IMPORTANT NOTE: This will convert the sparse matrix contained in the
+    DotPlotMatrix object to a dense format, in order to make it compatible with
+    imshow(). This can require a lot of memory if this dot plot matrix
+    describes long sequences -- for large matrices (e.g. where the sequences
+    have lengths > ~500 nt), I recommend using viz_spy() instead.
+
+    Parameters
+    ----------
+    m: wotplot.DotPlotMatrix
+        Matrix object to visualize.
+
+    cmap: str
+        matplotlib colormap; the default of "gray_r" uses white to represent
+        0 (empty cells in the dot plot matrix) and black to represent 1
+        (match cells in the dot plot matrix). Only used if visualizing a binary
+        matrix.
+
+    nbcmap: dict
+        Maps 0, 1, -1, and 2 to colors in RGB triplet format (e.g. red is
+        [255, 0, 0]). Only used if visualizing a matrix that is not binary.
+
+    title: str or None
+        If this is not None, then it'll be set as the title of the plot.
+
+    ax: matplotlib.axes.Axes or None
+        If this is not None, then we will add the visualization within this
+        Axes object and not bother creating a new figure and axes object.
+
+    **kwargs
+        Will be passed to imshow().
+
+    Returns
+    -------
+    fig, ax: (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes object created by this function. These are only
+        returned if an axes object (the ax parameter above) was not provided;
+        if an axes object was provided (i.e. "ax is not None"), then we won't
+        return anything.
 
     References
     ----------
-    https://docs.opencv.org/4.x/d9/d61/tutorial_py_morphological_ops.html
-        OpenCV tutorial on dilation and other morphological operations.
-
-    https://stackoverflow.com/q/44618675
-        The answers to this question showed me the light (of image processing
-        101) (I didn't know what a dilation was)
-
-    https://matplotlib.org/3.3.4/_modules/matplotlib/axes/_axes.html#Axes.spy
-        This function replicates part of what ax.spy() does, with some tweaks.
+    The default nbcmap is based on Figure 6.20 in Chapter 6 of Bioinformatics
+    Algorithms (Compeau & Pevzner), edition 2.
     """
+    fig, ax = _create_fig_and_ax_if_needed(ax)
+
+    dense_mat = m.mat.toarray()
     if not m.binary:
-        raise ValueError(
-            "Can't use viz_binary() on a DotPlotMatrix that is not binary."
-        )
-
-    if num_dilation_iterations == "auto":
-        maxlen = max(len(m.s1), len(m.s2))
-        # Don't bother doing dilation for small matrices
-        if maxlen < 500:
-            num_dilation_iterations = 0
-        else:
-            # sloppy stuff, TODO replace (also check stuff in [500, 2500))
-            num_dilation_iterations = 4 + ceil((maxlen - 2500) / 2500)
-
-    if num_dilation_iterations > 0:
-        # scipy's dilation function doesn't seem to support sparse matrices...
-        # TODO TODO
-        matrix_to_show = scipy.sparse.coo_matrix(
-            binary_dilation(
-                m.mat.toarray(), iterations=num_dilation_iterations
-            ).astype(m.mat.dtype)
-        )
+        dense_mat = _convert_to_colors(dense_mat, nbcmap)
+        ax.imshow(dense_mat, **kwargs)
     else:
-        matrix_to_show = m.mat
+        ax.imshow(dense_mat, cmap=cmap, **kwargs)
+    style_viz_ax(ax, m, title)
 
-    return_mplobjs = False
-    if ax is None:
-        return_mplobjs = True
-        fig, ax = pyplot.subplots()
-        if size_inches is not None:
-            fig.set_size_inches(size_inches)
-
-    _draw_sparse_binary_matrix(ax, matrix_to_show)
-    _tidy_dotplot_viz_ax(ax, m)
-
-    if title is not None:
-        ax.set_title(title, fontsize=18)
-
-    if return_mplobjs:
+    # Only return fig and ax if _create_fig_and_ax_if_needed() created them
+    # (i.e. the user did not provide their own "ax" object)
+    if fig is not None:
         return fig, ax
