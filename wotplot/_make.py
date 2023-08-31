@@ -1,3 +1,4 @@
+import time
 from collections import defaultdict
 from ._scipy_sm_constructor_getter import get_sm_constructor
 
@@ -19,9 +20,20 @@ def rc(seq):
 def get_kmer_dd(s, k):
     """Maps each k-mer in a string to a list of start positions."""
     kmers = defaultdict(list)
-    for i in range(len(s) - k + 1):
-        kmer = s[i : i + k]
-        kmers[kmer].append(i)
+    # This should never happen, but let's appease the testing gods anyway
+    if len(s) == 0:
+        return kmers
+    # sliding window approach -- theoretically more efficient than slicing the
+    # entire k-mer out at once, but i suspect it doesn't make much of a
+    # difference in python
+    curr_kmer = s[:k]
+    kmers[curr_kmer].append(0)
+    # i is the starting position of each k-mer; start at 1 since we already
+    # considered the first k-mer
+    for i in range(1, len(s) - k + 1):
+        # remove first char and add next char over
+        curr_kmer = curr_kmer[1:] + s[i + k - 1]
+        kmers[curr_kmer].append(i)
     return kmers
 
 
@@ -57,7 +69,7 @@ def _validate_yorder(yorder):
         raise ValueError("yorder must be 'BT' or 'TB'")
 
 
-def _make(s1, s2, k, yorder="BT", binary=True):
+def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     """Computes a dot plot matrix.
 
     Parameters
@@ -69,6 +81,10 @@ def _make(s1, s2, k, yorder="BT", binary=True):
     binary: bool
         See DotPlotMatrix.__init__() for details.
 
+    verbose: bool
+        If True, prints a lot of information as this computes the matrix.
+        Useful for performance benchmarking.
+
     Returns
     -------
     (mat, ss1, ss2): (sparse matrix, str, str)
@@ -79,18 +95,29 @@ def _make(s1, s2, k, yorder="BT", binary=True):
         ss1 and ss2 are versions of s1 and s2, respectively, converted to
         strings.
     """
+    t0 = time.time()
+
+    def _mlog(s):
+        if verbose:
+            print(f"{time.time() - t0:,.2f}s: {s}", flush=True)
+
     # First, verify that the SciPy version installed is good
     smc = get_sm_constructor()
 
+    _mlog("validating inputs...")
     # Then validate the inputs
     _validate_k(k)
     _validate_yorder(yorder)
     ss1 = _validate_and_stringify_seq(s1, k)
     ss2 = _validate_and_stringify_seq(s2, k)
 
+    _mlog("recording k-mer info for s1...")
     # Ok, things seem good. Record k-mer information now.
     ss1_kmers = get_kmer_dd(ss1, k)
+    _mlog(f"{len(ss1_kmers):,} unique k-mers in s1.")
+    _mlog("recording k-mer info for s2...")
     ss2_kmers = get_kmer_dd(ss2, k)
+    _mlog(f"{len(ss2_kmers):,} unique k-mers in s2.")
 
     # We could remove the "- k + 1" parts here, but then we'd have empty space
     # for all plots where k > 1 (since you can't have e.g. a 2-mer begin in the
@@ -135,9 +162,12 @@ def _make(s1, s2, k, yorder="BT", binary=True):
 
     # Find k-mers that are shared between both strings (not considering
     # reverse-complementing)
+    _mlog("finding shared k-mers...")
     ss1_set = set(ss1_kmers.keys())
     ss2_set = set(ss2_kmers.keys())
     shared_set = ss1_set & ss2_set
+    _mlog(f"{len(shared_set):,} shared unique k-mers.")
+    _mlog("going through shared k-mers (searching for fwd matches)...")
     for shared_kmer in shared_set:
         for ss1p in ss1_kmers[shared_kmer]:
             for ss2p in ss2_kmers[shared_kmer]:
@@ -148,6 +178,7 @@ def _make(s1, s2, k, yorder="BT", binary=True):
 
     # Find k-mers that are shared between both strings, but
     # reverse-complemented
+    _mlog("going through shared k-mers (searching for rc matches)...")
     for ss1k in ss1_kmers:
         rc_ss1k = rc(ss1k)
         if rc_ss1k in ss2_kmers:
@@ -163,6 +194,9 @@ def _make(s1, s2, k, yorder="BT", binary=True):
                         else:
                             set_nz_val(REV, ss1p, ss2p)
 
+    density = 100 * (len(cell2val) / (mat_shape[0] * mat_shape[1]))
+    _mlog(f"{len(cell2val):,} match cell(s); {density:.2f}% density.")
+    _mlog("converting to COO format inputs...")
     # Match the input data format expected by SciPy of (vals, (rows, cols)):
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
     mat_vals = []
@@ -173,5 +207,7 @@ def _make(s1, s2, k, yorder="BT", binary=True):
         mat_rows.append(r)
         mat_cols.append(c)
 
+    _mlog("creating sparse matrix...")
     mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
+    _mlog("done creating the matrix.")
     return mat, ss1, ss2

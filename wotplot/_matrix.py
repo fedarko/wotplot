@@ -30,7 +30,7 @@ class DotPlotMatrix:
         mat is binary, then all matches are represented identically.
     """
 
-    def __init__(self, s1, s2, k, yorder="BT", binary=True):
+    def __init__(self, s1, s2, k, yorder="BT", binary=True, verbose=False):
         """Initializes the dot plot matrix.
 
         Parameters
@@ -82,13 +82,17 @@ class DotPlotMatrix:
             -  1: k1 == k2, and/or ReverseComplement(k1) == k2
             -  0: k1 != k2, and ReverseComplement(k1) != k2
 
+        verbose: bool
+            If True, logs a lot of information as this computes the matrix.
+            Useful for performance benchmarking.
+
         References
         ----------
         Initial implementation based on the Shared k-mers Problem in the
         Bioinformatics Algorithms textbook
         (https://www.bioinformaticsalgorithms.org/) by Compeau & Pevzner.
         """
-        self.mat, self.s1, self.s2 = _make(s1, s2, k, yorder, binary)
+        self.mat, self.s1, self.s2 = _make(s1, s2, k, yorder, binary, verbose)
         self.k = k
         self.yorder = yorder
         self.binary = binary

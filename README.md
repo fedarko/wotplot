@@ -3,7 +3,7 @@
 <a href="https://github.com/fedarko/wotplot/actions/workflows/main.yml"><img src="https://github.com/fedarko/wotplot/actions/workflows/main.yml/badge.svg" alt="wotplot CI" /></a>
 <a href="https://codecov.io/gh/fedarko/wotplot"><img src="https://codecov.io/gh/fedarko/wotplot/branch/main/graph/badge.svg" alt="Code Coverage" /></a>
 
-wotplot is a simple Python 3 package for creating and visualizing
+wotplot is a small Python library for creating and visualizing
 [dot plot matrices](https://en.wikipedia.org/wiki/Dot_plot_(bioinformatics)).
 
 ## Quick example
@@ -47,9 +47,9 @@ I'll try to put this on PyPI / conda eventually.
 
 ## Performance
 
-I haven't done strict benchmarking on this yet -- we now store dot plot
-matrices in a sparse format, which should make this tool scale reasonably well when
-comparing large sequences.
+See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/blob/main/docs/Benchmarking.ipynb) for some informal benchmarking results performed on a laptop with ~8 GB of RAM.
+
+In general, this library isn't super efficient, but on such an environment it seems to work well with sequences up to 1,000,000 nt long (at least for _k_ = 10 and _k_ = 20).
 
 ## Why does this package exist?
 
