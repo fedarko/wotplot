@@ -47,13 +47,13 @@ I'll try to put this on PyPI / conda eventually.
 
 ## Performance
 
-See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/blob/main/docs/Benchmarking.ipynb) for some informal benchmarking results performed on a laptop with ~8 GB of RAM.
+See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/blob/main/docs/Benchmarking.ipynb) for some informal benchmarking results performed on a laptop with ~8 GB of RAM. On this system, the library works alright with sequences up to 1,000,000 nt long (at least for _k_ = 10 and _k_ = 20).
 
-In general, this library isn't super efficient, but on such an environment it seems to work well with sequences up to 1,000,000 nt long (at least for _k_ = 10 and _k_ = 20).
+This library [could be made a lot more efficient](https://github.com/fedarko/wotplot/issues/2), but right now it's good enough for my purposes. Feel free to make a pull request if you'd like to speed it up ;)
 
 ## Why does this package exist?
 
-1. This package separates the creation of a dot plot matrix from the visualization. Other tools that I tried produced pretty visualizations, but didn't give me easy access to the original matrix.
+1. This package separates the creation and visualization of dot plot matrices. Other tools that I tried produced pretty visualizations, but didn't give me easy access to the underlying matrix.
 
 2. I wanted something that worked well with [matplotlib](https://matplotlib.org), so that I could create and tile lots of dotplots at once in complicated ways.
 
