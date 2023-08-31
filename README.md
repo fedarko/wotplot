@@ -19,7 +19,8 @@ k = 3
 # Create the dotplot matrix
 m = wotplot.DotPlotMatrix(s1, s2, k)
 
-# Visualize the matrix
+# Visualize the matrix using matplotlib.imshow()
+# (For large matrices, I recommend using viz_spy() instead)
 wotplot.viz_imshow(m)
 ```
 
