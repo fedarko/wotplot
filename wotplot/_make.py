@@ -128,7 +128,6 @@ def _fill_match_cells(
         Either True (s2 is reverse-complemented) or False (s2 is not
         reverse-complemented).
 
-
     Returns
     -------
     matches: list of (int, int)
@@ -167,6 +166,10 @@ def _fill_match_cells(
     while i < len(s1_sa) and j < len(s2_sa):
         p1 = s1_sa[i]
         p2 = s2_sa[j]
+        # Since there are only n - k + 1 k-mers in a string of length n, we can
+        # ignore the last (k - 1) positions in the string -- there are suffixes
+        # that start here, but these suffixes have length < k so we don't care
+        # about them.
         if p1 > last_kmer_index_1:
             i += 1
             continue
