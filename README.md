@@ -6,7 +6,9 @@
 wotplot is a small Python library for creating and visualizing
 [dot plot matrices](https://en.wikipedia.org/wiki/Dot_plot_(bioinformatics)).
 
-## Quick example
+## Quick examples
+
+### Small dataset
 
 ```python
 import wotplot
@@ -17,17 +19,31 @@ s2 = "AGCAGGTTATCTACCTGT"
 k = 3
 
 # Create the dotplot matrix
-m = wotplot.DotPlotMatrix(s1, s2, k)
+m = wotplot.DotPlotMatrix(s1, s2, k, binary=False)
 
 # Visualize the matrix using matplotlib.imshow()
-# (For large matrices, I recommend using viz_spy() instead)
+# (For large matrices, I recommend using viz_spy() instead; see below)
 wotplot.viz_imshow(m)
 ```
 
-![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/example_dotplot.png)
+![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/img/small_example_dotplot.png)
 
 This example is adapted from Figure 6.20 (bottom right) in
 [_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org), edition 2.
+
+### Larger dataset: comparing two _E. coli_ genomes
+
+```python
+# (skipping over the part where I loaded the genomes into memory...)
+em = wotplot.DotPlotMatrix(e1s, e2s, 20, verbose=True)
+fig, ax = pyplot.subplots()
+wotplot.viz_spy(em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax)
+ax.set_xlabel(f"$E. coli$ K-12 substr. MG1655 ({len(e1s)/1e6:.2f} Mbp) \u2192")
+ax.set_ylabel(f"$E. coli$ O157:H7 str. Sakai ({len(e2s)/1e6:.2f} Mbp) \u2192")
+fig.set_size_inches(8, 8)
+```
+
+![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/img/ecoli_example_dotplot.png)
 
 ## More detailed tutorial
 
@@ -47,6 +63,28 @@ I'll try to put this on PyPI / conda eventually.
 
 ## Performance
 
+### Optimizations made so far
+
+I've tried to make this library reasonably performant. The main optimizations
+include:
+
+- We use suffix arrays (courtesy of the lovely
+  [pydivsufsort](https://github.com/louisabraham/pydivsufsort) library) in
+  order to reduce the memory footprint of finding shared _k_-mers.
+
+- We store the dot plot matrix in sparse format (courtesy of
+  [SciPy](https://docs.scipy.org/doc/scipy/reference/sparse.html)) in order to
+  reduce its memory footprint.
+
+- We support visualizing the dot plot matrix's nonzero values using
+  matplotlib's [`spy()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.spy.html)
+  function, which (at least for large sequences) is much faster
+  (and has a much smaller memory footprint) than converting the matrix to a
+  dense format and visualizing it with something like
+  [`imshow()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.spy.html).
+
+### Informal benchmarking
+
 See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/blob/main/docs/Benchmarking.ipynb)
 for some very informal benchmarking results performed on a laptop with ~8 GB of RAM.
 
@@ -56,13 +94,15 @@ the notebook demonstrates computing the dot plot of two random 100 Mbp sequences
 Dot plots of shorter sequences (e.g. 100 kbp or less) usually take only a few seconds to
 compute, at least for reasonably large values of _k_.
 
+### Next steps
+
 This library [could be made a lot more efficient](https://github.com/fedarko/wotplot/issues/2),
 but right now it's good enough for my purposes. Feel free to open an issue / make a pull request
 if you'd like to speed it up ;)
 
-## Why does this package exist?
+## Why does this library exist?
 
-1. This package separates the creation and visualization of dot plot matrices. Other tools that I tried produced pretty visualizations, but didn't give me easy access to the underlying matrix.
+1. This library separates the creation and visualization of dot plot matrices. Other tools that I tried produced pretty visualizations, but didn't give me easy access to the underlying matrix.
 
 2. I wanted something that worked well with [matplotlib](https://matplotlib.org), so that I could create and tile lots of dotplots at once in complicated ways.
 
