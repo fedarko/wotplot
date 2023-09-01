@@ -314,6 +314,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         "1)."
     )
 
+    _mlog("converting match information to COO format inputs...")
     # We could remove the "- k + 1" parts here, but then we'd have empty space
     # for all plots where k > 1 (since you can't have e.g. a 2-mer begin in the
     # final row or column). Interestingly, Figure 6.20 in Bioinformatics
@@ -322,10 +323,16 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
 
     # Match the input data format expected by SciPy of (vals, (rows, cols)):
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
+    #
+    # The reason we don't just output mat_vals, mat_rows, and mat_cols from
+    # _find_match_cells() is that we need to be careful about duplicate cells.
+    # If binary is False, then we need to do this to identify palindromes; and
+    # even if binary is True, we need to do this because including duplicate
+    # entries will result in them being summed when creating the matrix
+    # (seriously, see the SciPy docs linked above).
     mat_vals = []
     mat_rows = []
     mat_cols = []
-
     for (r, c) in matches:
         mat_vals.append(matches[(r, c)])
         mat_rows.append(r)
@@ -333,9 +340,8 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
 
     density = 100 * (len(matches) / (mat_shape[0] * mat_shape[1]))
     _mlog(f"{len(matches):,} match cell(s); {density:.2f}% density.")
-    _mlog("converting to COO format inputs...")
 
-    _mlog("creating sparse matrix...")
+    _mlog("creating sparse matrix from COO format inputs...")
     mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
     _mlog("done creating the matrix.")
     return mat, s1, s2
