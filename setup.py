@@ -41,6 +41,7 @@ setup(
         "numpy",
         "scipy",
         "matplotlib",
+        "pydivsufsort",
     ],
     # you know tbh i'm not sure if you NEED to have already installed scipy
     # before installing wotplot. i remember that trying to pip install numpy

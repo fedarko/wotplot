@@ -1,8 +1,13 @@
 import time
-from collections import defaultdict
+from pydivsufsort import divsufsort
 from ._scipy_sm_constructor_getter import get_sm_constructor
 
 NT2COMP = {"A": "T", "C": "G", "T": "A", "G": "C"}
+# Appended to the end of a string when we create its suffix array. "$" occurs
+# lexicographically before all of the DNA nucleotides, and including this
+# character is helpful when creating suffix arrays -- see Chapter 9 of
+# "Bioinformatics Algorithms" for details.
+ENDCHAR = b"$"
 
 MATCH = 1
 FWD = 1
@@ -15,26 +20,6 @@ def rc(seq):
     for i in range(len(seq) - 1, -1, -1):
         out += NT2COMP[seq[i]]
     return out
-
-
-def get_kmer_dd(s, k):
-    """Maps each k-mer in a string to a list of start positions."""
-    kmers = defaultdict(list)
-    # This should never happen, but let's appease the testing gods anyway
-    if len(s) == 0:
-        return kmers
-    # sliding window approach -- theoretically more efficient than slicing the
-    # entire k-mer out at once, but i suspect it doesn't make much of a
-    # difference in python
-    curr_kmer = s[:k]
-    kmers[curr_kmer].append(0)
-    # i is the starting position of each k-mer; start at 1 since we already
-    # considered the first k-mer
-    for i in range(1, len(s) - k + 1):
-        # remove first char and add next char over
-        curr_kmer = curr_kmer[1:] + s[i + k - 1]
-        kmers[curr_kmer].append(i)
-    return kmers
 
 
 def _validate_and_stringify_seq(seq, k):
@@ -67,6 +52,202 @@ def _validate_k(k):
 def _validate_yorder(yorder):
     if yorder not in ("BT", "TB"):
         raise ValueError("yorder must be 'BT' or 'TB'")
+
+
+def _get_suffix_array(seq):
+    # We convert the seq to bytes (same as done in pydivsufsort here:
+    # https://github.com/louisabraham/pydivsufsort/blob/f4431ee1ea96ee5caf579d9b9e4764636d9cfef1/pydivsufsort/divsufsort.py#L73)
+    # in order to prevent a warning about it having to convert the seq to bytes
+    # for us. Ideally we wouldn't even work with strings at all (or we'd do
+    # this conversion at the start of _make() and use bytes from there on), but
+    # I don't really feel like making that change r/n and I don't think it'll
+    # make a big difference compared to this tool's other inefficiencies.
+    # Although it is still a TODO worth noting (converting both s2 and rc(s2)
+    # to bytes separately makes me feel gross).
+    return divsufsort(seq.encode("ascii") + ENDCHAR)
+
+
+def _get_row(position_in_s2, num_rows, yorder):
+    # (Note that we assume that position_in_s2 < num_rows. It should be a
+    # 0-indexed position.)
+    if yorder == "TB":
+        return position_in_s2
+    elif yorder == "BT":
+        return num_rows - position_in_s2 - 1
+    else:
+        # should never happen, assuming this is called from _make() after
+        # validating inputs
+        raise ValueError(f"Unrecognized yorder: {yorder}")
+
+
+def _fill_match_cells(
+    s1, s2, k, s1_sa, s2_sa, md, yorder="BT", binary=True, s2isrc=False
+):
+    """Finds the start positions of shared k-mers in two strings.
+
+    Does this using suffix arrays, which makes this more memory-efficient than
+    a naive approach.
+
+    This used to just return the matching positions, but now its main "output"
+    is updating md (a dict that maps matrix position --> match types). This is
+    faster than outputting things from here in a nice, easy-to-read format and
+    then having to waste time converting that :(
+
+    Parameters
+    ----------
+    s1: str
+    s2: str
+        The strings in which we'll search for shared k-mers. We assume that
+        both of these strings have lengths >= k. These strings should NOT
+        contain the ENDCHAR character.
+
+    k: int
+        k-mer size.
+
+    s1_sa: np.ndarray
+        Suffix array for (s1 + ENDCHAR).
+
+    s2_sa: np.ndarray
+        Suffix array for (s2 + ENDCHAR).
+
+    md: dict of (int, int) --> int
+        We'll update this dict with keys of the format (p1, p2) (indicating
+        that a matching k-mer exists at position p1 in s1 and position p2 in
+        s2). The match types (each one of {FWD, REV, BOTH, MATCH}) are given by
+        the values of this dict.
+
+    yorder: str
+        Either "BT" (bottom-to-top) or "TB" (top-to-bottom). See
+        DotPlotMatrix.__init__().
+
+    binary: bool
+        Either True (only match type used is MATCH) or False (can use FWD, REV,
+        or BOTH). See DotPlotMatrix.__init__().
+
+    s2isrc: bool
+        Either True (s2 is reverse-complemented) or False (s2 is not
+        reverse-complemented).
+
+    Returns
+    -------
+    matches: list of (int, int)
+        Each entry in this list is of the format (p2, p1), and corresponds to
+        the presence of a matching k-mer at position p1 in s1 and position p2
+        in s2. (Both p1 and p2 are zero-indexed.) This thus corresponds to the
+        (row, col) positions of match cells in a matrix, if s1 is on the
+        horizontal axis and s2 is on the vertical axis.
+
+    Example
+    -------
+    >>> s1 = "ACGTC"
+    >>> s2 = "AAGTCAC"
+    >>> sa1 = _get_suffix_array(s1)
+    >>> sa2 = _get_suffix_array(s2)
+    >>> md = {}
+    >>> _fill_match_cells(s1, s2, 2, sa1, sa2, md, yorder="TB", binary=False)
+    >>> md
+    {(5, 0): 1, (2, 2): 1, (3, 3): 1}
+    >>> s2r = rc(s2)
+    >>> sa2r = _get_suffix_array(s2r)
+    >>> _fill_match_cells(
+    ...     s1, s2r, 2, sa1, sa2r, md, yorder="TB", binary=False, s2isrc=True
+    ... )
+    >>> md
+    {(5, 0): 1, (2, 2): 1, (3, 3): 1, (2, 0): -1, (5, 2): -1}
+    """
+    # i and j are indices in the two suffix arrays. we'll set them to 1 in
+    # order to skip the first entry in the suffix array (which will always
+    # correspond to the suffix of just ENDCHAR, i.e. "$").
+    i = 1
+    j = 1
+    last_kmer_index_1 = len(s1) - k
+    last_kmer_index_2 = len(s2) - k
+    num_rows = len(s2) - k + 1
+    while i < len(s1_sa) and j < len(s2_sa):
+        p1 = s1_sa[i]
+        p2 = s2_sa[j]
+        # Since there are only n - k + 1 k-mers in a string of length n, we can
+        # ignore the last (k - 1) positions in the string -- there are suffixes
+        # that start here, but these suffixes have length < k so we don't care
+        # about them.
+        if p1 > last_kmer_index_1:
+            i += 1
+            continue
+        if p2 > last_kmer_index_2:
+            j += 1
+            continue
+        # if we've made it here, then we know that both i and j correspond to
+        # indices of suffixes in the two strings that each contain at least k
+        # characters
+        k1 = s1[p1 : p1 + k]
+        k2 = s2[p2 : p2 + k]
+        if k1 == k2:
+            # "Descend" through s1 and s2, identifying all suffixes where the
+            # beginning k-mer matches k1 (and k2, but now we know k1 == k2 so I
+            # just use k1 for clarity's sake).
+            #
+            # NOTE: In the second checks that these while loops make (looking
+            # at the beginning k-mer of next_i or next_j), there's the
+            # possibility that the positions given by s1_sa[next_i] or
+            # s2_sa[next_j] occur after last_kmer_index_1 or last_kmer_index_2,
+            # respectively. In these cases, the beginning "k-mer" will be cut
+            # off by the end of the string, and will thus by definition be
+            # unequal to k1. We could add more explicit checks here, but I'm
+            # not sure that the added clarity would be worth the potential
+            # slight performance hit. (In big sequences, most positions are ...
+            # not near the end of the sequence. damn they should give me a
+            # fields medal for that Math Wisdom i just brought into the world.)
+            next_i = i + 1
+            while (
+                next_i < len(s1_sa)
+                and s1[s1_sa[next_i] : s1_sa[next_i] + k] == k1
+            ):
+                next_i += 1
+
+            next_j = j + 1
+            while (
+                next_j < len(s2_sa)
+                and s2[s2_sa[next_j] : s2_sa[next_j] + k] == k1
+            ):
+                next_j += 1
+
+            # Ok, now we know the "span" of this k-mer in both strings' suffix
+            # arrays -- in s1_sa, it's range(i, next_i).
+            # (If this k-mer only occurs once in s1, then next_i = i + 1: so
+            # list(range(i, next_i)) == [i].)
+            #
+            # We'll add each match to matches, then jump to just past the ends
+            # of these "spans."
+            for mi in range(i, next_i):
+                for mj in range(j, next_j):
+                    # NOTE: could maybe speed this up slightly by reusing
+                    # results across all mj values?
+                    if s2isrc:
+                        y = _get_row(len(s2) - s2_sa[mj] - k, num_rows, yorder)
+                    else:
+                        y = _get_row(s2_sa[mj], num_rows, yorder)
+                    pos = (y, s1_sa[mi])
+                    if not binary:
+                        if s2isrc:
+                            if pos in md:
+                                md[pos] = BOTH
+                            else:
+                                md[pos] = REV
+                        else:
+                            md[pos] = FWD
+                    else:
+                        md[pos] = MATCH
+            i = next_i
+            j = next_j
+        else:
+            # find lexicographically smaller suffix
+            # (We can safely make this comparison using k1 and k2 as proxies
+            # for their entire suffix, because we will only end up in this
+            # branch if k1 != k2)
+            if k1 < k2:
+                i += 1
+            else:
+                j += 1
 
 
 def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
@@ -104,110 +285,77 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     # First, verify that the SciPy version installed is good
     smc = get_sm_constructor()
 
-    _mlog("validating inputs...")
     # Then validate the inputs
+    _mlog("validating inputs...")
     _validate_k(k)
     _validate_yorder(yorder)
-    ss1 = _validate_and_stringify_seq(s1, k)
-    ss2 = _validate_and_stringify_seq(s2, k)
+    s1 = _validate_and_stringify_seq(s1, k)
+    s2 = _validate_and_stringify_seq(s2, k)
 
-    _mlog("recording k-mer info for s1...")
-    # Ok, things seem good. Record k-mer information now.
-    ss1_kmers = get_kmer_dd(ss1, k)
-    _mlog(f"{len(ss1_kmers):,} unique k-mers in s1.")
-    _mlog("recording k-mer info for s2...")
-    ss2_kmers = get_kmer_dd(ss2, k)
-    _mlog(f"{len(ss2_kmers):,} unique k-mers in s2.")
+    # Ok, things seem good.
 
     # We could remove the "- k + 1" parts here, but then we'd have empty space
     # for all plots where k > 1 (since you can't have e.g. a 2-mer begin in the
     # final row or column). Interestingly, Figure 6.20 in Bioinformatics
-    # Algorithms does actually include this extra empty space, but I think here
-    # it is okay to omit it.
-    mat_shape = (len(ss2) - k + 1, len(ss1) - k + 1)
+    # Algorithms does include this extra empty space, but we'll omit it here
+    mat_shape = (len(s2) - k + 1, len(s1) - k + 1)
 
-    def get_row(s2p):
-        if yorder == "TB":
-            return s2p
-        elif yorder == "BT":
-            return mat_shape[0] - s2p - 1
-        else:
-            # should never happen
-            raise ValueError(f"Unrecognized yorder: {yorder}")
+    _mlog("computing suffix array for s1...")
+    s1_sa = _get_suffix_array(s1)
 
-    # We'll populate the sparse matrix all at once -- I think this should be
-    # faster than populating it bit by bit as we loop through the k-mers.
-    # We can do this by keeping track of all non-zero values and their row/col
-    # coordinates, then providing them to the sparse matrix constructor.
-    # Later on we'll provide this data to SciPy in the form of three lists
-    # (values, rows, and columns), but for now we store this data as a dict
-    # (to make it easier to overwrite the same cell, etc.)
-    cell2val = {}
+    _mlog("computing suffix array for s2...")
+    s2_sa = _get_suffix_array(s2)
 
-    def set_nz_val(val, ss1p, ss2p):
-        cell2val[(get_row(ss2p), ss1p)] = val
-
-    def cell_already_fwd(ss1p, ss2p):
-        coords = (get_row(ss2p), ss1p)
-        # abuse boolean short-circuiting to avoid a KeyError.
-        #
-        # We coooould make cell2val a defaultdict(int) in order to make this
-        # check easier, but then every time we'd try to access a cell that
-        # doesn't have a nonzero value assigned yet that cell would get
-        # assigned a zero value entry in the defaultdict -- which could
-        # unnecessarily increase memory in the sparse matrix (I think "explicit
-        # zeroes" take up space). SO ANYWAY using a normal dict avoids this
-        # problem
-        return coords in cell2val and cell2val[coords] == FWD
+    _mlog("computing ReverseComplement(s2)...")
+    rcs2 = rc(s2)
+    _mlog("computing suffix array for ReverseComplement(s2)...")
+    rcs2_sa = _get_suffix_array(rcs2)
 
     # Find k-mers that are shared between both strings (not considering
     # reverse-complementing)
-    _mlog("finding shared k-mers...")
-    ss1_set = set(ss1_kmers.keys())
-    ss2_set = set(ss2_kmers.keys())
-    shared_set = ss1_set & ss2_set
-    _mlog(f"{len(shared_set):,} shared unique k-mers.")
-    _mlog("going through shared k-mers (searching for fwd matches)...")
-    for shared_kmer in shared_set:
-        for ss1p in ss1_kmers[shared_kmer]:
-            for ss2p in ss2_kmers[shared_kmer]:
-                if binary:
-                    set_nz_val(MATCH, ss1p, ss2p)
-                else:
-                    set_nz_val(FWD, ss1p, ss2p)
+    matches = {}
+    _mlog("finding forward matches between s1 and s2...")
+    _fill_match_cells(
+        s1, s2, k, s1_sa, s2_sa, matches, yorder=yorder, binary=binary
+    )
+    _mlog(f"found {len(matches):,} forward match cell(s).")
 
-    # Find k-mers that are shared between both strings, but
-    # reverse-complemented
-    _mlog("going through shared k-mers (searching for rc matches)...")
-    for ss1k in ss1_kmers:
-        rc_ss1k = rc(ss1k)
-        if rc_ss1k in ss2_kmers:
-            for ss1p in ss1_kmers[ss1k]:
-                for ss2p in ss2_kmers[rc_ss1k]:
-                    if binary:
-                        set_nz_val(MATCH, ss1p, ss2p)
-                    else:
-                        if cell_already_fwd(ss1p, ss2p):
-                            # If there's both a FWD and RC match here, give it
-                            # a unique value
-                            set_nz_val(BOTH, ss1p, ss2p)
-                        else:
-                            set_nz_val(REV, ss1p, ss2p)
+    _mlog("finding matches between s1 and ReverseComplement(s2)...")
+    _fill_match_cells(
+        s1,
+        rcs2,
+        k,
+        s1_sa,
+        rcs2_sa,
+        matches,
+        yorder=yorder,
+        binary=binary,
+        s2isrc=True,
+    )
+    _mlog(f"found {len(matches):,} total match cell(s).")
+    density = 100 * (len(matches) / (mat_shape[0] * mat_shape[1]))
+    _mlog(f"density = {density:.2f}%.")
 
-    density = 100 * (len(cell2val) / (mat_shape[0] * mat_shape[1]))
-    _mlog(f"{len(cell2val):,} match cell(s); {density:.2f}% density.")
-    _mlog("converting to COO format inputs...")
+    _mlog("converting match information to COO format inputs...")
+
     # Match the input data format expected by SciPy of (vals, (rows, cols)):
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
+    #
+    # The reason we don't just output mat_vals, mat_rows, and mat_cols from
+    # _find_match_cells() is that we need to be careful about duplicate cells.
+    # If binary is False, then we need to do this to identify palindromes; and
+    # even if binary is True, we need to do this because including duplicate
+    # entries will result in them being summed when creating the matrix
+    # (seriously, see the SciPy docs linked above).
     mat_vals = []
     mat_rows = []
     mat_cols = []
-    for (r, c) in cell2val:
-        mat_vals.append(cell2val[(r, c)])
+    for (r, c) in matches:
+        mat_vals.append(matches[(r, c)])
         mat_rows.append(r)
         mat_cols.append(c)
 
-    _mlog("creating sparse matrix...")
+    _mlog("creating sparse matrix from COO format inputs...")
     mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
     _mlog("done creating the matrix.")
-    return mat, ss1, ss2
+    return mat, s1, s2
