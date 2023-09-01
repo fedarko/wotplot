@@ -34,8 +34,8 @@ wotplot.viz_imshow(m)
 
 ### Larger dataset: comparing two _E. coli_ genomes
 
-Using _E. coli_ K-12 [(from this assembly)](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000005845.2/)
-and _E. coli_ O157:H7 [(from this assembly)](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000008865.2/).
+Using _E. coli_ K-12 ([from this assembly](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000005845.2/))
+and _E. coli_ O157:H7 ([from this assembly](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000008865.2/)).
 I removed the two plasmid sequences from the O157:H7 assembly.
 
 ```python
@@ -44,7 +44,7 @@ I removed the two plasmid sequences from the O157:H7 assembly.
 # Create the matrix
 em = wotplot.DotPlotMatrix(e1s, e2s, 20, verbose=True)
 
-# Visualize it using matplotlib.spy()
+# Visualize the matrix using matplotlib.spy()
 fig, ax = pyplot.subplots()
 wotplot.viz_spy(
     em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax
