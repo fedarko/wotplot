@@ -116,21 +116,34 @@ def _get_shared_kmers(s1, s2, k, s1_sa, s2_sa):
         k1 = s1[p1 : p1 + k]
         k2 = s2[p2 : p2 + k]
         if k1 == k2:
-            matches.append((p1, p2))
-            # "Descend" through s1, identifying all matches between these
-            # k-mers and k2. this could probably be made more efficient, or the
-            # results here could maybe be reused in future steps (TODO).
-            next_p1 = p1 + 1
-            while s1[next_p1: next_p1 + k] == k2:
-                matches.append((next_p1, p2))
-                next_p1 += 1
-            # Also "descend" through s2
-            next_p2 = p2 + 1
-            while s2[next_p2: next_p2 + k] == k1:
-                matches.append((p1, next_p2))
-                next_p2 += 1
-            i += (next_p1 - p1)
-            j += (next_p2 - p2)
+            # "Descend" through s1 and s2, identifying all suffixes where the
+            # beginning k-mer matches k1 and k2.
+            next_i = i + 1
+            while (
+                next_i < len(s1_sa)
+                and s1[s1_sa[next_i] : s1_sa[next_i] + k] == k2
+            ):
+                next_i += 1
+
+            next_j = j + 1
+            while (
+                next_j < len(s2_sa)
+                and s2[s2_sa[next_j] : s2_sa[next_j] + k] == k1
+            ):
+                next_j += 1
+
+            # Ok, now we know the "span" of this k-mer in both strings' suffix
+            # arrays -- in s1_sa, it's range(i, next_i).
+            # (If this k-mer only occurs once in s1, then next_i = i + 1: so
+            # list(range(i, next_i)) == [i].)
+            #
+            # We'll add each match to matches, then jump to just past the ends
+            # of these "spans."
+            for mi in range(i, next_i):
+                for mj in range(j, next_j):
+                    matches.append((s1_sa[mi], s2_sa[mj]))
+            i = next_i
+            j = next_j
         else:
             # find lexicographically smaller suffix
             # (We can safely make this comparison using k1 and k2 as proxies
