@@ -18,7 +18,7 @@ s1 = "AGCAGGAGATAAACCTGT"
 s2 = "AGCAGGTTATCTACCTGT"
 k = 3
 
-# Create the dotplot matrix
+# Create the matrix
 m = wotplot.DotPlotMatrix(s1, s2, k, binary=False)
 
 # Visualize the matrix using matplotlib.imshow()
@@ -33,11 +33,21 @@ This example is adapted from Figure 6.20 (bottom right) in
 
 ### Larger dataset: comparing two _E. coli_ genomes
 
+Using _E. coli_ K-12 [(from this assembly)](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000005845.2/)
+and _E. coli_ O157:H7 [(from this assembly)](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000008865.2/).
+I removed the two plasmid sequences from the O157:H7 assembly.
+
 ```python
 # (skipping over the part where I loaded the genomes into memory...)
+
+# Create the matrix
 em = wotplot.DotPlotMatrix(e1s, e2s, 20, verbose=True)
+
+# Visualize it using matplotlib.spy()
 fig, ax = pyplot.subplots()
-wotplot.viz_spy(em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax)
+wotplot.viz_spy(
+    em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax
+)
 ax.set_xlabel(f"$E. coli$ K-12 substr. MG1655 ({len(e1s)/1e6:.2f} Mbp) \u2192")
 ax.set_ylabel(f"$E. coli$ O157:H7 str. Sakai ({len(e2s)/1e6:.2f} Mbp) \u2192")
 fig.set_size_inches(8, 8)
