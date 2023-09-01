@@ -93,6 +93,13 @@ include:
   dense format and visualizing it with something like
   [`imshow()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.spy.html).
 
+### That being said...
+
+This library could be made a lot more efficient (I've been documenting ideas in
+[issue #2](https://github.com/fedarko/wotplot/issues/2)),
+but right now it's good enough for my purposes. Feel free to open an issue / make a pull request
+if you'd like to speed it up ;)
+
 ### Informal benchmarking
 
 See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/blob/main/docs/Benchmarking.ipynb)
@@ -103,12 +110,6 @@ the notebook demonstrates computing the dot plot of two random 100 Mbp sequences
 (using _k_ = 20) in 54 minutes and 12.45 seconds.
 Dot plots of shorter sequences (e.g. 100 kbp or less) usually take only a few seconds to
 compute, at least for reasonably large values of _k_.
-
-### Next steps
-
-This library [could be made a lot more efficient](https://github.com/fedarko/wotplot/issues/2),
-but right now it's good enough for my purposes. Feel free to open an issue / make a pull request
-if you'd like to speed it up ;)
 
 ## Why does this library exist?
 
