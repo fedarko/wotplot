@@ -54,11 +54,31 @@ def _validate_yorder(yorder):
         raise ValueError("yorder must be 'BT' or 'TB'")
 
 
-def _get_shared_kmers(s1, s2, k, s1_sa, s2_sa):
+def _get_row(position_in_s2, num_rows, yorder):
+    # (Note that we assume that position_in_s2 < num_rows. It should be a
+    # 0-indexed position.)
+    if yorder == "TB":
+        return position_in_s2
+    elif yorder == "BT":
+        return num_rows - position_in_s2 - 1
+    else:
+        # should never happen, assuming this is called from _make() after
+        # validating inputs
+        raise ValueError(f"Unrecognized yorder: {yorder}")
+
+
+def _fill_match_cells(
+    s1, s2, k, s1_sa, s2_sa, md, yorder="BT", binary=True, s2isrc=False
+):
     """Finds the start positions of shared k-mers in two strings.
 
     Does this using suffix arrays, which makes this more memory-efficient than
     a naive approach.
+
+    This used to just return the matching positions, but now its main "output"
+    is updating md (a dict that maps matrix position --> match types). This is
+    faster than outputting things from here in a nice, easy-to-read format and
+    then having to waste time converting that :(
 
     Parameters
     ----------
@@ -77,21 +97,51 @@ def _get_shared_kmers(s1, s2, k, s1_sa, s2_sa):
     s2_sa: np.ndarray
         Suffix array for (s2 + ENDCHAR).
 
+    md: dict of (int, int) --> int
+        We'll update this dict with keys of the format (p1, p2) (indicating
+        that a matching k-mer exists at position p1 in s1 and position p2 in
+        s2). The match types (each one of {FWD, REV, BOTH, MATCH}) are given by
+        the values of this dict.
+
+    yorder: str
+        Either "BT" (bottom-to-top) or "TB" (top-to-bottom). See
+        DotPlotMatrix.__init__().
+
+    binary: bool
+        Either True (only match type used is MATCH) or False (can use FWD, REV,
+        or BOTH). See DotPlotMatrix.__init__().
+
+    s2isrc: bool
+        Either True (s2 is reverse-complemented) or False (s2 is not
+        reverse-complemented).
+
+
     Returns
     -------
     matches: list of (int, int)
-        Each entry in this list is of the format (p1, p2), and corresponds to
+        Each entry in this list is of the format (p2, p1), and corresponds to
         the presence of a matching k-mer at position p1 in s1 and position p2
-        in s2. (Both p1 and p2 are zero-indexed.)
+        in s2. (Both p1 and p2 are zero-indexed.) This thus corresponds to the
+        (row, col) positions of match cells in a matrix, if s1 is on the
+        horizontal axis and s2 is on the vertical axis.
 
     Example
     -------
     >>> s1 = "ACGTC"
     >>> s2 = "AAGTCAC"
-    >>> _get_shared_kmers(
-    ...     s1, s2, 2, divsufsort(s1 + ENDCHAR), divsufsort(s2 + ENDCHAR)
+    >>> sa1 = divsufsort(s1 + ENDCHAR)
+    >>> sa2 = divsufsort(s2 + ENDCHAR)
+    >>> md = {}
+    >>> _fill_match_cells(s1, s2, 2, sa1, sa2, md, yorder="TB", binary=False)
+    >>> md
+    {(5, 0): 1, (2, 2): 1, (3, 3): 1}
+    >>> s2r = rc(s2)
+    >>> sa2r = divsufsort(s2r + ENDCHAR)
+    >>> _fill_match_cells(
+    ...     s1, s2r, 2, sa1, sa2r, md, yorder="TB", binary=False, s2isrc=True
     ... )
-    [(0, 5), (2, 2), (3, 3)]
+    >>> md
+    {(5, 0): 1, (2, 2): 1, (3, 3): 1, (2, 0): -1, (5, 2): -1}
     """
     # i and j are indices in the two suffix arrays. we'll set them to 1 in
     # order to skip the first entry in the suffix array (which will always
@@ -100,7 +150,7 @@ def _get_shared_kmers(s1, s2, k, s1_sa, s2_sa):
     j = 1
     last_kmer_index_1 = len(s1) - k
     last_kmer_index_2 = len(s2) - k
-    matches = []
+    num_rows = len(s2) - k + 1
     while i < len(s1_sa) and j < len(s2_sa):
         p1 = s1_sa[i]
         p2 = s2_sa[j]
@@ -154,7 +204,23 @@ def _get_shared_kmers(s1, s2, k, s1_sa, s2_sa):
             # of these "spans."
             for mi in range(i, next_i):
                 for mj in range(j, next_j):
-                    matches.append((s1_sa[mi], s2_sa[mj]))
+                    # NOTE: could maybe speed this up slightly by reusing
+                    # results across all mj values?
+                    if s2isrc:
+                        y = _get_row(len(s2) - s2_sa[mj] - k, num_rows, yorder)
+                    else:
+                        y = _get_row(s2_sa[mj], num_rows, yorder)
+                    pos = (y, s1_sa[mi])
+                    if not binary:
+                        if s2isrc:
+                            if pos in md:
+                                md[pos] = BOTH
+                            else:
+                                md[pos] = REV
+                        else:
+                            md[pos] = FWD
+                    else:
+                        md[pos] = MATCH
             i = next_i
             j = next_j
         else:
@@ -166,7 +232,6 @@ def _get_shared_kmers(s1, s2, k, s1_sa, s2_sa):
                 i += 1
             else:
                 j += 1
-    return matches
 
 
 def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
@@ -225,16 +290,29 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
 
     # Find k-mers that are shared between both strings (not considering
     # reverse-complementing)
-    _mlog("finding shared k-mers between s1 and s2...")
-    fwd_matches = _get_shared_kmers(s1, s2, k, s1_sa, s2_sa)
-    _mlog(f'found {len(fwd_matches):,} such "forward" shared k-mers.')
+    matches = {}
+    _mlog("finding forward shared k-mers between s1 and s2...")
+    _fill_match_cells(
+        s1, s2, k, s1_sa, s2_sa, matches, yorder=yorder, binary=binary
+    )
+    _mlog(f"found {len(matches):,} forward shared k-mers.")
 
     _mlog("finding shared k-mers between s1 and ReverseComplement(s2)...")
-    rev_matches = _get_shared_kmers(s1, rcs2, k, s1_sa, rcs2_sa)
-    _mlog(f'found {len(rev_matches):,} such "reverse" shared k-mers.')
-
-    # Convert fwd and rev matches to matrix COO format
-    cell2val = {}
+    _fill_match_cells(
+        s1,
+        rcs2,
+        k,
+        s1_sa,
+        rcs2_sa,
+        matches,
+        yorder=yorder,
+        binary=binary,
+        s2isrc=True,
+    )
+    _mlog(
+        f"found {len(matches):,} total shared k-mers (treating palindromes as "
+        "1)."
+    )
 
     # We could remove the "- k + 1" parts here, but then we'd have empty space
     # for all plots where k > 1 (since you can't have e.g. a 2-mer begin in the
@@ -242,67 +320,20 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     # Algorithms does include this extra empty space, but we'll omit it here
     mat_shape = (len(s2) - k + 1, len(s1) - k + 1)
 
-    def get_row(s2p):
-        if yorder == "TB":
-            return s2p
-        elif yorder == "BT":
-            return mat_shape[0] - s2p - 1
-        else:
-            # should never happen
-            raise ValueError(f"Unrecognized yorder: {yorder}")
-
-    def cell_already_fwd(s1p, s2p):
-        coords = (get_row(s2p), s1p)
-        # abuse boolean short-circuiting to avoid a KeyError.
-        #
-        # We coooould make cell2val a defaultdict(int) in order to make this
-        # check easier, but then every time we'd try to access a cell that
-        # doesn't have a nonzero value assigned yet that cell would get
-        # assigned a zero value entry in the defaultdict -- which could
-        # unnecessarily increase memory in the sparse matrix (I think "explicit
-        # zeroes" take up space). SO ANYWAY using a normal dict avoids this
-        # problem
-        return coords in cell2val and cell2val[coords] == FWD
-
-    def set_nz_val(val, s1p, s2p):
-        # val should be FWD or REV. we might change it depending on the matrix
-        # type (binary or not) and if another value already exists in this cell
-        if binary:
-            val_to_use = MATCH
-        else:
-            if val == REV:
-                if cell_already_fwd(s1p, s2p):
-                    val_to_use = BOTH
-                else:
-                    val_to_use = REV
-            else:
-                # We assume that this was called on all FWD matches first, then
-                # on all REV matches. If you do this out of order then it'll
-                # break the palindrome detection, so don't do that >:(
-                val_to_use = FWD
-        cell2val[(get_row(s2p), s1p)] = val_to_use
-
-    _mlog("converting forward match information to COO format...")
-    for m in fwd_matches:
-        set_nz_val(FWD, *m)
-
-    _mlog("converting reverse match information to COO format...")
-    for m in rev_matches:
-        s2p = len(s2) - m[1] - k
-        set_nz_val(REV, m[0], s2p)
-
-    density = 100 * (len(cell2val) / (mat_shape[0] * mat_shape[1]))
-    _mlog(f"{len(cell2val):,} match cell(s); {density:.2f}% density.")
-    _mlog("converting to COO format inputs...")
     # Match the input data format expected by SciPy of (vals, (rows, cols)):
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
     mat_vals = []
     mat_rows = []
     mat_cols = []
-    for (r, c) in cell2val:
-        mat_vals.append(cell2val[(r, c)])
+
+    for (r, c) in matches:
+        mat_vals.append(matches[(r, c)])
         mat_rows.append(r)
         mat_cols.append(c)
+
+    density = 100 * (len(matches) / (mat_shape[0] * mat_shape[1]))
+    _mlog(f"{len(matches):,} match cell(s); {density:.2f}% density.")
+    _mlog("converting to COO format inputs...")
 
     _mlog("creating sparse matrix...")
     mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
