@@ -117,11 +117,24 @@ def _get_shared_kmers(s1, s2, k, s1_sa, s2_sa):
         k2 = s2[p2 : p2 + k]
         if k1 == k2:
             # "Descend" through s1 and s2, identifying all suffixes where the
-            # beginning k-mer matches k1 and k2.
+            # beginning k-mer matches k1 (and k2, but now we know k1 == k2 so I
+            # just use k1 for clarity's sake).
+            #
+            # NOTE: In the second checks that these while loops make (looking
+            # at the beginning k-mer of next_i or next_j), there's the
+            # possibility that the positions given by s1_sa[next_i] or
+            # s2_sa[next_j] occur after last_kmer_index_1 or last_kmer_index_2,
+            # respectively. In these cases, the beginning "k-mer" will be cut
+            # off by the end of the string, and will thus by definition be
+            # unequal to k1. We could add more explicit checks here, but I'm
+            # not sure that the added clarity would be worth the potential
+            # slight performance hit. (In big sequences, most positions are ...
+            # not near the end of the sequence. damn they should give me a
+            # fields medal for that Math Wisdom i just brought into the world.)
             next_i = i + 1
             while (
                 next_i < len(s1_sa)
-                and s1[s1_sa[next_i] : s1_sa[next_i] + k] == k2
+                and s1[s1_sa[next_i] : s1_sa[next_i] + k] == k1
             ):
                 next_i += 1
 
