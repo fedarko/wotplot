@@ -7,7 +7,7 @@ NT2COMP = {"A": "T", "C": "G", "T": "A", "G": "C"}
 # lexicographically before all of the DNA nucleotides, and including this
 # character is helpful when creating suffix arrays -- see Chapter 9 of
 # "Bioinformatics Algorithms" for details.
-ENDCHAR = "$"
+ENDCHAR = b"$"
 
 MATCH = 1
 FWD = 1
@@ -52,6 +52,17 @@ def _validate_k(k):
 def _validate_yorder(yorder):
     if yorder not in ("BT", "TB"):
         raise ValueError("yorder must be 'BT' or 'TB'")
+
+
+def _get_suffix_array(seq):
+    # We convert the seq to bytes (same as done in pydivsufsort here:
+    # https://github.com/louisabraham/pydivsufsort/blob/f4431ee1ea96ee5caf579d9b9e4764636d9cfef1/pydivsufsort/divsufsort.py#L73)
+    # in order to prevent a warning about it having to convert the seq to bytes
+    # for us. Ideally we wouldn't even work with strings at all (or we'd do
+    # this conversion at the start of _make() and use bytes from there on), but
+    # I don't really feel like making that change r/n and I don't think it'll
+    # make a big difference compared to this tool's other inefficiencies.
+    return divsufsort(seq.encode("ascii") + ENDCHAR)
 
 
 def _get_row(position_in_s2, num_rows, yorder):
@@ -129,14 +140,14 @@ def _fill_match_cells(
     -------
     >>> s1 = "ACGTC"
     >>> s2 = "AAGTCAC"
-    >>> sa1 = divsufsort(s1 + ENDCHAR)
-    >>> sa2 = divsufsort(s2 + ENDCHAR)
+    >>> sa1 = _get_suffix_array(s1)
+    >>> sa2 = _get_suffix_array(s2)
     >>> md = {}
     >>> _fill_match_cells(s1, s2, 2, sa1, sa2, md, yorder="TB", binary=False)
     >>> md
     {(5, 0): 1, (2, 2): 1, (3, 3): 1}
     >>> s2r = rc(s2)
-    >>> sa2r = divsufsort(s2r + ENDCHAR)
+    >>> sa2r = _get_suffix_array(s2r)
     >>> _fill_match_cells(
     ...     s1, s2r, 2, sa1, sa2r, md, yorder="TB", binary=False, s2isrc=True
     ... )
@@ -276,28 +287,35 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     s1 = _validate_and_stringify_seq(s1, k)
     s2 = _validate_and_stringify_seq(s2, k)
 
-    # Ok, things seem good. Compute suffix arrays, then find shared k-mers.
+    # Ok, things seem good.
+
+    # We could remove the "- k + 1" parts here, but then we'd have empty space
+    # for all plots where k > 1 (since you can't have e.g. a 2-mer begin in the
+    # final row or column). Interestingly, Figure 6.20 in Bioinformatics
+    # Algorithms does include this extra empty space, but we'll omit it here
+    mat_shape = (len(s2) - k + 1, len(s1) - k + 1)
+
     _mlog("computing suffix array for s1...")
-    s1_sa = divsufsort(s1 + ENDCHAR)
+    s1_sa = _get_suffix_array(s1)
 
     _mlog("computing suffix array for s2...")
-    s2_sa = divsufsort(s2 + ENDCHAR)
+    s2_sa = _get_suffix_array(s2)
 
     _mlog("computing ReverseComplement(s2)...")
     rcs2 = rc(s2)
     _mlog("computing suffix array for ReverseComplement(s2)...")
-    rcs2_sa = divsufsort(rcs2 + ENDCHAR)
+    rcs2_sa = _get_suffix_array(rcs2)
 
     # Find k-mers that are shared between both strings (not considering
     # reverse-complementing)
     matches = {}
-    _mlog("finding forward shared k-mers between s1 and s2...")
+    _mlog("finding forward matches between s1 and s2...")
     _fill_match_cells(
         s1, s2, k, s1_sa, s2_sa, matches, yorder=yorder, binary=binary
     )
-    _mlog(f"found {len(matches):,} forward shared k-mers.")
+    _mlog(f"found {len(matches):,} forward match cell(s).")
 
-    _mlog("finding shared k-mers between s1 and ReverseComplement(s2)...")
+    _mlog("finding matches between s1 and ReverseComplement(s2)...")
     _fill_match_cells(
         s1,
         rcs2,
@@ -309,17 +327,11 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         binary=binary,
         s2isrc=True,
     )
-    _mlog(
-        f"found {len(matches):,} total shared k-mers (treating palindromes as "
-        "1)."
-    )
+    _mlog(f"found {len(matches):,} total match cell(s).")
+    density = 100 * (len(matches) / (mat_shape[0] * mat_shape[1]))
+    _mlog(f"density = {density:.2f}%.")
 
     _mlog("converting match information to COO format inputs...")
-    # We could remove the "- k + 1" parts here, but then we'd have empty space
-    # for all plots where k > 1 (since you can't have e.g. a 2-mer begin in the
-    # final row or column). Interestingly, Figure 6.20 in Bioinformatics
-    # Algorithms does include this extra empty space, but we'll omit it here
-    mat_shape = (len(s2) - k + 1, len(s1) - k + 1)
 
     # Match the input data format expected by SciPy of (vals, (rows, cols)):
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
@@ -337,9 +349,6 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         mat_vals.append(matches[(r, c)])
         mat_rows.append(r)
         mat_cols.append(c)
-
-    density = 100 * (len(matches) / (mat_shape[0] * mat_shape[1]))
-    _mlog(f"{len(matches):,} match cell(s); {density:.2f}% density.")
 
     _mlog("creating sparse matrix from COO format inputs...")
     mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
