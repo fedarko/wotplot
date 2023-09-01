@@ -21,7 +21,8 @@ s1 = "AGCAGGAGATAAACCTGT"
 s2 = "AGCAGGTTATCTACCTGT"
 k = 3
 
-# Create the matrix
+# Create the matrix (the "binary" parameter means we'll distinguish forward,
+# reverse-complementary, and palindromic matching k-mers from each other)
 m = wotplot.DotPlotMatrix(s1, s2, k, binary=False)
 
 # Visualize the matrix using matplotlib.imshow()
