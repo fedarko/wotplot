@@ -12,6 +12,7 @@
 test:
 	python3 -B -m pytest \
 		wotplot/ \
+		--doctest-modules \
 		--cov-report xml \
 		--cov-report term \
 		--cov-report html \

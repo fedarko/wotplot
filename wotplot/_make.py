@@ -1,8 +1,13 @@
 import time
-from collections import defaultdict
+from pydivsufsort import divsufsort
 from ._scipy_sm_constructor_getter import get_sm_constructor
 
 NT2COMP = {"A": "T", "C": "G", "T": "A", "G": "C"}
+# Appended to the end of a string when we create its suffix array. "$" occurs
+# lexicographically before all of the DNA nucleotides, and including this
+# character is helpful when creating suffix arrays -- see Chapter 9 of
+# "Bioinformatics Algorithms" for details.
+ENDCHAR = "$"
 
 MATCH = 1
 FWD = 1
@@ -15,26 +20,6 @@ def rc(seq):
     for i in range(len(seq) - 1, -1, -1):
         out += NT2COMP[seq[i]]
     return out
-
-
-def get_kmer_dd(s, k):
-    """Maps each k-mer in a string to a list of start positions."""
-    kmers = defaultdict(list)
-    # This should never happen, but let's appease the testing gods anyway
-    if len(s) == 0:
-        return kmers
-    # sliding window approach -- theoretically more efficient than slicing the
-    # entire k-mer out at once, but i suspect it doesn't make much of a
-    # difference in python
-    curr_kmer = s[:k]
-    kmers[curr_kmer].append(0)
-    # i is the starting position of each k-mer; start at 1 since we already
-    # considered the first k-mer
-    for i in range(1, len(s) - k + 1):
-        # remove first char and add next char over
-        curr_kmer = curr_kmer[1:] + s[i + k - 1]
-        kmers[curr_kmer].append(i)
-    return kmers
 
 
 def _validate_and_stringify_seq(seq, k):
@@ -67,6 +52,83 @@ def _validate_k(k):
 def _validate_yorder(yorder):
     if yorder not in ("BT", "TB"):
         raise ValueError("yorder must be 'BT' or 'TB'")
+
+
+def _get_shared_kmers(s1, s2, k, s1_sa, s2_sa):
+    """Finds the start positions of shared k-mers in two strings.
+
+    Does this using suffix arrays, which makes this more memory-efficient than
+    a naive approach.
+
+    Parameters
+    ----------
+    s1: str
+    s2: str
+        The strings in which we'll search for shared k-mers. We assume that
+        both of these strings have lengths >= k. These strings should NOT
+        contain the ENDCHAR character.
+
+    k: int
+        k-mer size.
+
+    s1_sa: np.ndarray
+        Suffix array for (s1 + ENDCHAR).
+
+    s2_sa: np.ndarray
+        Suffix array for (s2 + ENDCHAR).
+
+    Returns
+    -------
+    matches: list of (int, int)
+        Each entry in this list is of the format (p1, p2), and corresponds to
+        the presence of a matching k-mer at position p1 in s1 and position p2
+        in s2. (Both p1 and p2 are zero-indexed.)
+
+    Example
+    -------
+    >>> s1 = "ACGTC"
+    >>> s2 = "AAGTCAC"
+    >>> _get_shared_kmers(
+    ...     s1, s2, 2, divsufsort(s1 + ENDCHAR), divsufsort(s2 + ENDCHAR)
+    ... )
+    [(0, 5), (2, 2), (3, 3)]
+    """
+    # i and j are indices in the two suffix arrays. we'll set them to 1 in
+    # order to skip the first entry in the suffix array (which will always
+    # correspond to the suffix of just ENDCHAR, i.e. "$").
+    i = 1
+    j = 1
+    last_kmer_index_1 = len(s1) - k
+    last_kmer_index_2 = len(s2) - k
+    matches = []
+    while i < len(s1_sa) and j < len(s2_sa):
+        p1 = s1_sa[i]
+        p2 = s2_sa[j]
+        if p1 > last_kmer_index_1:
+            i += 1
+            continue
+        if p2 > last_kmer_index_2:
+            j += 1
+            continue
+        # if we've made it here, then we know that both i and j correspond to
+        # indices of suffixes in the two strings that each contain at least k
+        # characters
+        k1 = s1[p1 : p1 + k]
+        k2 = s2[p2 : p2 + k]
+        if k1 == k2:
+            matches.append((p1, p2))
+            i += 1
+            j += 1
+        else:
+            # find lexicographically smaller suffix
+            # (We can safely make this comparison using k1 and k2 as proxies
+            # for their entire suffix, because we will only end up in this
+            # branch if k1 != k2)
+            if k1 < k2:
+                i += 1
+            else:
+                j += 1
+    return matches
 
 
 def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
@@ -104,26 +166,42 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     # First, verify that the SciPy version installed is good
     smc = get_sm_constructor()
 
-    _mlog("validating inputs...")
     # Then validate the inputs
+    _mlog("validating inputs...")
     _validate_k(k)
     _validate_yorder(yorder)
     ss1 = _validate_and_stringify_seq(s1, k)
     ss2 = _validate_and_stringify_seq(s2, k)
 
-    _mlog("recording k-mer info for s1...")
-    # Ok, things seem good. Record k-mer information now.
-    ss1_kmers = get_kmer_dd(ss1, k)
-    _mlog(f"{len(ss1_kmers):,} unique k-mers in s1.")
-    _mlog("recording k-mer info for s2...")
-    ss2_kmers = get_kmer_dd(ss2, k)
-    _mlog(f"{len(ss2_kmers):,} unique k-mers in s2.")
+    # Ok, things seem good. Compute suffix arrays, then find shared k-mers.
+    _mlog("computing suffix array for s1...")
+    ss1_sa = divsufsort(ss1 + ENDCHAR)
+
+    _mlog("computing suffix array for s2...")
+    ss2_sa = divsufsort(ss2 + ENDCHAR)
+
+    _mlog("computing ReverseComplement(s2)...")
+    rcs2 = rc(ss2)
+    _mlog("computing suffix array for ReverseComplement(s2)...")
+    rcs2_sa = divsufsort(rcs2 + ENDCHAR)
+
+    # Find k-mers that are shared between both strings (not considering
+    # reverse-complementing)
+    _mlog("finding shared k-mers between s1 and s2...")
+    fwd_matches = _get_shared_kmers(ss1, ss2, k, ss1_sa, ss2_sa)
+    _mlog(f'found {len(fwd_matches):,} such "forward" shared k-mers.')
+
+    _mlog("finding shared k-mers between s1 and ReverseComplement(s2)...")
+    rev_matches = _get_shared_kmers(ss1, rcs2, k, ss1_sa, rcs2_sa)
+    _mlog(f'found {len(rev_matches):,} such "reverse" shared k-mers.')
+
+    # Convert fwd and rev matches to matrix COO format
+    cell2val = {}
 
     # We could remove the "- k + 1" parts here, but then we'd have empty space
     # for all plots where k > 1 (since you can't have e.g. a 2-mer begin in the
     # final row or column). Interestingly, Figure 6.20 in Bioinformatics
-    # Algorithms does actually include this extra empty space, but I think here
-    # it is okay to omit it.
+    # Algorithms does include this extra empty space, but we'll omit it here
     mat_shape = (len(ss2) - k + 1, len(ss1) - k + 1)
 
     def get_row(s2p):
@@ -134,18 +212,6 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         else:
             # should never happen
             raise ValueError(f"Unrecognized yorder: {yorder}")
-
-    # We'll populate the sparse matrix all at once -- I think this should be
-    # faster than populating it bit by bit as we loop through the k-mers.
-    # We can do this by keeping track of all non-zero values and their row/col
-    # coordinates, then providing them to the sparse matrix constructor.
-    # Later on we'll provide this data to SciPy in the form of three lists
-    # (values, rows, and columns), but for now we store this data as a dict
-    # (to make it easier to overwrite the same cell, etc.)
-    cell2val = {}
-
-    def set_nz_val(val, ss1p, ss2p):
-        cell2val[(get_row(ss2p), ss1p)] = val
 
     def cell_already_fwd(ss1p, ss2p):
         coords = (get_row(ss2p), ss1p)
@@ -160,39 +226,32 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         # problem
         return coords in cell2val and cell2val[coords] == FWD
 
-    # Find k-mers that are shared between both strings (not considering
-    # reverse-complementing)
-    _mlog("finding shared k-mers...")
-    ss1_set = set(ss1_kmers.keys())
-    ss2_set = set(ss2_kmers.keys())
-    shared_set = ss1_set & ss2_set
-    _mlog(f"{len(shared_set):,} shared unique k-mers.")
-    _mlog("going through shared k-mers (searching for fwd matches)...")
-    for shared_kmer in shared_set:
-        for ss1p in ss1_kmers[shared_kmer]:
-            for ss2p in ss2_kmers[shared_kmer]:
-                if binary:
-                    set_nz_val(MATCH, ss1p, ss2p)
+    def set_nz_val(val, ss1p, ss2p):
+        # val should be FWD or REV. we might change it depending on the matrix
+        # type (binary or not) and if another value already exists in this cell
+        if binary:
+            val_to_use = MATCH
+        else:
+            if val == REV:
+                if cell_already_fwd(ss1p, ss2p):
+                    val_to_use = BOTH
                 else:
-                    set_nz_val(FWD, ss1p, ss2p)
+                    val_to_use = REV
+            else:
+                # We assume that this was called on all FWD matches first, then
+                # on all REV matches. If you do this out of order then it'll
+                # break the palindrome detection, so don't do that >:(
+                val_to_use = FWD
+        cell2val[(get_row(ss2p), ss1p)] = val_to_use
 
-    # Find k-mers that are shared between both strings, but
-    # reverse-complemented
-    _mlog("going through shared k-mers (searching for rc matches)...")
-    for ss1k in ss1_kmers:
-        rc_ss1k = rc(ss1k)
-        if rc_ss1k in ss2_kmers:
-            for ss1p in ss1_kmers[ss1k]:
-                for ss2p in ss2_kmers[rc_ss1k]:
-                    if binary:
-                        set_nz_val(MATCH, ss1p, ss2p)
-                    else:
-                        if cell_already_fwd(ss1p, ss2p):
-                            # If there's both a FWD and RC match here, give it
-                            # a unique value
-                            set_nz_val(BOTH, ss1p, ss2p)
-                        else:
-                            set_nz_val(REV, ss1p, ss2p)
+    _mlog("converting forward match information to COO format...")
+    for m in fwd_matches:
+        set_nz_val(FWD, *m)
+
+    _mlog("converting reverse match information to COO format...")
+    for m in rev_matches:
+        ss2p = len(s2) - m[1] - k
+        set_nz_val(REV, m[0], ss2p)
 
     density = 100 * (len(cell2val) / (mat_shape[0] * mat_shape[1]))
     _mlog(f"{len(cell2val):,} match cell(s); {density:.2f}% density.")
