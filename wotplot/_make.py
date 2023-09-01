@@ -117,8 +117,20 @@ def _get_shared_kmers(s1, s2, k, s1_sa, s2_sa):
         k2 = s2[p2 : p2 + k]
         if k1 == k2:
             matches.append((p1, p2))
-            i += 1
-            j += 1
+            # "Descend" through s1, identifying all matches between these
+            # k-mers and k2. this could probably be made more efficient, or the
+            # results here could maybe be reused in future steps (TODO).
+            next_p1 = p1 + 1
+            while s1[next_p1: next_p1 + k] == k2:
+                matches.append((next_p1, p2))
+                next_p1 += 1
+            # Also "descend" through s2
+            next_p2 = p2 + 1
+            while s2[next_p2: next_p2 + k] == k1:
+                matches.append((p1, next_p2))
+                next_p2 += 1
+            i += (next_p1 - p1)
+            j += (next_p2 - p2)
         else:
             # find lexicographically smaller suffix
             # (We can safely make this comparison using k1 and k2 as proxies
