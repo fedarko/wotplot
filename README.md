@@ -47,9 +47,18 @@ I'll try to put this on PyPI / conda eventually.
 
 ## Performance
 
-See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/blob/main/docs/Benchmarking.ipynb) for some informal benchmarking results performed on a laptop with ~8 GB of RAM. On this system, the library works alright with sequences up to 1,000,000 nt long (at least for _k_ = 10 and _k_ = 20).
+See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/blob/main/docs/Benchmarking.ipynb)
+for some very informal benchmarking results performed on a laptop with ~8 GB of RAM.
 
-This library [could be made a lot more efficient](https://github.com/fedarko/wotplot/issues/2), but right now it's good enough for my purposes. Feel free to make a pull request if you'd like to speed it up ;)
+Even on this system, the library can handle reasonably large sequences: in the biggest example,
+the notebook demonstrates computing the dot plot of two random 100 Mbp sequences
+(using _k_ = 20) in 54 minutes and 12.45 seconds.
+Dot plots of shorter sequences (e.g. 100 kbp or less) usually take only a few seconds to
+compute, at least for reasonably large values of _k_.
+
+This library [could be made a lot more efficient](https://github.com/fedarko/wotplot/issues/2),
+but right now it's good enough for my purposes. Feel free to open an issue / make a pull request
+if you'd like to speed it up ;)
 
 ## Why does this package exist?
 
