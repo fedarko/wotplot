@@ -10,6 +10,9 @@ wotplot is a small Python library for creating and visualizing
 
 ### Small dataset
 
+This example is adapted from Figure 6.20 (bottom right) in
+[_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org), edition 2.
+
 ```python
 import wotplot
 
@@ -28,9 +31,6 @@ wotplot.viz_imshow(m)
 
 ![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/img/small_example_dotplot.png)
 
-This example is adapted from Figure 6.20 (bottom right) in
-[_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org), edition 2.
-
 ### Larger dataset: comparing two _E. coli_ genomes
 
 Using _E. coli_ K-12 [(from this assembly)](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000005845.2/)
@@ -38,7 +38,7 @@ and _E. coli_ O157:H7 [(from this assembly)](https://www.ncbi.nlm.nih.gov/datase
 I removed the two plasmid sequences from the O157:H7 assembly.
 
 ```python
-# (skipping over the part where I loaded the genomes into memory...)
+# (skipping the part where I loaded the genomes into memory as e1s and e2s...)
 
 # Create the matrix
 em = wotplot.DotPlotMatrix(e1s, e2s, 20, verbose=True)
@@ -79,7 +79,7 @@ I've tried to make this library reasonably performant. The main optimizations
 include:
 
 - We use suffix arrays (courtesy of the lovely
-  [pydivsufsort](https://github.com/louisabraham/pydivsufsort) library) in
+  [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort) library) in
   order to reduce the memory footprint of finding shared _k_-mers.
 
 - We store the dot plot matrix in sparse format (courtesy of
