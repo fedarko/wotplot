@@ -208,29 +208,29 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     _mlog("validating inputs...")
     _validate_k(k)
     _validate_yorder(yorder)
-    ss1 = _validate_and_stringify_seq(s1, k)
-    ss2 = _validate_and_stringify_seq(s2, k)
+    s1 = _validate_and_stringify_seq(s1, k)
+    s2 = _validate_and_stringify_seq(s2, k)
 
     # Ok, things seem good. Compute suffix arrays, then find shared k-mers.
     _mlog("computing suffix array for s1...")
-    ss1_sa = divsufsort(ss1 + ENDCHAR)
+    s1_sa = divsufsort(s1 + ENDCHAR)
 
     _mlog("computing suffix array for s2...")
-    ss2_sa = divsufsort(ss2 + ENDCHAR)
+    s2_sa = divsufsort(s2 + ENDCHAR)
 
     _mlog("computing ReverseComplement(s2)...")
-    rcs2 = rc(ss2)
+    rcs2 = rc(s2)
     _mlog("computing suffix array for ReverseComplement(s2)...")
     rcs2_sa = divsufsort(rcs2 + ENDCHAR)
 
     # Find k-mers that are shared between both strings (not considering
     # reverse-complementing)
     _mlog("finding shared k-mers between s1 and s2...")
-    fwd_matches = _get_shared_kmers(ss1, ss2, k, ss1_sa, ss2_sa)
+    fwd_matches = _get_shared_kmers(s1, s2, k, s1_sa, s2_sa)
     _mlog(f'found {len(fwd_matches):,} such "forward" shared k-mers.')
 
     _mlog("finding shared k-mers between s1 and ReverseComplement(s2)...")
-    rev_matches = _get_shared_kmers(ss1, rcs2, k, ss1_sa, rcs2_sa)
+    rev_matches = _get_shared_kmers(s1, rcs2, k, s1_sa, rcs2_sa)
     _mlog(f'found {len(rev_matches):,} such "reverse" shared k-mers.')
 
     # Convert fwd and rev matches to matrix COO format
@@ -240,7 +240,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     # for all plots where k > 1 (since you can't have e.g. a 2-mer begin in the
     # final row or column). Interestingly, Figure 6.20 in Bioinformatics
     # Algorithms does include this extra empty space, but we'll omit it here
-    mat_shape = (len(ss2) - k + 1, len(ss1) - k + 1)
+    mat_shape = (len(s2) - k + 1, len(s1) - k + 1)
 
     def get_row(s2p):
         if yorder == "TB":
@@ -251,8 +251,8 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
             # should never happen
             raise ValueError(f"Unrecognized yorder: {yorder}")
 
-    def cell_already_fwd(ss1p, ss2p):
-        coords = (get_row(ss2p), ss1p)
+    def cell_already_fwd(s1p, s2p):
+        coords = (get_row(s2p), s1p)
         # abuse boolean short-circuiting to avoid a KeyError.
         #
         # We coooould make cell2val a defaultdict(int) in order to make this
@@ -264,14 +264,14 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         # problem
         return coords in cell2val and cell2val[coords] == FWD
 
-    def set_nz_val(val, ss1p, ss2p):
+    def set_nz_val(val, s1p, s2p):
         # val should be FWD or REV. we might change it depending on the matrix
         # type (binary or not) and if another value already exists in this cell
         if binary:
             val_to_use = MATCH
         else:
             if val == REV:
-                if cell_already_fwd(ss1p, ss2p):
+                if cell_already_fwd(s1p, s2p):
                     val_to_use = BOTH
                 else:
                     val_to_use = REV
@@ -280,7 +280,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
                 # on all REV matches. If you do this out of order then it'll
                 # break the palindrome detection, so don't do that >:(
                 val_to_use = FWD
-        cell2val[(get_row(ss2p), ss1p)] = val_to_use
+        cell2val[(get_row(s2p), s1p)] = val_to_use
 
     _mlog("converting forward match information to COO format...")
     for m in fwd_matches:
@@ -288,8 +288,8 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
 
     _mlog("converting reverse match information to COO format...")
     for m in rev_matches:
-        ss2p = len(s2) - m[1] - k
-        set_nz_val(REV, m[0], ss2p)
+        s2p = len(s2) - m[1] - k
+        set_nz_val(REV, m[0], s2p)
 
     density = 100 * (len(cell2val) / (mat_shape[0] * mat_shape[1]))
     _mlog(f"{len(cell2val):,} match cell(s); {density:.2f}% density.")
@@ -307,4 +307,4 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     _mlog("creating sparse matrix...")
     mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
     _mlog("done creating the matrix.")
-    return mat, ss1, ss2
+    return mat, s1, s2
