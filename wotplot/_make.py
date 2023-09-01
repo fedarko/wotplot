@@ -62,6 +62,8 @@ def _get_suffix_array(seq):
     # this conversion at the start of _make() and use bytes from there on), but
     # I don't really feel like making that change r/n and I don't think it'll
     # make a big difference compared to this tool's other inefficiencies.
+    # Although it is still a TODO worth noting (converting both s2 and rc(s2)
+    # to bytes separately makes me feel gross).
     return divsufsort(seq.encode("ascii") + ENDCHAR)
 
 
