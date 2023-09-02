@@ -25,12 +25,20 @@ k = 3
 # reverse-complementary, and palindromic matching k-mers from each other)
 m = wotplot.DotPlotMatrix(s1, s2, k, binary=False)
 
-# Visualize the matrix using matplotlib's imshow() function
-# (For large matrices, use viz_spy() instead; see below)
+# Convert the matrix to dense format and visualize it using matplotlib's
+# imshow() function (for large matrices where dense representations are
+impractical, use viz_spy() instead; see below)
 wotplot.viz_imshow(m)
 ```
 
 ![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/img/small_example_dotplot.png)
+
+Using the default colorscheme,
+:large-red-square: red cells :large-red-square: indicate forward matching
+_k_-mers; :large-blue-square: blue cells :large-blue-square: indicate
+reverse-complementary matching _k_-mers; and
+:large-purple-square: purple cells :large-purple-square: indicate palindromic
+matching _k_-mers.
 
 ### Larger dataset: comparing two _E. coli_ genomes
 
