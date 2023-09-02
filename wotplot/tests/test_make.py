@@ -1,9 +1,10 @@
 import numpy as np
 import pytest
-from wotplot import DotPlotMatrix
+from wotplot import DotPlotMatrix, MATCH, FWD, REV, BOTH
 
 
 def test_make_simple_default():
+    assert MATCH == 1
     dpm = DotPlotMatrix("ACGTC", "AAGTC", 2)
     assert np.array_equal(
         dpm.mat.toarray(),
@@ -37,6 +38,8 @@ def test_make_simple_yorder_TB():
 
 
 def test_make_simple_not_binary():
+    assert FWD == 1
+    assert REV == -1
     dpm = DotPlotMatrix("ACGTC", "AAGTC", 2, binary=False)
     assert np.array_equal(
         dpm.mat.toarray(),
@@ -69,6 +72,7 @@ def test_make_simple_yorder_TB_and_not_binary():
 def test_make_palindrome_not_binary():
     # AATCGATC
     # 01234567
+    assert BOTH == 2
     dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False)
     assert np.array_equal(
         dpm.mat.toarray(),
