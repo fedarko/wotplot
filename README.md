@@ -92,8 +92,8 @@ include:
 
 - We support visualizing the dot plot matrix's nonzero values using
   matplotlib's [`spy()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.spy.html)
-  function, which (at least for large sequences) is much faster
-  (and has a much smaller memory footprint) than converting the matrix to a
+  function, which (at least for large sequences) is faster and more
+  memory-efficient than converting the matrix to a
   dense format and visualizing it with something like
   [`imshow()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.imshow.html).
 
