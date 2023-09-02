@@ -74,14 +74,12 @@ Please see [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/b
 
 ## Installation
 
-wotplot supports Python ≥ 3.6. You can install it
-and its dependencies using [pip](https://pip.pypa.io):
+wotplot supports Python ≥ 3.6. You can install it and its dependencies using
+[pip](https://pip.pypa.io):
 
+```bash
+pip install wotplot
 ```
-pip install git+https://github.com/fedarko/wotplot.git
-```
-
-I'll try to put this on PyPI / conda eventually.
 
 ## Performance
 
