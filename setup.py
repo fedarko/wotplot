@@ -2,6 +2,7 @@
 # Adapted from https://github.com/fedarko/strainFlye/blob/main/setup.py
 # (... adapted from https://github.com/biocore/qurro/blob/master/setup.py)
 
+import os
 from setuptools import find_packages, setup
 
 classifier_str = """
@@ -17,16 +18,25 @@ classifier_str = """
 """
 classifiers = [s.strip() for s in classifier_str.split("\n") if s]
 
-description = "Simple package for creating and visualizing dot plot matrices"
+description = "Small library for creating and visualizing dot plot matrices"
 
 with open("README.md", "r") as f:
     long_description = f.read()
 
+# Extract the version from a special _version.py file. The reason we don't just
+# store it in wotplot/__init__.py is that that will break if dependencies
+# aren't installed. This is basically option 3 from
+# https://packaging.python.org/en/latest/guides/single-sourcing-package-version
+# -- also inspired by https://stackoverflow.com/a/7071358
+with open(os.path.join("wotplot", "_version.py"), "r") as f:
+    # The output of f.read() looks like '__version__ = "0.1.0"\n'.
+    # Splitting on "=" gives us ' "0.1.0"\n'; stripping whitespace gives us
+    # '"0.1.0"'; and slicing with [1:-1] gives us '0.1.0'.
+    version = f.read().split("=")[1].strip()[1:-1]
+
 setup(
     name="wotplot",
-    # TODO do something fancy so that this can be stored in __version__
-    # (see https://stackoverflow.com/q/458550)
-    version="0.1.0",
+    version=version,
     license="BSD",
     description=description,
     long_description=long_description,
