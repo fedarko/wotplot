@@ -29,26 +29,13 @@ def style_viz_ax(ax, m, title=None):
     - Adds axis labels formatted like "s1 (x nt)" and "s2 (y nt)", with arrows
       indicating sequence directionality relative to the axis.
 
-    - If a title is provide, sets it as the title of the object.
+    - If a title is provided, sets it as the title of the object.
     """
     # Hide the ticks / tick labels.
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-
-    # Based on the mutation matrix drawn in
-    # https://nbviewer.org/github/fedarko/strainFlye/blob/main/docs/SheepGutExample.ipynb
-    ax.tick_params(
-        top=True,
-        bottom=True,
-        left=True,
-        right=True,
-        labeltop=True,
-        labelbottom=True,
-        labelleft=True,
-        labelright=True,
-    )
 
     ax.set_xlabel(f"$s_1$ ({len(m.s1):,} nt) \u2192", fontsize=18)
     if m.yorder == "BT":

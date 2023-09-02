@@ -39,6 +39,9 @@ and _E. coli_ O157:H7 ([from this assembly](https://www.ncbi.nlm.nih.gov/dataset
 I removed the two plasmid sequences from the O157:H7 assembly.
 
 ```python
+import wotplot
+from matplotlib import pyplot
+
 # (skipping the part where I loaded the genomes into memory as e1s and e2s...)
 
 # Create the matrix
