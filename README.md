@@ -2,6 +2,8 @@
 
 <a href="https://github.com/fedarko/wotplot/actions/workflows/main.yml"><img src="https://github.com/fedarko/wotplot/actions/workflows/main.yml/badge.svg" alt="wotplot CI" /></a>
 <a href="https://codecov.io/gh/fedarko/wotplot"><img src="https://codecov.io/gh/fedarko/wotplot/branch/main/graph/badge.svg" alt="Code Coverage" /></a>
+<a href="https://pypi.org/project/wotplot"><img src="https://img.shields.io/pypi/v/wotplot?color=006dad" alt="PyPI" /></a>
+<!-- ^ yoinked from pyfastg's github README -->
 
 wotplot is a small Python library for creating and visualizing
 [dot plot matrices](https://en.wikipedia.org/wiki/Dot_plot_(bioinformatics)).
