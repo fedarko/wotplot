@@ -83,8 +83,9 @@ class DotPlotMatrix:
             -  0: k1 != k2, and ReverseComplement(k1) != k2
 
         verbose: bool
-            If True, logs a lot of information as this computes the matrix.
-            Useful for performance benchmarking.
+            If True, logs extra information as this computes the matrix. This
+            is useful when working with long sequences and/or for performance
+            benchmarking.
 
         References
         ----------
