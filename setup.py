@@ -49,15 +49,14 @@ setup(
     packages=find_packages(),
     install_requires=[
         "numpy",
-        "scipy",
+        # earliest version of SciPy I can find that supports python 3 (although
+        # the python >= 3.6 requirement will almost certainly result in a
+        # higher SciPy version being selected anyway). for reference, this also
+        # has scipy.sparse.coo_matrix.
+        "scipy >= 0.9",
         "matplotlib",
         "pydivsufsort",
     ],
-    # you know tbh i'm not sure if you NEED to have already installed scipy
-    # before installing wotplot. i remember that trying to pip install numpy
-    # would cause unspeakable problems a few years ago, but idk if this is also
-    # the case for scipy. i should really figure this out one of these days
-    setup_requires=["numpy", "scipy"],
     # Based on how Altair splits up its requirements:
     # https://github.com/altair-viz/altair/blob/master/setup.py
     extras_require={

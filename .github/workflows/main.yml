@@ -22,49 +22,32 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      # Set up a conda env using mamba (which is much faster than conda).
-      # We can use "create-args" to adjust the python version; based on
-      # https://github.com/mamba-org/setup-micromamba/issues/51#issue-1688507017
-      - name: Install conda dependencies
-        uses: mamba-org/setup-micromamba@v1
+      # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          environment-file: environment.yml
-          create-args: python=${{ matrix.python-version }}
-          init-shell: bash
+          python-version: ${{ matrix.python-version }}
 
-      # We've gotta use "bash -el {0}" in order to actually use the shell that
-      # has the environment activated. I am not 100% clear on why this is the
-      # case (I'm just following what github.com/mamba-org/setup-micromamba
-      # says), but if you take out the "-el {0}" part and just say
-      # "shell: bash" here then all of this stuff doesn't run in the conda
-      # environment we just created.
       - name: Sanity check echo python version
         run: python --version
-        shell: bash -el {0}
 
       - name: Sanity check echo python location
         run: which python
-        shell: bash -el {0}
 
       - name: Sanity check echo pip version
         run: pip --version
-        shell: bash -el {0}
 
       - name: Sanity check echo pip location
         run: which pip
-        shell: bash -el {0}
 
       - name: Install wotplot and pip dependencies
         run: pip install -e .[dev]
-        shell: bash -el {0}
 
       - name: Lint and stylecheck
         run: make stylecheck
-        shell: bash -el {0}
 
       - name: Run tests
         run: make test
-        shell: bash -el {0}
 
       - name: Upload code coverage information to Codecov
         uses: codecov/codecov-action@v2

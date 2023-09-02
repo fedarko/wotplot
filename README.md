@@ -26,7 +26,7 @@ k = 3
 m = wotplot.DotPlotMatrix(s1, s2, k, binary=False)
 
 # Visualize the matrix using matplotlib's imshow() function
-# (For large matrices, I recommend using viz_spy() instead; see below)
+# (For large matrices, use viz_spy() instead; see below)
 wotplot.viz_imshow(m)
 ```
 
@@ -65,9 +65,8 @@ Please see [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/b
 
 ## Installation
 
-Before installation, wotplot requires Python ≥ 3.6, NumPy, and SciPy.
-If you have already installed these dependencies, you can install
-wotplot using the following command:
+wotplot supports Python ≥ 3.6. You can install it
+and its dependencies using [pip](https://pip.pypa.io):
 
 ```
 pip install git+https://github.com/fedarko/wotplot.git
@@ -127,13 +126,11 @@ First, fork wotplot. Then you can download a copy of the code from your fork and
 install wotplot from this code.
 
 The following commands should work on a Unix system; this assumes that you have
-conda installed.
+Python ≥ 3.6 and pip installed.
 
 ```bash
 git clone https://github.com/your-github-username-goes-here/wotplot.git
 cd wotplot
-conda env create -f environment.yml
-conda activate wotplot
 pip install -e .[dev]
 ```
 
