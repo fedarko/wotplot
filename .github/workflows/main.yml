@@ -9,7 +9,12 @@ name: wotplot CI
 on: [push, pull_request]
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Pinning OS to Ubuntu 20.04, since "ubuntu-latest" (22.04, as of writing)
+    # dropped support for Python 3.6. Ideally we'd conditionally set the OS
+    # based on the Python version but I can't figure out how to do that :|
+    # shouldn't make a big difference for now, esp. since we're not doing any
+    # crazy systems-level stuff here
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
