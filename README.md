@@ -25,7 +25,7 @@ k = 3
 # reverse-complementary, and palindromic matching k-mers from each other)
 m = wotplot.DotPlotMatrix(s1, s2, k, binary=False)
 
-# Visualize the matrix using matplotlib.imshow()
+# Visualize the matrix using matplotlib's imshow() function
 # (For large matrices, I recommend using viz_spy() instead; see below)
 wotplot.viz_imshow(m)
 ```
@@ -47,7 +47,7 @@ from matplotlib import pyplot
 # Create the matrix
 em = wotplot.DotPlotMatrix(e1s, e2s, 20, verbose=True)
 
-# Visualize the matrix using matplotlib.spy()
+# Visualize the matrix using matplotlib's spy() function
 fig, ax = pyplot.subplots()
 wotplot.viz_spy(
     em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax
