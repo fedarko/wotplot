@@ -139,9 +139,9 @@ compute, at least for reasonably large values of _k_.
   [ways to make matplotlib visualizations interactive](https://matplotlib.org/stable/users/explain/interactive.html) (e.g. using
   [`%matplotlib notebook`](https://stackoverflow.com/a/41125787) within a
   Jupyter Notebook), but (1) I don't currently know enough about these methods
-  to support them and (2) these interactive visualizations will still probably
-  pale in comparison to the outputs of dedicated software for interactive dot
-  plot visualization (e.g. [ModDotPlot](https://github.com/marbl/ModDotPlot)).
+  to "officially" support them and (2) these visualizations will still probably
+  pale in comparison to the outputs of dedicated interactive software (e.g.
+  [ModDotPlot](https://github.com/marbl/ModDotPlot)).
 
 ## Setting up a development environment
 
