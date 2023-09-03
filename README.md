@@ -23,7 +23,7 @@ s1 = "AGCAGGAGATAAACCTGT"
 s2 = "AGCAGGTTATCTACCTGT"
 k = 3
 
-# Create the matrix (the "binary" parameter means we'll distinguish forward,
+# Create the matrix (setting binary=False means we'll distinguish forward,
 # reverse-complementary, and palindromic matching k-mers from each other)
 m = wotplot.DotPlotMatrix(s1, s2, k, binary=False)
 
@@ -140,6 +140,17 @@ git clone https://github.com/your-github-username-goes-here/wotplot.git
 cd wotplot
 pip install -e .[dev]
 ```
+
+## Acknowledgements
+
+The small example given above, and my initial implementation of an algorithm
+for computing dot plots, were based on
+[_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org)
+(Compeau & Pevzner).
+
+The idea of using suffix arrays to speed up dot plot computation is not new; it
+is also implemented in
+[Gepard](https://academic.oup.com/bioinformatics/article/23/8/1026/198110).
 
 ## Contact
 
