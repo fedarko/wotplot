@@ -136,8 +136,7 @@ compute, at least for reasonably large values of _k_.
 
 - **Only static visualizations:** The visualization methods included in the
   tool only support the creation of static plots. There are
-  [some ways](https://matplotlib.org/stable/users/explain/interactive.html) to
-  make matplotlib visualizations interactive (e.g. using
+  [ways to make matplotlib visualizations interactive](https://matplotlib.org/stable/users/explain/interactive.html) (e.g. using
   [`%matplotlib notebook`](https://stackoverflow.com/a/41125787) within a
   Jupyter Notebook), but (1) I don't currently know enough about these methods
   to support them and (2) these interactive visualizations will still probably
