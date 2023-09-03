@@ -144,13 +144,14 @@ pip install -e .[dev]
 ## Acknowledgements
 
 The small example given above, and my initial implementation of an algorithm
-for computing dot plots, were based on
+for computing dot plots, were based on Chapter 6 of
 [_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org)
 (Compeau & Pevzner).
 
 The idea of using suffix arrays to speed up dot plot computation is not new; it
 is also implemented in
-[Gepard](https://academic.oup.com/bioinformatics/article/23/8/1026/198110).
+[Gepard](https://cube.univie.ac.at/gepard)
+([Krumsiek _et al._ 2007](https://academic.oup.com/bioinformatics/article/23/8/1026/198110)).
 
 ## Contact
 
