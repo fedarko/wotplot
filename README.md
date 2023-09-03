@@ -38,8 +38,9 @@ wotplot.viz_imshow(m)
 <!-- Idea of using emojis to represent color c/o https://stackoverflow.com/questions/11509830#comment124410976_41247934 -->
 In the default colorscheme
 red cells (🟥) indicate forward matches,
-blue cells (🟦) indicate reverse-complementary matches, and
-purple cells (🟪) indicate palindromic matches.
+blue cells (🟦) indicate reverse-complementary matches,
+purple cells (🟪) indicate palindromic matches,
+and white cells (⬜) indicate no matches.
 
 ### Larger dataset: comparing two _E. coli_ genomes
 
