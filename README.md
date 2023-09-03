@@ -127,6 +127,22 @@ compute, at least for reasonably large values of _k_.
 
 2. I wanted something that worked well with [matplotlib](https://matplotlib.org), so that I could create and tile lots of dotplots at once in complicated ways.
 
+## Limitations
+
+- **Performance:** Although I've tried to optimize this tool (see the
+  "Performance" section above), it isn't the fastest or the most
+  memory-efficient way to visualize dot plots.
+
+- **Only static visualizations:** The visualization methods included in the
+  tool only support the creation of static plots. There are
+  [some ways](https://matplotlib.org/stable/users/explain/interactive.html) to
+  make matplotlib visualizations interactive (e.g. using
+  [`%matplotlib notebook`](https://stackoverflow.com/a/41125787) within a
+  Jupyter Notebook), but (1) I don't currently know enough about these methods
+  to support them and (2) these interactive visualizations will still probably
+  pale in comparison to the outputs of dedicated software for interactive dot
+  plot visualization (e.g. [ModDotPlot](https://github.com/marbl/ModDotPlot)).
+
 ## Setting up a development environment
 
 First, fork wotplot. Then you can download a copy of the code from your fork and
