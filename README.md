@@ -158,6 +158,13 @@ cd wotplot
 pip install -e .[dev]
 ```
 
+After the above commands, you can check that wotplot was installed successfully
+by running the test suite:
+
+```bash
+make test
+```
+
 ## Acknowledgements
 
 The small example given above, and my initial implementation of an algorithm
