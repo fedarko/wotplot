@@ -177,6 +177,20 @@ is also implemented in
 [Gepard](https://cube.univie.ac.at/gepard)
 ([Krumsiek _et al._ 2007](https://academic.oup.com/bioinformatics/article/23/8/1026/198110)).
 
+### Dependencies
+
+- [NumPy](https://numpy.org)
+- [SciPy](https://scipy.org)
+- [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort)
+- [matplotlib](https://matplotlib.org)
+
+#### Testing dependencies
+
+- [pytest](https://docs.pytest.org)
+- [pytest-cov](https://github.com/pytest-dev/pytest-cov)
+- [flake8](https://flake8.pycqa.org)
+- [black](https://github.com/psf/black)
+
 ## Contact
 
 Feel free to [open an issue](https://github.com/fedarko/wotplot/issues) if you
