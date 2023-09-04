@@ -189,7 +189,7 @@ is also implemented in
 - [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort)
 - [matplotlib](https://matplotlib.org)
 
-#### Testing dependencies
+### Testing dependencies
 
 - [pytest](https://docs.pytest.org)
 - [pytest-cov](https://github.com/pytest-dev/pytest-cov)
