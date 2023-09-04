@@ -140,8 +140,8 @@ compute, at least for reasonably large values of _k_.
   [`%matplotlib notebook`](https://stackoverflow.com/a/41125787) within a
   Jupyter Notebook), but (1) I don't currently know enough about these methods
   to "officially" support them and (2) these visualizations will still probably
-  pale in comparison to the outputs of dedicated interactive software (e.g.
-  [ModDotPlot](https://github.com/marbl/ModDotPlot)).
+  pale in comparison to the outputs of dedicated interactive visualization
+  software (e.g. [ModDotPlot](https://github.com/marbl/ModDotPlot)).
 
 ## Setting up a development environment
 
