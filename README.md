@@ -145,11 +145,12 @@ compute, at least for reasonably large values of _k_.
 
 ## Setting up a development environment
 
-First, fork wotplot. Then you can download a copy of the code from your fork and
-install wotplot from this code.
+First, fork wotplot -- this will make it easy to submit a pull request later.
 
-The following commands should work on a Unix system; this assumes that you have
-Python ≥ 3.6 and pip installed.
+After you've forked wotplot, you can download a copy of the code from your
+fork and install wotplot from this downloaded code. The following commands
+should do this; these commands assume that you're using a Unix system and
+that you have Python ≥ 3.6 and pip installed.
 
 ```bash
 git clone https://github.com/your-github-username-goes-here/wotplot.git
