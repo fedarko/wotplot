@@ -17,9 +17,13 @@ def test_rc_good():
 
 def test_rc_badchar():
     # in practice, bad characters should already have been caught when make()
-    # validates input sequences. however, we may as well be careful here...
-    with pytest.raises(KeyError):
-        rc("ACGTM")
+    # validates input sequences, and the new method we use for computing
+    # reverse-complements (rc()) doesn't disallow non-DNA characters. Let's
+    # verify that these "bad characters" don't cause a crash, but keep in mind
+    # that these sorts of scenarios should never happen in practice (as of
+    # writing).
+    assert rc("ACGTM") == "MACGT"
+    assert rc("T G") == "C A"
 
 
 # def test_get_kmer_dd_good():

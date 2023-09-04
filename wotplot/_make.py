@@ -2,7 +2,9 @@ import time
 from pydivsufsort import divsufsort
 from ._scipy_sm_constructor_getter import get_sm_constructor
 
-NT2COMP = {"A": "T", "C": "G", "T": "A", "G": "C"}
+DNA = "ACGT"
+RCDNA = "TGCA"
+NT2COMP = str.maketrans(DNA, RCDNA)
 # Appended to the end of a string when we create its suffix array. "$" occurs
 # lexicographically before all of the DNA nucleotides, and including this
 # character is helpful when creating suffix arrays -- see Chapter 9 of
@@ -16,10 +18,15 @@ BOTH = 2
 
 
 def rc(seq):
-    out = ""
-    for i in range(len(seq) - 1, -1, -1):
-        out += NT2COMP[seq[i]]
-    return out
+    """Computes the reverse-complement of a DNA string.
+
+    References
+    ----------
+    Use str.maketrans() to replace nucleotides with their complements; this
+    approach (which should be relatively efficient) is based on Devon Ryan's
+    suggestion at https://bioinformatics.stackexchange.com/a/3585.
+    """
+    return seq.translate(NT2COMP)[::-1]
 
 
 def _validate_and_stringify_seq(seq, k):
@@ -31,7 +38,7 @@ def _validate_and_stringify_seq(seq, k):
         # silly question of what if a string contains both T and U??? It's
         # easiest to just mandate that we only take in A/C/G/T strings -- this
         # forces the user to do the conversion, so they can decide what to do.
-        if c not in NT2COMP:
+        if c not in DNA:
             raise ValueError(
                 f"Input sequence contains character {c}; only DNA nucleotides "
                 "(A, C, G, T) are currently allowed."
