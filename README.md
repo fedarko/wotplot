@@ -154,8 +154,8 @@ First, fork wotplot -- this will make it easy to submit a pull request later.
 
 After you've forked wotplot, you can download a copy of the code from your
 fork and install wotplot from this downloaded code. The following commands
-should do this. (Note that these commands assume [1] that you're using a
-Unix system and [2] that you have Python ≥ 3.6 and pip installed.)
+should do this; note that these commands assume (1) that you're using a
+Unix system and (2) that you have Python ≥ 3.6 and pip installed.
 
 ```bash
 git clone https://github.com/your-github-username-goes-here/wotplot.git
@@ -164,7 +164,7 @@ pip install -e .[dev]
 ```
 
 After the above commands, you can check that wotplot was installed successfully
-by running the test suite:
+by running its test suite:
 
 ```bash
 make test
