@@ -2,6 +2,7 @@
 
 <a href="https://github.com/fedarko/wotplot/actions/workflows/main.yml"><img src="https://github.com/fedarko/wotplot/actions/workflows/main.yml/badge.svg" alt="wotplot CI" /></a>
 <a href="https://codecov.io/gh/fedarko/wotplot"><img src="https://codecov.io/gh/fedarko/wotplot/branch/main/graph/badge.svg" alt="Code Coverage" /></a>
+<a href="https://zenodo.org/badge/latestdoi/670484537"><img src="https://zenodo.org/badge/670484537.svg" alt="DOI"></a>
 <a href="https://pypi.org/project/wotplot"><img src="https://img.shields.io/pypi/v/wotplot?color=006dad" alt="PyPI" /></a>
 <!-- ^ yoinked from pyfastg's github README -->
 
