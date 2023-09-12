@@ -226,14 +226,14 @@ def _fill_match_cells(
             # We'll add each match to matches, then jump to just past the ends
             # of these "spans."
             for mi in range(i, next_i):
+                x = s1_sa[mi]
                 for mj in range(j, next_j):
-                    # NOTE: could maybe speed this up slightly by reusing
-                    # results across all mj values?
                     if s2isrc:
-                        y = _get_row(len(s2) - s2_sa[mj] - k, num_rows, yorder)
+                        s2p = len(s2) - s2_sa[mj] - k
                     else:
-                        y = _get_row(s2_sa[mj], num_rows, yorder)
-                    pos = (y, s1_sa[mi])
+                        s2p = s2_sa[mj]
+                    y = _get_row(s2p, num_rows, yorder)
+                    pos = (y, x)
                     if not binary:
                         if s2isrc:
                             if pos in md:
