@@ -118,10 +118,11 @@ def _fill_match_cells(
         Suffix array for (s2 + ENDCHAR).
 
     md: dict of (int, int) --> int
-        We'll update this dict with keys of the format (p1, p2) (indicating
+        We'll update this dict with keys of the format (p2, p1) (indicating
         that a matching k-mer exists at position p1 in s1 and position p2 in
-        s2). The match types (each one of {FWD, REV, BOTH, MATCH}) are given by
-        the values of this dict.
+        s2); these positions correspond to the (row, col) positions of match
+        cells in a matrix, taking into account yorder. The values of this dict
+        indicate match types (one of {FWD, REV, BOTH, MATCH}).
 
     yorder: str
         Either "BT" (bottom-to-top) or "TB" (top-to-bottom). See
@@ -137,12 +138,8 @@ def _fill_match_cells(
 
     Returns
     -------
-    matches: list of (int, int)
-        Each entry in this list is of the format (p2, p1), and corresponds to
-        the presence of a matching k-mer at position p1 in s1 and position p2
-        in s2. (Both p1 and p2 are zero-indexed.) This thus corresponds to the
-        (row, col) positions of match cells in a matrix, if s1 is on the
-        horizontal axis and s2 is on the vertical axis.
+    None
+        (The main "side effect" of this function is updating md; see above.)
 
     Example
     -------
