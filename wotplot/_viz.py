@@ -1,13 +1,20 @@
 import numpy as np
 from matplotlib import pyplot
+from ._make import FWD, REV, BOTH
 
-# Colormap based on Figure 6.20 in Chapter 6 of Bioinformatics Algorithms
+# Colormaps based on Figure 6.20 in Chapter 6 of Bioinformatics Algorithms
 # (Compeau & Pevzner), ed. 2
-NBCMAP = {
+NBCMAP_255 = {
     0: [255, 255, 255],
-    1: [255, 0, 0],
-    -1: [0, 0, 255],
-    2: [100, 0, 100],
+    FWD: [255, 0, 0],
+    REV: [0, 0, 255],
+    BOTH: [100, 0, 100],
+}
+NBCMAP_HEX = {
+    0: "#ffffff",
+    FWD: "#ff0000",
+    REV: "#0000ff",
+    BOTH: "#640064",
 }
 
 
@@ -58,13 +65,20 @@ def _create_fig_and_ax_if_needed(ax=None):
     return None, ax
 
 
-def viz_spy(m, markersize=0.5, color="black", title=None, ax=None, **kwargs):
+def viz_spy(
+    m,
+    markersize=0.5,
+    color="black",
+    nbcmap=NBCMAP_HEX,
+    title=None,
+    ax=None,
+    **kwargs,
+):
     """Visualizes a DotPlotMatrix object using matplotlib's spy().
 
-    This should be much more performant than viz_imshow(). However, there are
-    some limitations: match cells can only be drawn with a single color, even
-    for matrices that are not binary; and you may want to adjust the markersize
-    based on the size of your matrix and desired resolution.
+    This should be much more performant than viz_imshow(). However, the use of
+    a fixed markersize can require manual adjustment based on the size of your
+    matrix and desired resolution.
 
     Parameters
     ----------
@@ -76,10 +90,16 @@ def viz_spy(m, markersize=0.5, color="black", title=None, ax=None, **kwargs):
         adjust this depending on the size of your matrix.
 
     color: color
-        The color to use for each match cell. This should be in a format
-        accepted by matplotlib; see
+        The color to use for each match cell. Must be in a format accepted by
+        matplotlib; see
         https://matplotlib.org/stable/gallery/color/color_demo.html for
-        details.
+        details. (Unlike the colors we use in imshow(), RGB triplets where the
+        entries range from 0 to 255 are not allowed here.) Only used if
+        visualizing a binary matrix.
+
+    nbcmap: dict
+        Maps 0, 1, -1, and 2 to colors (same possible formats as "color").
+        Only used if visualizing a matrix that is not binary.
 
     title: str or None
         If this is not None, then it'll be set as the title of the plot.
@@ -98,10 +118,28 @@ def viz_spy(m, markersize=0.5, color="black", title=None, ax=None, **kwargs):
         returned if an axes object (the ax parameter above) was not provided;
         if an axes object was provided (i.e. "ax is not None"), then we won't
         return anything.
+
+    Notes
+    -----
+    TODO case on binary and use color accordingly like in imshow
     """
 
     fig, ax = _create_fig_and_ax_if_needed(ax)
-    ax.spy(m.mat, markersize=markersize, color=color, **kwargs)
+    if not m.binary:
+        for val in (FWD, REV, BOTH):
+            # Filter the matrix to just the cells of a certain match type.
+            # https://stackoverflow.com/a/22077616
+            # This is somewhat inefficient -- ideally we'd do the filtering in
+            # one pass, or somehow make use of the information we already have
+            # from matrix construction about where these match cells are.
+            ax.spy(
+                m.mat.multiply(m.mat == val),
+                markersize=markersize,
+                color=nbcmap[val],
+                **kwargs,
+            )
+    else:
+        ax.spy(m.mat, markersize=markersize, color=color, **kwargs)
     style_viz_ax(ax, m, title)
     if fig is not None:
         return fig, ax
@@ -120,7 +158,9 @@ def _convert_to_colors(dm, nbcmap):
     return cm.astype("uint8")
 
 
-def viz_imshow(m, cmap="gray_r", nbcmap=NBCMAP, title=None, ax=None, **kwargs):
+def viz_imshow(
+    m, cmap="gray_r", nbcmap=NBCMAP_255, title=None, ax=None, **kwargs
+):
     """Visualizes a DotPlotMatrix object using matplotlib's imshow().
 
     IMPORTANT NOTE: This will convert the sparse matrix contained in the

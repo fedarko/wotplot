@@ -70,7 +70,7 @@ fig.set_size_inches(8, 8)
 
 ![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/img/ecoli_example_dotplot.png)
 
-When visualizing a binary matrix (and/or using `viz_spy()`), the default
+When visualizing a binary matrix, the default
 colorscheme uses black cells (⬛) to indicate matches (forward,
 reverse-complementary, or palindromic)
 and white cells (⬜) to indicate no matches.
