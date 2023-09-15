@@ -1,6 +1,6 @@
-import time
 from pydivsufsort import divsufsort
 from ._scipy_sm_constructor_getter import get_sm_constructor
+from ._logging import get_logger
 
 DNA = "ACGT"
 RCDNA = "TGCA"
@@ -280,11 +280,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         ss1 and ss2 are versions of s1 and s2, respectively, converted to
         strings.
     """
-    t0 = time.time()
-
-    def _mlog(s):
-        if verbose:
-            print(f"{time.time() - t0:,.2f}s: {s}", flush=True)
+    _mlog = get_logger(verbose)
 
     # First, verify that the SciPy version installed is good
     smc = get_sm_constructor()

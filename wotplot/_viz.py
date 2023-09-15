@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot
 from ._make import FWD, REV, BOTH
+from ._logging import get_logger
 
 # Colormaps based on Figure 6.20 in Chapter 6 of Bioinformatics Algorithms
 # (Compeau & Pevzner), ed. 2
@@ -72,6 +73,7 @@ def viz_spy(
     nbcmap=NBCMAP_HEX,
     title=None,
     ax=None,
+    verbose=False,
     **kwargs,
 ):
     """Visualizes a DotPlotMatrix object using matplotlib's spy().
@@ -108,6 +110,10 @@ def viz_spy(
         If this is not None, then we'll add the visualization within this
         Axes object.
 
+    verbose: bool
+        If True, prints information about time taken. Useful for performance
+        benchmarking.
+
     **kwargs
         Will be passed to spy().
 
@@ -123,10 +129,27 @@ def viz_spy(
     -----
     TODO case on binary and use color accordingly like in imshow
     """
+    _mlog = get_logger(verbose)
 
     fig, ax = _create_fig_and_ax_if_needed(ax)
     if not m.binary:
+        # spy() doesn't, as far as i can tell, have an easy way to set the
+        # background color. We can use set_facecolor(), though -- see
+        # https://stackoverflow.com/a/23645437.
+        #
+        # To avoid wasting time, we only call set_facecolor() if the background
+        # color is different from the default. This might still be unnecessary
+        # (if e.g. the user redefined the bg color as "white" instead of
+        # "#ffffff" then we still shouldn't need to call set_facecolor()),
+        # but I think this approach should do the most performant thing in most
+        # situations.
+        if nbcmap[0] != NBCMAP_HEX[0]:
+            _mlog(f"Setting background color to {nbcmap[0]}...")
+            ax.set_facecolor(nbcmap[0])
+            _mlog("Done setting background color.")
+
         for val in (FWD, REV, BOTH):
+            _mlog(f'Visualizing "{val}" cells...')
             # Filter the matrix to just the cells of a certain match type.
             # https://stackoverflow.com/a/22077616
             # This is somewhat inefficient -- ideally we'd do the filtering in
@@ -138,9 +161,14 @@ def viz_spy(
                 color=nbcmap[val],
                 **kwargs,
             )
+            _mlog(f'Done visualizing "{val}" cells.')
     else:
+        _mlog("Visualizing all match cells...")
         ax.spy(m.mat, markersize=markersize, color=color, **kwargs)
+        _mlog("Done visualizing all match cells.")
+    _mlog("Slightly restyling the visualization...")
     style_viz_ax(ax, m, title)
+    _mlog("Done.")
     if fig is not None:
         return fig, ax
 
