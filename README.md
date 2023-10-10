@@ -9,6 +9,15 @@
 wotplot is a small Python library for creating and visualizing
 [dot plot matrices](https://en.wikipedia.org/wiki/Dot_plot_(bioinformatics)).
 
+Notably, wotplot creates the _exact_ dot plot matrix, describing
+(given some _k_ ≥ 1) every single
+[_k_-mer](https://en.wikipedia.org/wiki/K-mer) match between two sequences.
+Many tools for visualizing dot plots create only an approximation of this matrix
+(e.g. containing only the "best" matches) in order to save time. wotplot uses multiple
+optimizations (see below) to make the creation and visualization of the
+exact dot plot matrix feasible even for entire prokaryotic genomes. Having this
+exact matrix can be useful for a variety of downstream analyses.
+
 ## Quick examples
 
 ### Small dataset
