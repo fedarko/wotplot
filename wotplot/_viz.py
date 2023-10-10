@@ -107,9 +107,9 @@ def viz_spy(
         visualizing a binary matrix and/or if force_binary is True.
 
     nbcmap: dict
-        Maps 0, 1, -1, and 2 to colors (same possible formats as "color").
-        Only used if visualizing a matrix that is not binary and if
-        force_binary is False.
+        Maps 0, 1, -1, and 2 to colors (of the same possible formats as the
+        above "color" parameter). Only used if visualizing a matrix that is
+        not binary and if force_binary is False.
 
     title: str or None
         If this is not None, then it'll be set as the title of the plot.
@@ -137,23 +137,32 @@ def viz_spy(
 
     fig, ax = _create_fig_and_ax_if_needed(ax)
     if not m.binary and not force_binary:
-        # spy() doesn't, as far as i can tell, have an easy way to set the
+        # With viz_imshow(), we manually add one RGB triplet per cell
+        # (for both match and non-match cells), meaning we don't have to do
+        # anything special to set the color of zero cells. In this function,
+        # however, we need to explicitly say "okay, set the background color to
+        # whatever nbcmap[0] is."
+        #
+        # spy() doesn't, as far as I can tell, have an easy way to set the
         # background color. We can use set_facecolor(), though -- see
         # https://stackoverflow.com/a/23645437.
         #
-        # To avoid wasting time, we only call set_facecolor() if the background
-        # color is different from the default. This might still be unnecessary
-        # (if e.g. the user redefined the bg color as "white" instead of
-        # "#ffffff" then we still shouldn't need to call set_facecolor()),
-        # but I think this approach should do the most performant thing in most
-        # situations.
-        if nbcmap[0] != NBCMAP_HEX[0]:
+        # The most common scenario, I think, will be that the user has default
+        # matplotlib styles set (in which the default background color is
+        # white) and nbcmap[0] is set to its default (also of white). To save
+        # time, I check to see that this is the case -- if so, I don't bother
+        # calling set_facecolor(). For all other cases, though, I will call
+        # set_facecolor(). (We could try to avoid more redundant uses of this
+        # function by converting nbcmap[0] to an RGB triplet to simplify
+        # comparison with the output of get_facecolor(), but I'm not sure how
+        # much time that approach would even save...)
+        if nbcmap[0] != NBCMAP_HEX[0] or ax.get_facecolor() != (1, 1, 1, 1):
             _mlog(f"Setting background color to {nbcmap[0]}...")
             ax.set_facecolor(nbcmap[0])
             _mlog("Done setting background color.")
 
         for val in (FWD, REV, BOTH):
-            _mlog(f'Visualizing "{val}" cells...')
+            _mlog(f'Visualizing "{val}" cells with spy()...')
             # Filter the matrix to just the cells of a certain match type.
             # https://stackoverflow.com/a/22077616
             # This is somewhat inefficient -- ideally we'd do the filtering in
@@ -167,7 +176,7 @@ def viz_spy(
             )
             _mlog(f'Done visualizing "{val}" cells.')
     else:
-        _mlog("Visualizing all match cells...")
+        _mlog("Visualizing all match cells with spy()...")
         ax.spy(m.mat, markersize=markersize, color=color, **kwargs)
         _mlog("Done visualizing all match cells.")
     _mlog("Slightly restyling the visualization...")
@@ -191,7 +200,13 @@ def _convert_to_colors(dm, nbcmap):
 
 
 def viz_imshow(
-    m, cmap="gray_r", nbcmap=NBCMAP_255, title=None, ax=None, **kwargs
+    m,
+    cmap="gray_r",
+    nbcmap=NBCMAP_255,
+    title=None,
+    ax=None,
+    verbose=False,
+    **kwargs,
 ):
     """Visualizes a DotPlotMatrix object using matplotlib's imshow().
 
@@ -223,6 +238,10 @@ def viz_imshow(
         If this is not None, then we will add the visualization within this
         Axes object and not bother creating a new figure and axes object.
 
+    verbose: bool
+        If True, prints information about time taken. Useful for performance
+        benchmarking.
+
     **kwargs
         Will be passed to imshow().
 
@@ -239,15 +258,22 @@ def viz_imshow(
     The default nbcmap is based on Figure 6.20 in Chapter 6 of Bioinformatics
     Algorithms (Compeau & Pevzner), edition 2.
     """
+    _mlog = get_logger(verbose)
     fig, ax = _create_fig_and_ax_if_needed(ax)
 
+    _mlog("Converting the matrix to dense format...")
     dense_mat = m.mat.toarray()
     if not m.binary:
+        _mlog("Converting the matrix from numbers to colors...")
         dense_mat = _convert_to_colors(dense_mat, nbcmap)
+        _mlog("Calling imshow()...")
         ax.imshow(dense_mat, **kwargs)
     else:
+        _mlog("Calling imshow()...")
         ax.imshow(dense_mat, cmap=cmap, **kwargs)
+    _mlog("Slightly restyling the visualization...")
     style_viz_ax(ax, m, title)
+    _mlog("Done.")
 
     # Only return fig and ax if _create_fig_and_ax_if_needed() created them
     # (i.e. the user did not provide their own "ax" object)
