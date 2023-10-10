@@ -18,6 +18,8 @@ NBCMAP_HEX = {
     BOTH: "#640064",
 }
 
+DRAW_ORDER = (FWD, REV, BOTH)
+
 
 def style_viz_ax(ax, m, title=None):
     """Adjusts the styling of a matplotlib Axes object to make it look nice.
@@ -72,6 +74,7 @@ def viz_spy(
     force_binary=False,
     color="black",
     nbcmap=NBCMAP_HEX,
+    draw_order=DRAW_ORDER,
     title=None,
     ax=None,
     verbose=False,
@@ -111,6 +114,17 @@ def viz_spy(
         above "color" parameter). Only used if visualizing a matrix that is
         not binary and if force_binary is False.
 
+    draw_order: iterable
+        If the input matrix is not binary, we will draw the matrix's match
+        cells as distinct colors by calling spy() multiple times (once per
+        match type). If your markersize is large enough that adjacent cells
+        in the matrix can overlap, then the order in which we call spy()
+        will impact which colors are drawn "on top" of others in the
+        visualization (with later colors ending up on top). You can change the
+        drawing order by adjusting this parameter (the default draws forward
+        matches, then reverse-complementary matches, then palindromic matches).
+        I don't think this should make a big difference in most cases.
+
     title: str or None
         If this is not None, then it'll be set as the title of the plot.
 
@@ -137,6 +151,11 @@ def viz_spy(
 
     fig, ax = _create_fig_and_ax_if_needed(ax)
     if not m.binary and not force_binary:
+        if len(draw_order) != 3 or set(draw_order) != set(DRAW_ORDER):
+            raise ValueError(
+                f"draw_order must include exactly 3 elements ({FWD}, {REV}, "
+                f"and {BOTH} in any order)."
+            )
         # With viz_imshow(), we manually add one RGB triplet per cell
         # (for both match and non-match cells), meaning we don't have to do
         # anything special to set the color of zero cells. In this function,
@@ -161,7 +180,11 @@ def viz_spy(
             ax.set_facecolor(nbcmap[0])
             _mlog("Done setting background color.")
 
-        for val in (FWD, REV, BOTH):
+        # PERF: we could maybe speed this up by scanning the matrix and
+        # searching to make sure there are cells of each type before calling
+        # spy(). However, I'm not sure if the scanning operations will take
+        # longer than just biting the bullet and calling spy() three times :|
+        for val in draw_order:
             _mlog(f'Visualizing "{val}" cells with spy()...')
             # Filter the matrix to just the cells of a certain match type.
             # https://stackoverflow.com/a/22077616
