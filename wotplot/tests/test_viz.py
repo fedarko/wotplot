@@ -73,3 +73,16 @@ def test_viz_spy_notbinary_verbose_diff_bgcolor(capsys):
     ).splitlines()
     out_lines = capsys.readouterr().out.splitlines()
     _check_viz_spy_logging_output(exp_lines, out_lines)
+
+
+def test_viz_spy_binary_verbose(capsys):
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
+    viz_spy(dpm, verbose=True)
+    exp_lines = (
+        f'Visualizing all match cells with spy()...\n'
+        f'Done visualizing all match cells.\n'
+        f"Slightly restyling the visualization...\n"
+        f"Done.\n"
+    ).splitlines()
+    out_lines = capsys.readouterr().out.splitlines()
+    _check_viz_spy_logging_output(exp_lines, out_lines)
