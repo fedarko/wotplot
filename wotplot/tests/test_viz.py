@@ -1,6 +1,6 @@
 import pytest
 from wotplot import DotPlotMatrix, FWD, REV, BOTH
-from wotplot._viz import viz_spy
+from wotplot._viz import viz_spy, viz_imshow
 
 
 def test_viz_spy_notbinary_bad_draw_order():
@@ -23,7 +23,7 @@ def test_viz_spy_notbinary_bad_draw_order():
         assert str(ei.value) == exp_err
 
 
-def _check_viz_spy_logging_output(exp_lines, out_lines):
+def _check_logging_output(exp_lines, out_lines):
     assert len(out_lines) == len(exp_lines)
     for ol, el in zip(out_lines, exp_lines):
         # this will break if any of the logged stuff after the time includes
@@ -48,7 +48,7 @@ def test_viz_spy_notbinary_verbose(capsys):
         f"Done.\n"
     ).splitlines()
     out_lines = capsys.readouterr().out.splitlines()
-    _check_viz_spy_logging_output(exp_lines, out_lines)
+    _check_logging_output(exp_lines, out_lines)
 
 
 def test_viz_spy_notbinary_verbose_diff_bgcolor(capsys):
@@ -72,17 +72,44 @@ def test_viz_spy_notbinary_verbose_diff_bgcolor(capsys):
         f"Done.\n"
     ).splitlines()
     out_lines = capsys.readouterr().out.splitlines()
-    _check_viz_spy_logging_output(exp_lines, out_lines)
+    _check_logging_output(exp_lines, out_lines)
 
 
 def test_viz_spy_binary_verbose(capsys):
     dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
     viz_spy(dpm, verbose=True)
     exp_lines = (
-        f'Visualizing all match cells with spy()...\n'
-        f'Done visualizing all match cells.\n'
-        f"Slightly restyling the visualization...\n"
-        f"Done.\n"
+        "Visualizing all match cells with spy()...\n"
+        "Done visualizing all match cells.\n"
+        "Slightly restyling the visualization...\n"
+        "Done.\n"
     ).splitlines()
     out_lines = capsys.readouterr().out.splitlines()
-    _check_viz_spy_logging_output(exp_lines, out_lines)
+    _check_logging_output(exp_lines, out_lines)
+
+
+def test_viz_imshow_binary_verbose(capsys):
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
+    viz_imshow(dpm, verbose=True)
+    exp_lines = (
+        "Converting the matrix to dense format...\n"
+        "Calling imshow()...\n"
+        "Slightly restyling the visualization...\n"
+        "Done.\n"
+    ).splitlines()
+    out_lines = capsys.readouterr().out.splitlines()
+    _check_logging_output(exp_lines, out_lines)
+
+
+def test_viz_imshow_notbinary_verbose(capsys):
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False)
+    viz_imshow(dpm, verbose=True)
+    exp_lines = (
+        "Converting the matrix to dense format...\n"
+        "Converting the matrix from numbers to colors...\n"
+        "Calling imshow()...\n"
+        "Slightly restyling the visualization...\n"
+        "Done.\n"
+    ).splitlines()
+    out_lines = capsys.readouterr().out.splitlines()
+    _check_logging_output(exp_lines, out_lines)
