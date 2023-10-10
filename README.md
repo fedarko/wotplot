@@ -65,6 +65,7 @@ from matplotlib import pyplot
 # (skipping the part where I loaded the genomes into memory as e1s and e2s...)
 
 # Create the matrix (leaving binary=True by default)
+# This takes about 3 minutes on a laptop with 8 GB of RAM
 em = wotplot.DotPlotMatrix(e1s, e2s, 20, verbose=True)
 
 # Visualize the matrix using matplotlib's spy() function
