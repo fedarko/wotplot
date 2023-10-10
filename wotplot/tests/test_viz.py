@@ -1,4 +1,11 @@
+# Tests the visualization functions. Note that testing matplotlib images is
+# kind of a pain (https://stackoverflow.com/q/27948126), so these tests mostly
+# boil down to checking that the correct logging output gets written -- this is
+# sufficient for checking that we are going to the desired branches of the
+# code, etc. There's more work that could be done to polish these tests, of
+# course, but I think this should be sufficient for now.
 import pytest
+from matplotlib import pyplot
 from wotplot import DotPlotMatrix, FWD, REV, BOTH
 from wotplot._viz import viz_spy, viz_imshow
 
@@ -113,3 +120,26 @@ def test_viz_imshow_notbinary_verbose(capsys):
     ).splitlines()
     out_lines = capsys.readouterr().out.splitlines()
     _check_logging_output(exp_lines, out_lines)
+
+
+def test_viz_imshow_title_and_predefined_ax():
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
+    t = "Hi I'm a title!"
+    fig, ax = pyplot.subplots()
+    viz_imshow(dpm, title=t, ax=ax)
+    assert ax.get_title() == t
+    # while we're at it, check that the x and y labels were correctly set
+    assert ax.get_xlabel() == "$s_1$ (8 nt) \u2192"
+    assert ax.get_ylabel() == "$s_2$ (7 nt) \u2192"
+
+
+def test_viz_spy_title_and_predefined_ax():
+    # like the above test, but with viz_spy()
+    # sorry for the duplicated code, this is a bit sloppy
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
+    t = "Hi I'm a title!"
+    fig, ax = pyplot.subplots()
+    viz_spy(dpm, title=t, ax=ax)
+    assert ax.get_title() == t
+    assert ax.get_xlabel() == "$s_1$ (8 nt) \u2192"
+    assert ax.get_ylabel() == "$s_2$ (7 nt) \u2192"
