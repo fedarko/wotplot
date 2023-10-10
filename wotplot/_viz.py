@@ -69,6 +69,7 @@ def _create_fig_and_ax_if_needed(ax=None):
 def viz_spy(
     m,
     markersize=0.5,
+    force_binary=False,
     color="black",
     nbcmap=NBCMAP_HEX,
     title=None,
@@ -91,17 +92,24 @@ def viz_spy(
         Size of the markers drawn to represent each match cell. You may want to
         adjust this depending on the size of your matrix.
 
+    force_binary: bool
+        If the input matrix is not binary, you can set this parameter to True
+        to force the visualization of it as a binary matrix (i.e. with each
+        match cell being the same color). For large matrices, this can save a
+        few seconds.
+
     color: color
         The color to use for each match cell. Must be in a format accepted by
         matplotlib; see
         https://matplotlib.org/stable/gallery/color/color_demo.html for
         details. (Unlike the colors we use in imshow(), RGB triplets where the
         entries range from 0 to 255 are not allowed here.) Only used if
-        visualizing a binary matrix.
+        visualizing a binary matrix and/or if force_binary is True.
 
     nbcmap: dict
         Maps 0, 1, -1, and 2 to colors (same possible formats as "color").
-        Only used if visualizing a matrix that is not binary.
+        Only used if visualizing a matrix that is not binary and if
+        force_binary is False.
 
     title: str or None
         If this is not None, then it'll be set as the title of the plot.
@@ -124,15 +132,11 @@ def viz_spy(
         returned if an axes object (the ax parameter above) was not provided;
         if an axes object was provided (i.e. "ax is not None"), then we won't
         return anything.
-
-    Notes
-    -----
-    TODO case on binary and use color accordingly like in imshow
     """
     _mlog = get_logger(verbose)
 
     fig, ax = _create_fig_and_ax_if_needed(ax)
-    if not m.binary:
+    if not m.binary and not force_binary:
         # spy() doesn't, as far as i can tell, have an easy way to set the
         # background color. We can use set_facecolor(), though -- see
         # https://stackoverflow.com/a/23645437.
