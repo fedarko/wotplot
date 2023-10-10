@@ -1,6 +1,7 @@
+import pytest
 import numpy as np
 from wotplot import DotPlotMatrix
-from wotplot._viz import _convert_to_colors, NBCMAP_255
+from wotplot._viz import _convert_to_colors, _get_yarr, NBCMAP_255
 
 
 def test_convert_to_colors_not_binary():
@@ -35,3 +36,11 @@ def test_convert_to_colors_binary():
             ]
         ),
     )
+
+
+def test_get_yarr():
+    assert _get_yarr("BT") == "\u2192"
+    assert _get_yarr("TB") == "\u2190"
+    with pytest.raises(ValueError) as ei:
+        _get_yarr("BB")
+    assert str(ei.value) == "Unrecognized yorder?: BB"
