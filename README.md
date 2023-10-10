@@ -69,6 +69,7 @@ from matplotlib import pyplot
 em = wotplot.DotPlotMatrix(e1s, e2s, 20, verbose=True)
 
 # Visualize the matrix using matplotlib's spy() function
+# This takes about 2 seconds on a laptop with 8 GB of RAM
 fig, ax = pyplot.subplots()
 wotplot.viz_spy(
     em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax
