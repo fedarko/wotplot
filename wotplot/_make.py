@@ -1,6 +1,6 @@
-import time
 from pydivsufsort import divsufsort
 from ._scipy_sm_constructor_getter import get_sm_constructor
+from ._logging import get_logger
 
 DNA = "ACGT"
 RCDNA = "TGCA"
@@ -280,11 +280,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         ss1 and ss2 are versions of s1 and s2, respectively, converted to
         strings.
     """
-    t0 = time.time()
-
-    def _mlog(s):
-        if verbose:
-            print(f"{time.time() - t0:,.2f}s: {s}", flush=True)
+    _mlog = get_logger(verbose)
 
     # First, verify that the SciPy version installed is good
     smc = get_sm_constructor()
@@ -318,9 +314,10 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         s1, s2, k, s1_sa, s2_sa, matches, yorder=yorder, binary=binary
     )
     _mlog(f"found {len(matches):,} forward match cell(s).")
-    # I'm not sure if this is needed, but we might as well be very clear that
-    # "hey this big chunky suffix array is now unnecessary please garbage
-    # collect it"
+    # I'm not sure if this makes a difference (is Python smart enough to
+    # immediately garbage-collect s2_sa at this point?), but we might as
+    # well be very clear that "hey this big chunky suffix array is now
+    # unnecessary please garbage collect it"
     del s2_sa
 
     _mlog("computing ReverseComplement(s2)...")
@@ -341,6 +338,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         s2isrc=True,
     )
     _mlog(f"found {len(matches):,} total match cell(s).")
+    del s1_sa
     del rcs2_sa
     density = 100 * (len(matches) / (mat_shape[0] * mat_shape[1]))
     _mlog(f"density = {density:.2f}%.")

@@ -9,6 +9,15 @@
 wotplot is a small Python library for creating and visualizing
 [dot plot matrices](https://en.wikipedia.org/wiki/Dot_plot_(bioinformatics)).
 
+Notably, wotplot creates the _exact_ dot plot matrix, describing
+(given some _k_ ≥ 1) every single
+[_k_-mer](https://en.wikipedia.org/wiki/K-mer) match between two sequences.
+Many tools for visualizing dot plots create only an approximation of this matrix
+(containing only the "best" matches) in order to save time; wotplot uses a few
+optimizations to make the creation and visualization of the
+exact dot plot matrix feasible even for entire prokaryotic genomes. Having this
+exact matrix can be useful for a variety of downstream analyses.
+
 ## Quick examples
 
 ### Small dataset
@@ -56,9 +65,11 @@ from matplotlib import pyplot
 # (skipping the part where I loaded the genomes into memory as e1s and e2s...)
 
 # Create the matrix (leaving binary=True by default)
+# This takes about 3 minutes on a laptop with 8 GB of RAM
 em = wotplot.DotPlotMatrix(e1s, e2s, 20, verbose=True)
 
 # Visualize the matrix using matplotlib's spy() function
+# This takes about 2 seconds on a laptop with 8 GB of RAM
 fig, ax = pyplot.subplots()
 wotplot.viz_spy(
     em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax
@@ -70,7 +81,7 @@ fig.set_size_inches(8, 8)
 
 ![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/img/ecoli_example_dotplot.png)
 
-When visualizing a binary matrix (and/or using `viz_spy()`), the default
+When visualizing a binary matrix, the default
 colorscheme uses black cells (⬛) to indicate matches (forward,
 reverse-complementary, or palindromic)
 and white cells (⬜) to indicate no matches.
@@ -124,7 +135,7 @@ for some very informal benchmarking results performed on a laptop with ~8 GB of 
 
 Even on this system, the library can handle reasonably large sequences: in the biggest example,
 the notebook demonstrates computing the dot plot of two random 100 Mbp sequences
-(using _k_ = 20) in 54 minutes and 12.45 seconds.
+(using _k_ = 20) in ~50 minutes.
 Dot plots of shorter sequences (e.g. 100 kbp or less) usually take only a few seconds to
 compute, at least for reasonably large values of _k_.
 

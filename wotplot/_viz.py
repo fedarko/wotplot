@@ -1,14 +1,36 @@
 import numpy as np
 from matplotlib import pyplot
+from ._make import FWD, REV, BOTH
+from ._logging import get_logger
 
-# Colormap based on Figure 6.20 in Chapter 6 of Bioinformatics Algorithms
+# Colormaps based on Figure 6.20 in Chapter 6 of Bioinformatics Algorithms
 # (Compeau & Pevzner), ed. 2
-NBCMAP = {
+NBCMAP_255 = {
     0: [255, 255, 255],
-    1: [255, 0, 0],
-    -1: [0, 0, 255],
-    2: [100, 0, 100],
+    FWD: [255, 0, 0],
+    REV: [0, 0, 255],
+    BOTH: [100, 0, 100],
 }
+NBCMAP_HEX = {
+    0: "#ffffff",
+    FWD: "#ff0000",
+    REV: "#0000ff",
+    BOTH: "#640064",
+}
+
+DRAW_ORDER = (FWD, REV, BOTH)
+
+
+def _get_yarr(yorder):
+    if yorder == "BT":
+        # -->, which gets turned into an up arrow when we rotate the yax label
+        yarr = "\u2192"
+    elif yorder == "TB":
+        # <--, which gets turned into a down arrow when we rotate the yax label
+        yarr = "\u2190"
+    else:
+        raise ValueError(f"Unrecognized yorder?: {yorder}")
+    return yarr
 
 
 def style_viz_ax(ax, m, title=None):
@@ -38,14 +60,7 @@ def style_viz_ax(ax, m, title=None):
     ax.set_yticklabels([])
 
     ax.set_xlabel(f"$s_1$ ({len(m.s1):,} nt) \u2192", fontsize=18)
-    if m.yorder == "BT":
-        # -->, which gets turned into an up arrow when we rotate the yax label
-        yarr = "\u2192"
-    elif m.yorder == "TB":
-        # <--, which gets turned into a down arrow when we rotate the yax label
-        yarr = "\u2190"
-    else:
-        raise ValueError(f"Unrecognized yorder?: {m.yorder}")
+    yarr = _get_yarr(m.yorder)
     ax.set_ylabel(f"$s_2$ ({len(m.s2):,} nt) {yarr}", fontsize=18)
 
     if title is not None:
@@ -58,13 +73,23 @@ def _create_fig_and_ax_if_needed(ax=None):
     return None, ax
 
 
-def viz_spy(m, markersize=0.5, color="black", title=None, ax=None, **kwargs):
+def viz_spy(
+    m,
+    markersize=0.5,
+    force_binary=False,
+    color="black",
+    nbcmap=NBCMAP_HEX,
+    draw_order=DRAW_ORDER,
+    title=None,
+    ax=None,
+    verbose=False,
+    **kwargs,
+):
     """Visualizes a DotPlotMatrix object using matplotlib's spy().
 
-    This should be much more performant than viz_imshow(). However, there are
-    some limitations: match cells can only be drawn with a single color, even
-    for matrices that are not binary; and you may want to adjust the markersize
-    based on the size of your matrix and desired resolution.
+    This should be much more performant than viz_imshow(). However, the use of
+    a fixed markersize can require manual adjustment based on the size of your
+    matrix and desired resolution.
 
     Parameters
     ----------
@@ -75,11 +100,35 @@ def viz_spy(m, markersize=0.5, color="black", title=None, ax=None, **kwargs):
         Size of the markers drawn to represent each match cell. You may want to
         adjust this depending on the size of your matrix.
 
+    force_binary: bool
+        If the input matrix is not binary, you can set this parameter to True
+        to force the visualization of it as a binary matrix (i.e. with each
+        match cell being the same color). For large matrices, this can save a
+        few seconds.
+
     color: color
-        The color to use for each match cell. This should be in a format
-        accepted by matplotlib; see
+        The color to use for each match cell. Must be in a format accepted by
+        matplotlib; see
         https://matplotlib.org/stable/gallery/color/color_demo.html for
-        details.
+        details. (Unlike the colors we use in imshow(), RGB triplets where the
+        entries range from 0 to 255 are not allowed here.) Only used if
+        visualizing a binary matrix and/or if force_binary is True.
+
+    nbcmap: dict
+        Maps 0, 1, -1, and 2 to colors (of the same possible formats as the
+        above "color" parameter). Only used if visualizing a matrix that is
+        not binary and if force_binary is False.
+
+    draw_order: iterable
+        If the input matrix is not binary, we will draw the matrix's match
+        cells as distinct colors by calling spy() multiple times (once per
+        match type). If your markersize is large enough that adjacent cells
+        in the matrix can overlap, then the order in which we call spy()
+        will impact which colors are drawn "on top" of others in the
+        visualization (with later colors ending up on top). You can change the
+        drawing order by adjusting this parameter (the default draws forward
+        matches, then reverse-complementary matches, then palindromic matches).
+        I don't think this should make a big difference in most cases.
 
     title: str or None
         If this is not None, then it'll be set as the title of the plot.
@@ -87,6 +136,10 @@ def viz_spy(m, markersize=0.5, color="black", title=None, ax=None, **kwargs):
     ax: matplotlib.axes.Axes or None
         If this is not None, then we'll add the visualization within this
         Axes object.
+
+    verbose: bool
+        If True, prints information about time taken. Useful for performance
+        benchmarking.
 
     **kwargs
         Will be passed to spy().
@@ -99,10 +152,67 @@ def viz_spy(m, markersize=0.5, color="black", title=None, ax=None, **kwargs):
         if an axes object was provided (i.e. "ax is not None"), then we won't
         return anything.
     """
+    _mlog = get_logger(verbose)
 
     fig, ax = _create_fig_and_ax_if_needed(ax)
-    ax.spy(m.mat, markersize=markersize, color=color, **kwargs)
+    if not m.binary and not force_binary:
+        if len(draw_order) != 3 or set(draw_order) != set(DRAW_ORDER):
+            raise ValueError(
+                f"draw_order must include exactly 3 elements ({FWD}, {REV}, "
+                f"and {BOTH} in any order)."
+            )
+        # With viz_imshow(), we manually add one RGB triplet per cell
+        # (for both match and non-match cells), meaning we don't have to do
+        # anything special to set the color of zero cells. In this function,
+        # however, we need to explicitly say "okay, set the background color to
+        # whatever nbcmap[0] is."
+        #
+        # spy() doesn't, as far as I can tell, have an easy way to set the
+        # background color. We can use set_facecolor(), though -- see
+        # https://stackoverflow.com/a/23645437.
+        #
+        # The most common scenario, I think, will be that the user has default
+        # matplotlib styles set (in which the default background color is
+        # white) and nbcmap[0] is set to its default (also of white). To save
+        # time, I check to see that this is the case -- if so, I don't bother
+        # calling set_facecolor(). For all other cases, though, I will call
+        # set_facecolor(). (We could try to avoid more redundant uses of this
+        # function by converting nbcmap[0] to an RGB triplet to simplify
+        # comparison with the output of get_facecolor(), but I'm not sure how
+        # much time that approach would even save...)
+        if nbcmap[0] != NBCMAP_HEX[0] or ax.get_facecolor() != (1, 1, 1, 1):
+            _mlog(f"Setting background color to {nbcmap[0]}...")
+            ax.set_facecolor(nbcmap[0])
+            _mlog("Done setting background color.")
+
+        # PERF: we could speed this up by only calling spy() for match cell
+        # types that actually exist in the matrix (e.g. if there aren't any
+        # palindromic matches, skip that spy() call). The most efficient way to
+        # do this, I think, would be assigning properties to each matrix during
+        # construction that describe the match cell types this matrix has --
+        # however, calling spy() with an empty set of values is relatively
+        # quick, so this isn't super important.
+        for val in draw_order:
+            _mlog(f'Visualizing "{val}" cells with spy()...')
+            # Filter the matrix to just the cells of a certain match type.
+            # https://stackoverflow.com/a/22077616
+            # This is somewhat inefficient -- ideally we'd do the filtering in
+            # one pass, or somehow make use of the information we already have
+            # from matrix construction about where these match cells are.
+            ax.spy(
+                m.mat.multiply(m.mat == val),
+                markersize=markersize,
+                color=nbcmap[val],
+                **kwargs,
+            )
+            _mlog(f'Done visualizing "{val}" cells.')
+    else:
+        _mlog("Visualizing all match cells with spy()...")
+        ax.spy(m.mat, markersize=markersize, color=color, **kwargs)
+        _mlog("Done visualizing all match cells.")
+    _mlog("Slightly restyling the visualization...")
     style_viz_ax(ax, m, title)
+    _mlog("Done.")
     if fig is not None:
         return fig, ax
 
@@ -120,7 +230,15 @@ def _convert_to_colors(dm, nbcmap):
     return cm.astype("uint8")
 
 
-def viz_imshow(m, cmap="gray_r", nbcmap=NBCMAP, title=None, ax=None, **kwargs):
+def viz_imshow(
+    m,
+    cmap="gray_r",
+    nbcmap=NBCMAP_255,
+    title=None,
+    ax=None,
+    verbose=False,
+    **kwargs,
+):
     """Visualizes a DotPlotMatrix object using matplotlib's imshow().
 
     IMPORTANT NOTE: This will convert the sparse matrix contained in the
@@ -151,6 +269,10 @@ def viz_imshow(m, cmap="gray_r", nbcmap=NBCMAP, title=None, ax=None, **kwargs):
         If this is not None, then we will add the visualization within this
         Axes object and not bother creating a new figure and axes object.
 
+    verbose: bool
+        If True, prints information about time taken. Useful for performance
+        benchmarking.
+
     **kwargs
         Will be passed to imshow().
 
@@ -167,15 +289,22 @@ def viz_imshow(m, cmap="gray_r", nbcmap=NBCMAP, title=None, ax=None, **kwargs):
     The default nbcmap is based on Figure 6.20 in Chapter 6 of Bioinformatics
     Algorithms (Compeau & Pevzner), edition 2.
     """
+    _mlog = get_logger(verbose)
     fig, ax = _create_fig_and_ax_if_needed(ax)
 
+    _mlog("Converting the matrix to dense format...")
     dense_mat = m.mat.toarray()
     if not m.binary:
+        _mlog("Converting the matrix from numbers to colors...")
         dense_mat = _convert_to_colors(dense_mat, nbcmap)
+        _mlog("Calling imshow()...")
         ax.imshow(dense_mat, **kwargs)
     else:
+        _mlog("Calling imshow()...")
         ax.imshow(dense_mat, cmap=cmap, **kwargs)
+    _mlog("Slightly restyling the visualization...")
     style_viz_ax(ax, m, title)
+    _mlog("Done.")
 
     # Only return fig and ax if _create_fig_and_ax_if_needed() created them
     # (i.e. the user did not provide their own "ax" object)
