@@ -185,10 +185,13 @@ def viz_spy(
             ax.set_facecolor(nbcmap[0])
             _mlog("Done setting background color.")
 
-        # PERF: we could maybe speed this up by scanning the matrix and
-        # searching to make sure there are cells of each type before calling
-        # spy(). However, I'm not sure if the scanning operations will take
-        # longer than just biting the bullet and calling spy() three times :|
+        # PERF: we could speed this up by only calling spy() for match cell
+        # types that actually exist in the matrix (e.g. if there aren't any
+        # palindromic matches, skip that spy() call). The most efficient way to
+        # do this, I think, would be assigning properties to each matrix during
+        # construction that describe the match cell types this matrix has --
+        # however, calling spy() with an empty set of values is relatively
+        # quick, so this isn't super important.
         for val in draw_order:
             _mlog(f'Visualizing "{val}" cells with spy()...')
             # Filter the matrix to just the cells of a certain match type.
