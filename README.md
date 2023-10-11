@@ -135,7 +135,7 @@ for some very informal benchmarking results performed on a laptop with ~8 GB of 
 
 Even on this system, the library can handle reasonably large sequences: in the biggest example,
 the notebook demonstrates computing the dot plot of two random 100 Mbp sequences
-(using _k_ = 20) in 54 minutes and 12.45 seconds.
+(using _k_ = 20) in ~50 minutes.
 Dot plots of shorter sequences (e.g. 100 kbp or less) usually take only a few seconds to
 compute, at least for reasonably large values of _k_.
 
