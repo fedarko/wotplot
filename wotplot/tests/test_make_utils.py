@@ -4,6 +4,7 @@ from wotplot._make import (
     _validate_and_stringify_seq,
     _validate_k,
     _validate_yorder,
+    _get_row,
 )
 
 
@@ -72,3 +73,15 @@ def test_validate_yorder_bad():
         with pytest.raises(ValueError) as ei:
             _validate_yorder(b)
         assert str(ei.value) == "yorder must be 'BT' or 'TB'"
+
+
+def test_get_row_good():
+    for r in range(0, 5):
+        assert _get_row(r, 6, "TB") == r
+        assert _get_row(r, 6, "BT") == 5 - r
+
+
+def test_get_row_bad_yorder():
+    with pytest.raises(ValueError) as ei:
+        _get_row(3, 6, "BB")
+    assert str(ei.value) == "yorder must be 'BT' or 'TB'"

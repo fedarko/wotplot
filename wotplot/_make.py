@@ -75,16 +75,41 @@ def _get_suffix_array(seq):
 
 
 def _get_row(position_in_s2, num_rows, yorder):
+    """Converts a position in the sequence s2 to a row index in the matrix.
+
+    This is dependent on the yorder of the matrix, and easy to mess up
+    accidentally -- which is why I've abstracted this to its own function.
+
+    Parameters
+    ----------
+    position_in_s2: int
+        The position in s2 to convert to a row index. This should be
+        0-indexed and less than num_rows.
+
+    num_rows: int
+        The number of rows in the matrix. This should be equal to |s2| - k + 1.
+
+    yorder: str
+        Should be "TB" (if s2 is oriented from top -> bottom) or "BT" (if s2 is
+        oriented from bottom -> top).
+
+    Returns
+    -------
+    int
+        The row index of position_in_s2 in the matrix.
+
+    Raises
+    ------
+    ValueError
+        If yorder is not "TB" or "BT".
+    """
+    _validate_yorder(yorder)
     # (Note that we assume that position_in_s2 < num_rows. It should be a
     # 0-indexed position.)
     if yorder == "TB":
         return position_in_s2
-    elif yorder == "BT":
-        return num_rows - position_in_s2 - 1
     else:
-        # should never happen, assuming this is called from _make() after
-        # validating inputs
-        raise ValueError(f"Unrecognized yorder: {yorder}")
+        return num_rows - position_in_s2 - 1
 
 
 def _fill_match_cells(
