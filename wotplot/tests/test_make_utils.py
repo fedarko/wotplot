@@ -26,23 +26,6 @@ def test_rc_badchar():
     assert rc("T G") == "C A"
 
 
-# def test_get_kmer_dd_good():
-#     dd = get_kmer_dd("ACGTTACTC", 2)
-#     # ACGTTACTC
-#     # 012345678
-#     assert dd == {
-#         "AC": [0, 5],
-#         "CG": [1],
-#         "GT": [2],
-#         "TT": [3],
-#         "TA": [4],
-#         "CT": [6],
-#         "TC": [7],
-#     }
-#     assert get_kmer_dd("", 4) == {}
-#     assert get_kmer_dd("CCT", 3) == {"CCT": [0]}
-
-
 def test_validate_and_stringify_good():
     _validate_and_stringify_seq("A", 1)
     _validate_and_stringify_seq("CTG", 2)
