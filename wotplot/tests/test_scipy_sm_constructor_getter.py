@@ -20,7 +20,7 @@ def test_get_vnums_good():
 
 
 def test_get_vnums_bad():
-    for bv in ("a.b", "evil", "1 2 3", ""):
+    for bv in ("56", "1", "a.b", "evil", "1 2 3", ""):
         with pytest.raises(RuntimeError) as ei:
             get_vnums(bv)
         assert str(ei.value) == (
