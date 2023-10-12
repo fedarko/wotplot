@@ -83,8 +83,8 @@ def _get_row(position_in_s2, num_rows, yorder):
     Parameters
     ----------
     position_in_s2: int
-        The position in s2 to convert to a row index. This should be
-        0-indexed and less than num_rows.
+        The position in s2 to convert to a row index. This should be a
+        0-indexed position, so it should always be less than num_rows.
 
     num_rows: int
         The number of rows in the matrix. This should be equal to |s2| - k + 1.
@@ -101,15 +101,19 @@ def _get_row(position_in_s2, num_rows, yorder):
     Raises
     ------
     ValueError
-        If yorder is not "TB" or "BT".
+        - If yorder is not "TB" or "BT".
+        - If position_in_s2 >= num_rows.
     """
     _validate_yorder(yorder)
-    # (Note that we assume that position_in_s2 < num_rows. It should be a
-    # 0-indexed position.)
-    if yorder == "TB":
-        return position_in_s2
+    if position_in_s2 < num_rows:
+        if yorder == "TB":
+            return position_in_s2
+        else:
+            return num_rows - position_in_s2 - 1
     else:
-        return num_rows - position_in_s2 - 1
+        raise ValueError(
+            f"s2 pos ({position_in_s2:,}) >= # rows ({num_rows:,})?"
+        )
 
 
 def _fill_match_cells(

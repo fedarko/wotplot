@@ -85,3 +85,17 @@ def test_get_row_bad_yorder():
     with pytest.raises(ValueError) as ei:
         _get_row(3, 6, "BB")
     assert str(ei.value) == "yorder must be 'BT' or 'TB'"
+
+
+def test_get_row_position_geq_num_rows():
+    with pytest.raises(ValueError) as ei:
+        _get_row(6, 6, "BT")
+    assert str(ei.value) == "s2 pos (6) >= # rows (6)?"
+
+    with pytest.raises(ValueError) as ei:
+        _get_row(7, 6, "BT")
+    assert str(ei.value) == "s2 pos (7) >= # rows (6)?"
+
+    with pytest.raises(ValueError) as ei:
+        _get_row(12345, 6, "BT")
+    assert str(ei.value) == "s2 pos (12,345) >= # rows (6)?"
