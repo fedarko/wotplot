@@ -8,6 +8,9 @@ from wotplot._make import (
     _get_suffix_array,
     _fill_match_cells,
 )
+# technically these are also defined in _make (as of writing), but they are
+# intended to be imported from the top-level namespace; so let's do that here.
+from wotplot import FWD, REV
 
 
 def test_rc_good():
@@ -116,7 +119,7 @@ def test_fill_match_cells():
     # {(np.int32(5), np.int32(0)): FWD, ...}, at least as of writing.
     # This is not a problem, since np.int32(5) == 5, so the rest of the code
     # should still work.
-    assert md == {(5, 0): 1, (2, 2): 1, (3, 3): 1}
+    assert md == {(5, 0): FWD, (2, 2): FWD, (3, 3): FWD}
 
     # "Extend" md with reverse-complementary matches
     s2r = rc(s2)
@@ -124,4 +127,10 @@ def test_fill_match_cells():
     _fill_match_cells(
         s1, s2r, 2, sa1, sa2r, md, yorder="TB", binary=False, s2isrc=True
     )
-    assert md == {(5, 0): 1, (2, 2): 1, (3, 3): 1, (2, 0): -1, (5, 2): -1}
+    assert md == {
+        (5, 0): FWD,
+        (2, 2): FWD,
+        (3, 3): FWD,
+        (2, 0): REV,
+        (5, 2): REV,
+    }
