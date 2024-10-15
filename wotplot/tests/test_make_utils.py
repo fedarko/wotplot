@@ -8,6 +8,7 @@ from wotplot._make import (
     _get_suffix_array,
     _fill_match_cells,
 )
+
 # technically these are also defined in _make (as of writing), but they are
 # intended to be imported from the top-level namespace; so let's do that here.
 from wotplot import FWD, REV
