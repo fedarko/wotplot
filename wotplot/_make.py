@@ -170,23 +170,19 @@ def _fill_match_cells(
     None
         (The main "side effect" of this function is updating md; see above.)
 
-    Example
-    -------
-    >>> s1 = "ACGTC"
-    >>> s2 = "AAGTCAC"
-    >>> sa1 = _get_suffix_array(s1)
-    >>> sa2 = _get_suffix_array(s2)
-    >>> md = {}
-    >>> _fill_match_cells(s1, s2, 2, sa1, sa2, md, yorder="TB", binary=False)
-    >>> md
-    {(5, 0): 1, (2, 2): 1, (3, 3): 1}
-    >>> s2r = rc(s2)
-    >>> sa2r = _get_suffix_array(s2r)
-    >>> _fill_match_cells(
-    ...     s1, s2r, 2, sa1, sa2r, md, yorder="TB", binary=False, s2isrc=True
-    ... )
-    >>> md
-    {(5, 0): 1, (2, 2): 1, (3, 3): 1, (2, 0): -1, (5, 2): -1}
+    Notes
+    -----
+    See wotplot/tests/test_make_utils.py for an example of using this function.
+
+    Historical context: I used to have a doctest here, but then numpy 2
+    changed how np.int32 types (present in pydivsufsort's output suffix arrays)
+    were represented from "7" to "np.int32(7)", which broke the doctest for
+    systems running numpy 2. I couldn't find a good general doctest solution
+    that worked for both numpy < 2 and numpy 2 (and wasn't ugly).
+
+    Just for reference, this sort of problem w/r/t numpy 2 is documented in
+    https://github.com/OSGeo/grass/issues/4100, and the general brittleness
+    inherent to doctests is discussed at https://stackoverflow.com/q/13473971.
     """
     # i and j are indices in the two suffix arrays. we'll set them to 1 in
     # order to skip the first entry in the suffix array (which will always

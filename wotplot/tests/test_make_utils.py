@@ -5,6 +5,8 @@ from wotplot._make import (
     _validate_k,
     _validate_yorder,
     _get_row,
+    _get_suffix_array,
+    _fill_match_cells,
 )
 
 
@@ -99,3 +101,22 @@ def test_get_row_position_geq_num_rows():
     with pytest.raises(ValueError) as ei:
         _get_row(12345, 6, "BT")
     assert str(ei.value) == "s2 pos (12,345) >= # rows (6)?"
+
+
+def test_fill_match_cells():
+    s1 = "ACGTC"
+    s2 = "AAGTCAC"
+    sa1 = _get_suffix_array(s1)
+    sa2 = _get_suffix_array(s2)
+    md = {}
+
+    _fill_match_cells(s1, s2, 2, sa1, sa2, md, yorder="TB", binary=False)
+    assert md == {(5, 0): 1, (2, 2): 1, (3, 3): 1}
+
+    # "Extend" md with reverse-complementary matches
+    s2r = rc(s2)
+    sa2r = _get_suffix_array(s2r)
+    _fill_match_cells(
+        s1, s2r, 2, sa1, sa2r, md, yorder="TB", binary=False, s2isrc=True
+    )
+    assert md == {(5, 0): 1, (2, 2): 1, (3, 3): 1, (2, 0): -1, (5, 2): -1}
