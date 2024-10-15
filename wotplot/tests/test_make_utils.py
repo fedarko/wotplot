@@ -111,6 +111,11 @@ def test_fill_match_cells():
     md = {}
 
     _fill_match_cells(s1, s2, 2, sa1, sa2, md, yorder="TB", binary=False)
+    # Note that the coordinates' types will be set based on the types present
+    # within the suffix array -- so repr(md) will, for numpy 2, be equal to
+    # {(np.int32(5), np.int32(0)): FWD, ...}, at least as of writing.
+    # This is not a problem, since np.int32(5) == 5, so the rest of the code
+    # should still work.
     assert md == {(5, 0): 1, (2, 2): 1, (3, 3): 1}
 
     # "Extend" md with reverse-complementary matches
