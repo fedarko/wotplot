@@ -161,3 +161,4 @@ cython_debug/
 
 scrap/
 docs/data/
+*.fxi

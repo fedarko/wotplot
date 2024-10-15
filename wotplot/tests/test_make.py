@@ -1,5 +1,7 @@
-import numpy as np
+import os
 import pytest
+import pyfastx
+import numpy as np
 from wotplot import DotPlotMatrix, MATCH, FWD, REV, BOTH
 
 
@@ -147,3 +149,52 @@ def test_make_bad_k():
         with pytest.raises(ValueError) as e:
             DotPlotMatrix("ACGTC", "ACCTC", b)
         assert str(e.value) == "k must be an integer \u2265 1"
+
+
+def test_make_self_dotplot_reuse_suffixarray(capsys):
+    f = pyfastx.Fasta(os.path.join("wotplot", "tests", "inputs", "test.fa"))
+    assert len(f) == 3
+    assert list(f.keys()) == ["r1", "r2", "r3"]
+    m = DotPlotMatrix(
+        f["r2"], f["r2"], 1, yorder="BT", binary=False, verbose=True
+    )
+    assert np.array_equal(
+        m.mat.toarray(),
+        np.array(
+            [
+                [-1, 0, 0, 1],
+                [0, 1, 1, 0],
+                [0, 1, 1, 0],
+                [1, 0, 0, -1],
+            ]
+        ),
+    )
+    assert (
+        "s1 and s2 are equal, so reusing s1's suffix array for s2..."
+        in capsys.readouterr().out
+    )
+
+
+def test_make_nonself_dotplot_dont_reuse_suffixarray(capsys):
+    f = pyfastx.Fasta(os.path.join("wotplot", "tests", "inputs", "test.fa"))
+    assert len(f) == 3
+    assert list(f.keys()) == ["r1", "r2", "r3"]
+    m = DotPlotMatrix(
+        f["r2"], f["r3"], 1, yorder="BT", binary=False, verbose=True
+    )
+    assert np.array_equal(
+        m.mat.toarray(),
+        np.array(
+            [
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+            ]
+        ),
+    )
+    assert (
+        "s1 and s2 are equal, so reusing s1's suffix array for s2..."
+        not in capsys.readouterr().out
+    )

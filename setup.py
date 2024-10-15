@@ -68,6 +68,10 @@ setup(
             # our CI to use later versions of black on the 3.7 build, but as a
             # hacky solution pinning black is fine
             "black < 22.10",
+            # some tests check that the code handles pyfastx.Sequence objects
+            # properly. However, actually using wotplot does not require
+            # that you install pyfastx
+            "pyfastx",
         ],
     },
     classifiers=classifiers,

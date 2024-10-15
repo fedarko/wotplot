@@ -332,8 +332,18 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     _mlog("computing suffix array for s1...")
     s1_sa = _get_suffix_array(s1)
 
-    _mlog("computing suffix array for s2...")
-    s2_sa = _get_suffix_array(s2)
+    if s1 == s2:
+        # Save an unnecessary extra call to _get_suffix_array().
+        # Note that pyfastx.Sequence objects, as of writing, don't work well
+        # with python equality checking (so if "f" is a pyfastx.Fasta object,
+        # f[0] != f[0] for some reason). However, since we've now converted
+        # s1 and s2 to strings in _validate_and_stringify_seq(), this should
+        # not be a problem, so we can take advantage of this speedup.
+        _mlog("s1 and s2 are equal, so reusing s1's suffix array for s2...")
+        s2_sa = s1_sa
+    else:
+        _mlog("computing suffix array for s2...")
+        s2_sa = _get_suffix_array(s2)
 
     # Find k-mers that are shared between both strings (not considering
     # reverse-complementing)
