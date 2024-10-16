@@ -27,6 +27,14 @@ def get_sm_constructor():
     This is done based on the version of SciPy installed. It will probably
     break eventually, but for now it works and allows us to support Python
     3.6 through 3.11.
+
+    Note about testing: as of writing, if you run wotplot's test suite once,
+    then one of the branches in this function will be uncovered (depending
+    on what version of SciPy you have installed). However, we use GitHub
+    Actions to test wotplot on multiple versions of Python (causing different
+    SciPy versions to be installed) -- since the coverage reports from these
+    test runs are merged together in CodeCov, this ensures that both branches
+    of this function are covered after running the full CI.
     """
     major_num, minor_num = get_vnums(scipy.__version__)
     if major_num >= 2 or (major_num == 1 and minor_num >= 8):
