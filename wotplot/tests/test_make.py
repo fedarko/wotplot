@@ -1,6 +1,4 @@
-import os
 import pytest
-import pyfastx
 import numpy as np
 from wotplot import DotPlotMatrix, MATCH, FWD, REV, BOTH
 
