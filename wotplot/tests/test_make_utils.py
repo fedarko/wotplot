@@ -1,3 +1,4 @@
+import pydivsufsort
 import pytest
 from wotplot._make import (
     rc,
@@ -110,11 +111,10 @@ def test_get_row_position_geq_num_rows():
 def test_fill_match_cells():
     s1 = "ACGTC"
     s2 = "AAGTCAC"
-    sa1 = _get_suffix_array(s1)
-    sa2 = _get_suffix_array(s2)
+    csfwd = pydivsufsort.common_substrings(s1, s2, 2)
     md = {}
 
-    _fill_match_cells(s1, s2, 2, sa1, sa2, md, yorder="TB", binary=False)
+    _fill_match_cells(s1, s2, 2, csfwd, md, yorder="TB", binary=False)
     # Note that the coordinates' types will be set based on the types present
     # within the suffix array -- so repr(md) will, for numpy 2, be equal to
     # {(np.int32(5), np.int32(0)): FWD, ...}, at least as of writing.
@@ -124,9 +124,9 @@ def test_fill_match_cells():
 
     # "Extend" md with reverse-complementary matches
     s2r = rc(s2)
-    sa2r = _get_suffix_array(s2r)
+    csrev = pydivsufsort.common_substrings(s1, s2r, 2)
     _fill_match_cells(
-        s1, s2r, 2, sa1, sa2r, md, yorder="TB", binary=False, s2isrc=True
+        s1, s2r, 2, csrev, md, yorder="TB", binary=False, s2isrc=True
     )
     assert md == {
         (5, 0): FWD,

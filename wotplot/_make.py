@@ -1,3 +1,4 @@
+import pydivsufsort
 from pydivsufsort import divsufsort
 from ._scipy_sm_constructor_getter import get_sm_constructor
 from ._logging import get_logger
@@ -117,6 +118,31 @@ def _get_row(position_in_s2, num_rows, yorder):
 
 
 def _fill_match_cells(
+    s1, s2, k, cs, md, yorder="BT", binary=True, s2isrc=False
+):
+    num_rows = len(s2) - k + 1
+    for match_run in cs:
+        num_cells_matched = match_run[2] - k + 1
+        for i in range(num_cells_matched):
+            x = match_run[0] + i
+            s2p = match_run[1] + i
+            if s2isrc:
+                s2p = len(s2) - s2p - k
+            y = _get_row(s2p, num_rows, yorder)
+            pos = (y, x)
+            if not binary:
+                if s2isrc:
+                    if pos in md:
+                        md[pos] = BOTH
+                    else:
+                        md[pos] = REV
+                else:
+                    md[pos] = FWD
+            else:
+                md[pos] = MATCH
+
+
+def _fill_match_cells_old(
     s1, s2, k, s1_sa, s2_sa, md, yorder="BT", binary=True, s2isrc=False
 ):
     """Finds the start positions of shared k-mers in two strings.
@@ -325,56 +351,27 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     # Algorithms does include this extra empty space, but we'll omit it here
     mat_shape = (len(s2) - k + 1, len(s1) - k + 1)
 
-    _mlog("computing suffix array for s1...")
-    s1_sa = _get_suffix_array(s1)
-
-    if s1 == s2:
-        # Save an unnecessary extra call to _get_suffix_array().
-        # Note that pyfastx.Sequence objects, as of writing, don't work well
-        # with python equality checking (so if "f" is a pyfastx.Fasta object,
-        # f[0] != f[0] for some reason). However, since we've now converted
-        # s1 and s2 to strings in _validate_and_stringify_seq(), this should
-        # not be a problem, so we can take advantage of this speedup.
-        _mlog("s1 and s2 are equal, so reusing s1's suffix array for s2...")
-        s2_sa = s1_sa
-    else:
-        _mlog("computing suffix array for s2...")
-        s2_sa = _get_suffix_array(s2)
-
-    # Find k-mers that are shared between both strings (not considering
-    # reverse-complementing)
+    # TODO: could probably avoid creating "matches" at all, and just populate
+    # the matrix directly using the output of common_substrings().
     matches = {}
     _mlog("finding forward matches between s1 and s2...")
-    _fill_match_cells(
-        s1, s2, k, s1_sa, s2_sa, matches, yorder=yorder, binary=binary
-    )
+    csfwd = pydivsufsort.common_substrings(s1, s2, limit=k)
+    _fill_match_cells(s1, s2, k, csfwd, matches, yorder=yorder, binary=binary)
     _mlog(f"found {len(matches):,} forward match cell(s).")
     # I'm not sure if this makes a difference (is Python smart enough to
-    # immediately garbage-collect s2_sa at this point?), but we might as
-    # well be very clear that "hey this big chunky suffix array is now
-    # unnecessary please garbage collect it"
-    del s2_sa
+    # immediately garbage-collect this at this point?), but let's be clear
+    del csfwd
 
     _mlog("computing ReverseComplement(s2)...")
     rcs2 = rc(s2)
-    _mlog("computing suffix array for ReverseComplement(s2)...")
-    rcs2_sa = _get_suffix_array(rcs2)
-
-    _mlog("finding matches between s1 and ReverseComplement(s2)...")
+    _mlog("finding reverse-complementary matches between s1 and s2...")
+    csrev = pydivsufsort.common_substrings(s1, rcs2, limit=k)
     _fill_match_cells(
-        s1,
-        rcs2,
-        k,
-        s1_sa,
-        rcs2_sa,
-        matches,
-        yorder=yorder,
-        binary=binary,
-        s2isrc=True,
+        s1, rcs2, k, csrev, matches, yorder=yorder, binary=binary, s2isrc=True
     )
     _mlog(f"found {len(matches):,} total match cell(s).")
-    del s1_sa
-    del rcs2_sa
+    del csrev
+
     density = 100 * (len(matches) / (mat_shape[0] * mat_shape[1]))
     _mlog(f"density = {density:.2f}%.")
 
