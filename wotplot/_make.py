@@ -203,7 +203,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     smc = get_sm_constructor()
 
     # Then validate the inputs
-    _mlog("validating inputs...")
+    _mlog("Validating inputs...")
     _validate_k(k)
     _validate_yorder(yorder)
     s1 = _validate_and_stringify_seq(s1, k)
@@ -218,22 +218,22 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     mat_shape = (len(s2) - k + 1, len(s1) - k + 1)
     matches = {}
 
-    _mlog("finding forward matches between s1 and s2...")
+    _mlog("Finding forward matches between s1 and s2...")
     _fill_match_cells(s1, s2, k, matches, yorder=yorder, binary=binary)
-    _mlog(f"found {len(matches):,} forward match cell(s).")
+    _mlog(f"Found {len(matches):,} forward match cell(s).")
 
-    _mlog("computing ReverseComplement(s2)...")
+    _mlog("Computing ReverseComplement(s2)...")
     rcs2 = rc(s2)
-    _mlog("finding reverse-complementary matches between s1 and s2...")
+    _mlog("Finding reverse-complementary matches between s1 and s2...")
     _fill_match_cells(
         s1, rcs2, k, matches, yorder=yorder, binary=binary, s2isrc=True
     )
-    _mlog(f"found {len(matches):,} total match cell(s).")
+    _mlog(f"Found {len(matches):,} total (fwd and/or RC) match cell(s).")
 
     density = 100 * (len(matches) / (mat_shape[0] * mat_shape[1]))
-    _mlog(f"density = {density:.2f}%.")
+    _mlog(f"Dot plot matrix density = {density:.2f}%.")
 
-    _mlog("converting match information to COO format inputs...")
+    _mlog("Converting match information to COO format inputs...")
 
     # Match the input data format expected by SciPy of (vals, (rows, cols)):
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
@@ -252,7 +252,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         mat_rows.append(r)
         mat_cols.append(c)
 
-    _mlog("creating sparse matrix from COO format inputs...")
+    _mlog("Creating sparse matrix from COO format inputs...")
     mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
-    _mlog("done creating the matrix.")
+    _mlog("Done creating the matrix.")
     return mat, s1, s2
