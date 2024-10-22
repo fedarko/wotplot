@@ -26,7 +26,7 @@ This example is adapted from Figure 6.20 (bottom right) in
 [_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org), edition 2.
 
 ```python
-import wotplot
+import wotplot as wp
 
 # Define our dataset
 s1 = "AGCAGGAGATAAACCTGT"
@@ -35,12 +35,12 @@ k = 3
 
 # Create the matrix (setting binary=False means we'll distinguish forward,
 # reverse-complementary, and palindromic matching k-mers from each other)
-m = wotplot.DotPlotMatrix(s1, s2, k, binary=False)
+m = wp.DotPlotMatrix(s1, s2, k, binary=False)
 
 # Convert the matrix to dense format and visualize it using matplotlib's
 # imshow() function (for large matrices where dense representations are
 # impractical, use viz_spy() instead; see below)
-wotplot.viz_imshow(m)
+wp.viz_imshow(m)
 ```
 
 ![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/img/small_example_dotplot.png)
@@ -59,19 +59,19 @@ and _E. coli_ O157:H7 ([from this assembly](https://www.ncbi.nlm.nih.gov/dataset
 I removed the two plasmid sequences from the O157:H7 assembly.
 
 ```python
-import wotplot
+import wotplot as wp
 from matplotlib import pyplot
 
 # (skipping the part where I loaded the genomes into memory as e1s and e2s...)
 
 # Create the matrix (leaving binary=True by default)
 # This takes about 3 minutes on a laptop with 8 GB of RAM
-em = wotplot.DotPlotMatrix(e1s, e2s, 20, verbose=True)
+em = wp.DotPlotMatrix(e1s, e2s, 20, verbose=True)
 
 # Visualize the matrix using matplotlib's spy() function
 # This takes about 2 seconds on a laptop with 8 GB of RAM
 fig, ax = pyplot.subplots()
-wotplot.viz_spy(
+wp.viz_spy(
     em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax
 )
 ax.set_xlabel(f"$E. coli$ K-12 substr. MG1655 ({len(e1s)/1e6:.2f} Mbp) \u2192")
