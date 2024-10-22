@@ -133,7 +133,10 @@ def _fill_match_cells(s1, s2, k, md, yorder="BT", binary=True, s2isrc=False):
 
     s2isrc: bool
         Either True (s2 is reverse-complemented) or False (s2 is not
-        reverse-complemented).
+        reverse-complemented). Importantly: if binary is False, you should
+        run the forward check (s1 vs. s2) as the "first pass," and run the
+        reverse-complementary check (s1. vs. RC(s2)) as the "second pass."
+        If you switch up the order, this will break palindrome detection.
 
     Returns
     -------
@@ -161,7 +164,14 @@ def _fill_match_cells(s1, s2, k, md, yorder="BT", binary=True, s2isrc=False):
             pos = (y, x)
             if not binary:
                 if s2isrc:
-                    if pos in md:
+                    # If we somehow see the same position represented multiple
+                    # times in the reverse matches, but it ONLY has reverse
+                    # matches, then keep it as a reverse match -- don't tag it
+                    # as palindromic erroneously. This should never ever happen
+                    # but I am being super paranoid here and adding a
+                    # "pos != REV" check just in case the behavior of
+                    # common_substrings() changes at some point.
+                    if pos in md and pos != REV:
                         md[pos] = BOTH
                     else:
                         md[pos] = REV
