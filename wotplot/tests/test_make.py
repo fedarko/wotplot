@@ -69,6 +69,41 @@ def test_make_simple_yorder_TB_and_not_binary():
     )
 
 
+def test_make_simple_acct():
+    # was initially going to be loaded from a FASTA file:
+    # https://github.com/fedarko/wotplot/blob/7397b184e8a6dbbc738e1e99f2e2fefd69c9b94f/wotplot/tests/test_make.py
+    dpm = DotPlotMatrix("ACCT", "ACCT", 1, yorder="BT", binary=False)
+    assert np.array_equal(
+        dpm.mat.toarray(),
+        np.array(
+            [
+                [-1, 0, 0, 1],
+                [0, 1, 1, 0],
+                [0, 1, 1, 0],
+                [1, 0, 0, -1],
+            ]
+        ),
+    )
+
+
+def test_make_simple_acct_ggggg():
+    # was initially going to be loaded from a FASTA file:
+    # https://github.com/fedarko/wotplot/blob/7397b184e8a6dbbc738e1e99f2e2fefd69c9b94f/wotplot/tests/test_make.py
+    dpm = DotPlotMatrix("ACCT", "GGGGG", 1, yorder="BT", binary=False)
+    assert np.array_equal(
+        dpm.mat.toarray(),
+        np.array(
+            [
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+            ]
+        ),
+    )
+
+
 def test_make_palindrome_not_binary():
     # AATCGATC
     # 01234567
