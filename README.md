@@ -106,9 +106,9 @@ pip install wotplot
 I've tried to make this library reasonably performant. The main optimizations
 include:
 
-- We use suffix arrays (courtesy of the lovely
-  [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort) library) in
-  order to reduce the memory footprint of finding shared _k_-mers.
+- We use the [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort)
+  library's [`common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)
+  algorithm to find _k_-mers that are shared between two sequences.
 
 - We store the dot plot matrix in sparse format (courtesy of
   [SciPy](https://docs.scipy.org/doc/scipy/reference/sparse.html)) in order to
@@ -135,7 +135,7 @@ for some very informal benchmarking results performed on a laptop with ~8 GB of 
 
 Even on this system, the library can handle reasonably large sequences: in the biggest example,
 the notebook demonstrates computing the dot plot of two random 100 Mbp sequences
-(using _k_ = 20) in ~50 minutes.
+(using _k_ = 20) in ~50 minutes. **TODO UPDATE RE FIXES**
 Dot plots of shorter sequences (e.g. 100 kbp or less) usually take only a few seconds to
 compute, at least for reasonably large values of _k_.
 
