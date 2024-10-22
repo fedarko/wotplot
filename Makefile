@@ -1,6 +1,8 @@
 # From https://github.com/fedarko/strainFlye/blob/main/Makefile
 
-.PHONY: test stylecheck style
+.PHONY: ci test stylecheck style
+
+ci: stylecheck test
 
 # The -B in the invocation of python prevents this from creating pycache stuff.
 # --cov-report xml is needed to make this visible to Codecov;
