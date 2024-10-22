@@ -239,7 +239,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
     #
     # The reason we don't just output mat_vals, mat_rows, and mat_cols from
-    # _find_match_cells() is that we need to be careful about duplicate cells.
+    # _fill_match_cells() is that we need to be careful about duplicate cells.
     # If binary is False, then we need to do this to identify palindromes; and
     # even if binary is True, we need to do this because including duplicate
     # entries will result in them being summed when creating the matrix
