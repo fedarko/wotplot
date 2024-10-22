@@ -196,6 +196,42 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
 
         ss1 and ss2 are versions of s1 and s2, respectively, converted to
         strings.
+
+    Notes
+    -----
+    Rather than create a sparse matrix and iteratively update it as we find
+    matches, we instead iteratively update a dict containing match information
+    and then provide this information all at once to a COO sparse matrix
+    constructor.
+
+    Question 1: why don't we incrementally update a matrix?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    I messed around with creating an empty LIL matrix and incrementally
+    updating that, rather than incrementally updating the "matches" dict,
+    but the LIL matrix approach was really inefficient -- it crashed for
+    the test E. coli example. This is probably because incremental updates
+    on a sparse matrix are inherently kind of slow, at least as of writing;
+    see https://stackoverflow.com/a/27771335 for some context.
+
+    Question 2: why bother with creating a dict of matches?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    The reason we don't just output mat_vals, mat_rows, and mat_cols from
+    _fill_match_cells() (and then pass them into the COO matrix constructor
+    directly) is that we need to be careful about duplicate cells. If we
+    store the results of _fill_match_cells() (comparing s1 vs. s2) in COO
+    format, then merging this with the results of the next run of
+    _fill_match_cells() (comparing s1 vs. RC(s2)) will be tricky.
+
+    Why do we need to do this comparison in the first place? If "binary" is
+    False, then we need to do it to identify palindromes (cells that are
+    both forward and reverse-complementary matches); and even if "binary" is
+    True, we need to do this because including duplicate entries will result in
+    them being summed when creating the matrix (see the SciPy docs link below).
+
+    References
+    ----------
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
     """
     _mlog = get_logger(verbose)
 
@@ -236,14 +272,6 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     _mlog("Converting match information to COO format inputs...")
 
     # Match the input data format expected by SciPy of (vals, (rows, cols)):
-    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
-    #
-    # The reason we don't just output mat_vals, mat_rows, and mat_cols from
-    # _fill_match_cells() is that we need to be careful about duplicate cells.
-    # If binary is False, then we need to do this to identify palindromes; and
-    # even if binary is True, we need to do this because including duplicate
-    # entries will result in them being summed when creating the matrix
-    # (seriously, see the SciPy docs linked above).
     mat_vals = []
     mat_rows = []
     mat_cols = []
