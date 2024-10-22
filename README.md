@@ -149,7 +149,9 @@ compute, at least for reasonably large values of _k_.
 
 - **Performance:** Although I've tried to optimize this tool (see the
   "Performance" section above), it isn't the fastest or the most
-  memory-efficient way to visualize dot plots.
+  memory-efficient way to visualize dot plots. The two obvious reasons for
+  this are that (1) this is written in Python, and (2) this is creating the
+  exact dot plot matrix rather than a subset of it.
 
 - **Only static visualizations:** The visualization methods included in the
   tool only support the creation of static plots. There are
