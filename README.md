@@ -65,15 +65,13 @@ from matplotlib import pyplot
 # (skipping the part where I loaded the genomes into memory as e1s and e2s...)
 
 # Create the matrix (leaving binary=True by default)
-# This takes about 3 minutes on a laptop with 8 GB of RAM
+# This takes about 30 seconds on a laptop with 8 GB of RAM
 em = wp.DotPlotMatrix(e1s, e2s, 20, verbose=True)
 
 # Visualize the matrix using matplotlib's spy() function
-# This takes about 2 seconds on a laptop with 8 GB of RAM
+# This takes < 1 second on a laptop with 8 GB of RAM
 fig, ax = pyplot.subplots()
-wp.viz_spy(
-    em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax
-)
+wp.viz_spy(em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax)
 ax.set_xlabel(f"$E. coli$ K-12 substr. MG1655 ({len(e1s)/1e6:.2f} Mbp) \u2192")
 ax.set_ylabel(f"$E. coli$ O157:H7 str. Sakai ({len(e2s)/1e6:.2f} Mbp) \u2192")
 fig.set_size_inches(8, 8)
