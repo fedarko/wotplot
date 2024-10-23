@@ -165,13 +165,23 @@ def _fill_match_cells(s1, s2, k, md, yorder="BT", binary=True, s2isrc=False):
             if not binary:
                 if s2isrc:
                     # If we somehow see the same position represented multiple
-                    # times in the reverse matches, but it ONLY has reverse
-                    # matches, then keep it as a reverse match -- don't tag it
-                    # as palindromic erroneously. This should never ever happen
-                    # but I am being super paranoid here and adding a
-                    # "pos != REV" check just in case the behavior of
-                    # common_substrings() changes at some point.
-                    if pos in md and pos != REV:
+                    # times in the reverse matches, but this position ONLY has
+                    # this reverse match, then keep it as a reverse match. If
+                    # we say a cell is palindromic ONLY if it has already been
+                    # recorded in md, then if this cell is encountered twice
+                    # during the "reverse-complementary" pass we will
+                    # erroneously label it palindromic.
+                    #
+                    # To fix this, we add the condition "md[pos] != REV". If
+                    # md[pos] == FWD, then since s2isrc is True, we should make
+                    # this cell palindromic (BOTH). And if md[pos] == BOTH then
+                    # we should keep this cell as BOTH. If md[pos] == REV,
+                    # though, then we should keep this cell as REV.
+                    #
+                    # The output of common_substrings() should not represent
+                    # the same position multiple times, but I am being paranoid
+                    # here just in case this changes.
+                    if pos in md and md[pos] != REV:
                         md[pos] = BOTH
                     else:
                         md[pos] = REV
