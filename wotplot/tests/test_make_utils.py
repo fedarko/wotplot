@@ -144,12 +144,12 @@ def test_fill_match_cells_redundant_common_substring_rc(mocker):
         (1, 1, 2),
     ]
 
-    # I know these two strings have more 1-mer matches than the ones given above
-    # (specifically, they have 4 * 3 = 12 distinct 1-mer matches). But, since
-    # we've mocked _get_common_substrings() above, there should only be 3 matches
-    # now. (Part of the reason I'm adjusting the return value to have fewer
-    # matches, besides making the code easier to test, is letting us quickly
-    # verify that the mocking worked as intended.)
+    # I know these two strings have more 1-mer matches than the ones given
+    # above (specifically, they have 4 * 3 = 12 distinct 1-mer matches). But,
+    # since we've mocked _get_common_substrings() above, there should only be
+    # 3 matches now. (Part of the reason I'm adjusting the return value to
+    # have fewer matches, besides making the code easier to test, is that this
+    # lets us quickly verify that the mocking worked as intended.)
     s1 = "AAAA"
     s2 = "AAA"
     md = {}
