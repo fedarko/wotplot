@@ -103,6 +103,39 @@ def _get_row(position_in_s2, num_rows, yorder):
         )
 
 
+def _get_common_substrings(s1, s2, k):
+    """Returns a list of shared regions (with length >= k) of two strings.
+
+    This just calls pydivsufsort.common_substrings(). The main reason I'm
+    putting this in its own function is to make unit testing
+    _fill_match_cells() easier.
+
+    Parameters
+    ----------
+    s1: str
+    s2: str
+        The strings in which we'll search for shared k-mers. We assume that
+        both of these strings have lengths >= k.
+
+    k: int
+        k-mer size.
+
+    Returns
+    -------
+    list of (int, int, int)
+        Each 3-tuple describes an identical region of s1 and s2 of length >= k.
+        The entries in each 3-tuple describe, in order:
+
+            0. The 0-indexed starting position of the identical region in s1.
+            1. The 0-indexed starting position of the identical region in s2.
+            2. The length of the identical region. This will be at least k.
+
+        Given such a 3-tuple "t", we know that
+        s1[t[0] : t[0] + t[2]] == s2[t[1] : t[1] + t[2]].
+    """
+    return pydivsufsort.common_substrings(s1, s2, limit=k)
+
+
 def _fill_match_cells(s1, s2, k, md, yorder="BT", binary=True, s2isrc=False):
     """Populates a dict describing k-mer matches between two strings.
 
@@ -151,7 +184,7 @@ def _fill_match_cells(s1, s2, k, md, yorder="BT", binary=True, s2isrc=False):
     matches. The common_substrings() algorithm is better.) See
     https://github.com/louisabraham/pydivsufsort/issues/42 for details.
     """
-    cs = pydivsufsort.common_substrings(s1, s2, limit=k)
+    cs = _get_common_substrings(s1, s2, k)
     num_rows = len(s2) - k + 1
     for match_run in cs:
         num_cells_matched = match_run[2] - k + 1
