@@ -132,6 +132,28 @@ def _get_common_substrings(s1, s2, k):
 
         Given such a 3-tuple "t", we know that
         s1[t[0] : t[0] + t[2]] == s2[t[1] : t[1] + t[2]].
+
+    Notes
+    -----
+    From what I can tell, the output of pydivsufsort.common_substrings() does
+    not ever describe the same pair of matching positions more than once. For
+    example:
+
+    >>> pydivsufsort.common_substrings("AAAA", "AAA", limit=1)
+    [(0, 0, 3), (0, 1, 2), (0, 2, 1), (1, 0, 3), (2, 0, 2), (3, 0, 1)]
+
+    Label each 3-tuple here as 0, 1, 2, 3, 4, 5, in the order they occur in the
+    above output. The spans of these 3-tuples on the dot plot grid look like:
+
+    A 2|2103
+    A 1|1034
+    A 0|0345
+       +----
+        0123
+        AAAA
+
+    ... That is, each of these 3-tuples is a diagonal line in the dot plot, and
+    none of these 3-tuples intersect with each other.
     """
     return pydivsufsort.common_substrings(s1, s2, limit=k)
 
