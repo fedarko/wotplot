@@ -208,6 +208,7 @@ is also implemented in
 
 - [pytest](https://docs.pytest.org)
 - [pytest-cov](https://github.com/pytest-dev/pytest-cov)
+- [pytest-mock](https://github.com/pytest-dev/pytest-mock)
 - [flake8](https://flake8.pycqa.org)
 - [black](https://github.com/psf/black)
 

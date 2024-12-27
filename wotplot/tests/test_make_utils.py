@@ -132,6 +132,8 @@ def test_fill_match_cells():
 
 
 def test_fill_match_cells_redundant_common_substring_rc(mocker):
+    # Mock the return value using pytest-mock; see
+    # https://stackoverflow.com/a/72943495
     gcs = mocker.patch("wotplot._make._get_common_substrings")
     gcs.return_value = [
         (0, 0, 3),

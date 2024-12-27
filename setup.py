@@ -63,6 +63,7 @@ setup(
         "dev": [
             "pytest >= 4.2",
             "pytest-cov >= 2.0",
+            "pytest-mock",
             "flake8",
             # black 22.10 stopped supporting python 3.6; ideally we'd adjust
             # our CI to use later versions of black on the 3.7 build, but as a
