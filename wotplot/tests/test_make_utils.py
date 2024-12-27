@@ -129,3 +129,31 @@ def test_fill_match_cells():
         (2, 0): REV,
         (5, 2): REV,
     }
+
+
+def test_fill_match_cells_same_position_covered_twice_in_s2(mocker):
+    gcs = mocker.patch("wotplot._make._get_common_substrings")
+    gcs.return_value = [
+        (0, 0, 3),
+        # Add on an extra unneeded diagonal (the (0, 0, 3) accounts
+        # for matches at (0, 0), (1, 1), and (2, 2)) to verify it doesn't
+        # break stuff
+        (1, 1, 2),
+    ]
+
+    # I know these two strings have more 1-mer matches than the ones given above
+    # (specifically, they have 4 * 3 = 12 distinct 1-mer matches). But, since
+    # we've mocked _get_common_substrings() above, there should only be 3 matches
+    # now. (Part of the reason I'm adjusting the return value to have fewer
+    # matches, besides making the code easier to test, is letting us quickly
+    # verify that the mocking worked as intended.)
+    s1 = "AAAA"
+    s2 = "AAA"
+    md = {}
+
+    _fill_match_cells(s1, s2, 1, md, yorder="TB", s2isrc=True, binary=False)
+    assert md == {
+        (2, 0): REV,
+        (1, 1): REV,
+        (0, 2): REV,
+    }
