@@ -131,13 +131,16 @@ def test_fill_match_cells():
     }
 
 
-def test_fill_match_cells_same_position_covered_twice_in_s2(mocker):
+def test_fill_match_cells_redundant_common_substring_rc(mocker):
     gcs = mocker.patch("wotplot._make._get_common_substrings")
     gcs.return_value = [
         (0, 0, 3),
-        # Add on an extra unneeded diagonal (the (0, 0, 3) accounts
-        # for matches at (0, 0), (1, 1), and (2, 2)) to verify it doesn't
-        # break stuff
+        # Add on an extra unneeded diagonal (the (0, 0, 3) already accounts
+        # for matches at (0, 0), (1, 1), and (2, 2), making (1, 1, 2) wholly
+        # unnecessary) to verify it doesn't break stuff. (Even though we will
+        # process some positions multiple times, we should still keep all of
+        # them as REV only -- this is something I was worried about making sure
+        # to handle correctly.)
         (1, 1, 2),
     ]
 
@@ -152,6 +155,8 @@ def test_fill_match_cells_same_position_covered_twice_in_s2(mocker):
     md = {}
 
     _fill_match_cells(s1, s2, 1, md, yorder="TB", s2isrc=True, binary=False)
+    # The positions look a bit different from (0, 0), (1, 1), and (2, 2)
+    # because we've set s2isrc=True.
     assert md == {
         (2, 0): REV,
         (1, 1): REV,
