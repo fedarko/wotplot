@@ -157,6 +157,18 @@ def test_fill_match_cells_redundant_common_substring_rc(mocker):
     _fill_match_cells(s1, s2, 1, md, yorder="TB", s2isrc=True, binary=False)
     # The positions look a bit different from (0, 0), (1, 1), and (2, 2)
     # because we've set s2isrc=True.
+    #
+    # The important thing is that all of these are REV only, with no BOTH
+    # matches. Why?
+    #
+    # As of writing, there is a line in _make._fill_match_cells()
+    # which looks like "if pos in md and md[pos] != REV:" -- if we remove
+    # the "and md[pos] != REV" part of this line, then this will break this
+    # test, because then the code will incorrectly say that "oh, we've already
+    # seen this cell, so that previous occurrence must be a forward match,
+    # so this cell must be a palindromic match!"
+    #
+    # So, this test just verifies that this line is working as intended. Phew.
     assert md == {
         (2, 0): REV,
         (1, 1): REV,
