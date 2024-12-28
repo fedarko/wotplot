@@ -5,7 +5,6 @@ from wotplot._make import (
     _validate_k,
     _validate_yorder,
     _get_row,
-    _get_suffix_array,
     _fill_match_cells,
 )
 
@@ -110,11 +109,9 @@ def test_get_row_position_geq_num_rows():
 def test_fill_match_cells():
     s1 = "ACGTC"
     s2 = "AAGTCAC"
-    sa1 = _get_suffix_array(s1)
-    sa2 = _get_suffix_array(s2)
     md = {}
 
-    _fill_match_cells(s1, s2, 2, sa1, sa2, md, yorder="TB", binary=False)
+    _fill_match_cells(s1, s2, 2, md, yorder="TB", binary=False)
     # Note that the coordinates' types will be set based on the types present
     # within the suffix array -- so repr(md) will, for numpy 2, be equal to
     # {(np.int32(5), np.int32(0)): FWD, ...}, at least as of writing.
@@ -124,14 +121,58 @@ def test_fill_match_cells():
 
     # "Extend" md with reverse-complementary matches
     s2r = rc(s2)
-    sa2r = _get_suffix_array(s2r)
-    _fill_match_cells(
-        s1, s2r, 2, sa1, sa2r, md, yorder="TB", binary=False, s2isrc=True
-    )
+    _fill_match_cells(s1, s2r, 2, md, yorder="TB", binary=False, s2isrc=True)
     assert md == {
         (5, 0): FWD,
         (2, 2): FWD,
         (3, 3): FWD,
         (2, 0): REV,
         (5, 2): REV,
+    }
+
+
+def test_fill_match_cells_redundant_common_substring_rc(mocker):
+    # Mock the return value using pytest-mock; see
+    # https://stackoverflow.com/a/72943495
+    gcs = mocker.patch("wotplot._make._get_common_substrings")
+    gcs.return_value = [
+        (0, 0, 3),
+        # Add on an extra unneeded diagonal (the (0, 0, 3) already accounts
+        # for matches at (0, 0), (1, 1), and (2, 2), making (1, 1, 2) wholly
+        # unnecessary) to verify it doesn't break stuff. (Even though we will
+        # process some positions multiple times, we should still keep all of
+        # them as REV only -- this is something I was worried about making sure
+        # to handle correctly.)
+        (1, 1, 2),
+    ]
+
+    # I know these two strings have more 1-mer matches than the ones given
+    # above (specifically, they have 4 * 3 = 12 distinct 1-mer matches). But,
+    # since we've mocked _get_common_substrings() above, there should only be
+    # 3 matches now. (Part of the reason I'm adjusting the return value to
+    # have fewer matches, besides making the code easier to test, is that this
+    # lets us quickly verify that the mocking worked as intended.)
+    s1 = "AAAA"
+    s2 = "AAA"
+    md = {}
+
+    _fill_match_cells(s1, s2, 1, md, yorder="TB", s2isrc=True, binary=False)
+    # The positions look a bit different from (0, 0), (1, 1), and (2, 2)
+    # because we've set s2isrc=True.
+    #
+    # The important thing is that all of these are REV only, with no BOTH
+    # matches. Why?
+    #
+    # As of writing, there is a line in _make._fill_match_cells()
+    # which looks like "if pos in md and md[pos] != REV:" -- if we remove
+    # the "and md[pos] != REV" part of this line, then this will break this
+    # test, because then the code will incorrectly say that "oh, we've already
+    # seen this cell, so that previous occurrence must be a forward match,
+    # so this cell must be a palindromic match!"
+    #
+    # So, this test just verifies that this line is working as intended. Phew.
+    assert md == {
+        (2, 0): REV,
+        (1, 1): REV,
+        (0, 2): REV,
     }

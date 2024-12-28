@@ -26,7 +26,7 @@ This example is adapted from Figure 6.20 (bottom right) in
 [_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org), edition 2.
 
 ```python
-import wotplot
+import wotplot as wp
 
 # Define our dataset
 s1 = "AGCAGGAGATAAACCTGT"
@@ -35,12 +35,12 @@ k = 3
 
 # Create the matrix (setting binary=False means we'll distinguish forward,
 # reverse-complementary, and palindromic matching k-mers from each other)
-m = wotplot.DotPlotMatrix(s1, s2, k, binary=False)
+m = wp.DotPlotMatrix(s1, s2, k, binary=False)
 
 # Convert the matrix to dense format and visualize it using matplotlib's
 # imshow() function (for large matrices where dense representations are
 # impractical, use viz_spy() instead; see below)
-wotplot.viz_imshow(m)
+wp.viz_imshow(m)
 ```
 
 ![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/img/small_example_dotplot.png)
@@ -59,21 +59,19 @@ and _E. coli_ O157:H7 ([from this assembly](https://www.ncbi.nlm.nih.gov/dataset
 I removed the two plasmid sequences from the O157:H7 assembly.
 
 ```python
-import wotplot
+import wotplot as wp
 from matplotlib import pyplot
 
 # (skipping the part where I loaded the genomes into memory as e1s and e2s...)
 
 # Create the matrix (leaving binary=True by default)
-# This takes about 3 minutes on a laptop with 8 GB of RAM
-em = wotplot.DotPlotMatrix(e1s, e2s, 20, verbose=True)
+# This takes about 30 seconds on a laptop with 8 GB of RAM
+em = wp.DotPlotMatrix(e1s, e2s, 20, verbose=True)
 
 # Visualize the matrix using matplotlib's spy() function
-# This takes about 2 seconds on a laptop with 8 GB of RAM
+# This takes < 1 second on a laptop with 8 GB of RAM
 fig, ax = pyplot.subplots()
-wotplot.viz_spy(
-    em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax
-)
+wp.viz_spy(em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax)
 ax.set_xlabel(f"$E. coli$ K-12 substr. MG1655 ({len(e1s)/1e6:.2f} Mbp) \u2192")
 ax.set_ylabel(f"$E. coli$ O157:H7 str. Sakai ({len(e2s)/1e6:.2f} Mbp) \u2192")
 fig.set_size_inches(8, 8)
@@ -106,9 +104,9 @@ pip install wotplot
 I've tried to make this library reasonably performant. The main optimizations
 include:
 
-- We use suffix arrays (courtesy of the lovely
-  [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort) library) in
-  order to reduce the memory footprint of finding shared _k_-mers.
+- We use the [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort)
+  library -- either its [`common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)
+  algorithm, or just the `divsufsort()` algorithm for computing suffix arrays -- to find shared _k_-mers.
 
 - We store the dot plot matrix in sparse format (courtesy of
   [SciPy](https://docs.scipy.org/doc/scipy/reference/sparse.html)) in order to
@@ -128,16 +126,36 @@ This library could be made a lot more efficient (I've been documenting ideas in
 but right now it's good enough for my purposes. Feel free to open an issue / make a pull request
 if you'd like to speed it up ;)
 
-### Informal benchmarking
+### Two methods for finding shared _k_-mers
 
-See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/blob/main/docs/Benchmarking.ipynb)
-for some very informal benchmarking results performed on a laptop with ~8 GB of RAM.
+As of writing, wotplot supports two methods for finding shared _k_-mers in order to
+create the dot plot matrix:
 
-Even on this system, the library can handle reasonably large sequences: in the biggest example,
-the notebook demonstrates computing the dot plot of two random 100 Mbp sequences
-(using _k_ = 20) in ~50 minutes.
-Dot plots of shorter sequences (e.g. 100 kbp or less) usually take only a few seconds to
-compute, at least for reasonably large values of _k_.
+1. **`pydivsufsort.common_substrings()` (default)**: faster, but requires more memory ([benchmarking](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb))
+
+2. **`pydivsufsort.divsufsort()`** only: slower, but requires less memory ([benchmarking](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking_7397b18.ipynb))
+
+  - This alternative method (herein referred to as "SA-only") computes suffix arrays for
+    each of the input strings, then iterates through them to identify shared matches.
+    It's less sophisticated than `common_substrings()`, but it works.
+
+  - You can use this alternative method by passing `sa_only=True` to the `DotPlotMatrix()`
+    constructor.
+
+In general, the default method should be fine up until your sequences are ~5 Mbp each.
+At that point, if you are using a system with low memory (less than ~8 GB RAM) and are okay
+with taking a longer time to computer your dot plots, you may want to use the SA-only method.
+
+#### Informal benchmarking
+
+Both of the benchmarking notebooks linked above use a laptop with 8 GB of RAM.
+Even on this system, wotplot can handle reasonably large sequences. Using the
+default method, wotplot can create the dot plot of two random 20 Mbp sequences (_k_ = 20)
+in 74 seconds; using the SA-only method, wotplot can create the dot plot of two random
+100 Mbp (!) sequences (_k_ = 20) in ~45 minutes (!!).
+
+... That all being said, dot plots of shorter sequences (e.g. 100 kbp or less) usually
+take only a few seconds to compute with either methods, at least for reasonably large values of _k_.
 
 ## Why does this library exist?
 
@@ -149,7 +167,9 @@ compute, at least for reasonably large values of _k_.
 
 - **Performance:** Although I've tried to optimize this tool (see the
   "Performance" section above), it isn't the fastest or the most
-  memory-efficient way to visualize dot plots.
+  memory-efficient way to visualize dot plots. The two obvious reasons for
+  this are that (1) this is written in Python, and (2) this is creating the
+  exact dot plot matrix rather than a subset of it.
 
 - **Only static visualizations:** The visualization methods included in the
   tool only support the creation of static plots. There are
@@ -193,6 +213,9 @@ The idea of using suffix arrays to speed up dot plot computation is not new; it
 is also implemented in
 [Gepard](https://cube.univie.ac.at/gepard)
 ([Krumsiek _et al._ 2007](https://academic.oup.com/bioinformatics/article/23/8/1026/198110)).
+(Eventually I moved from directly using suffix arrays to just using the
+`pydivsufsort.common_substrings()` algorithm, but admittedly that is still
+[using a suffix array under the hood](https://github.com/louisabraham/pydivsufsort/blob/2869020c26022e0f88592e85cdc480856e9856d5/pydivsufsort/wonderstring.py#L128-L157).)
 
 ### Dependencies
 
@@ -205,6 +228,7 @@ is also implemented in
 
 - [pytest](https://docs.pytest.org)
 - [pytest-cov](https://github.com/pytest-dev/pytest-cov)
+- [pytest-mock](https://github.com/pytest-dev/pytest-mock)
 - [flake8](https://flake8.pycqa.org)
 - [black](https://github.com/psf/black)
 

@@ -1,6 +1,4 @@
-import os
 import pytest
-import pyfastx
 import numpy as np
 from wotplot import DotPlotMatrix, MATCH, FWD, REV, BOTH
 
@@ -13,6 +11,22 @@ def test_make_simple_default():
         # The use of a trailing comma on the last line tells black to keep this
         # as a matrix, rather than compress it into a single line. From
         # https://stackoverflow.com/a/66839521.
+        np.array(
+            [
+                [0, 0, 0, 1],
+                [1, 0, 1, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+            ]
+        ),
+    )
+
+
+def test_make_simple_sa_only():
+    assert MATCH == 1
+    dpm = DotPlotMatrix("ACGTC", "AAGTC", 2, sa_only=True)
+    assert np.array_equal(
+        dpm.mat.toarray(),
         np.array(
             [
                 [0, 0, 0, 1],
@@ -71,11 +85,79 @@ def test_make_simple_yorder_TB_and_not_binary():
     )
 
 
+def test_make_simple_yorder_TB_and_not_binary_sa_only():
+    dpm = DotPlotMatrix(
+        "ACGTC", "AAGTC", 2, yorder="TB", binary=False, sa_only=True
+    )
+    assert np.array_equal(
+        dpm.mat.toarray(),
+        np.array(
+            [
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [-1, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]
+        ),
+    )
+
+
+def test_make_simple_acct():
+    # was initially going to be loaded from a FASTA file:
+    # https://github.com/fedarko/wotplot/blob/7397b184e8a6dbbc738e1e99f2e2fefd69c9b94f/wotplot/tests/test_make.py
+    dpm = DotPlotMatrix("ACCT", "ACCT", 1, yorder="BT", binary=False)
+    assert np.array_equal(
+        dpm.mat.toarray(),
+        np.array(
+            [
+                [-1, 0, 0, 1],
+                [0, 1, 1, 0],
+                [0, 1, 1, 0],
+                [1, 0, 0, -1],
+            ]
+        ),
+    )
+
+
+def test_make_simple_acct_ggggg():
+    # was initially going to be loaded from a FASTA file:
+    # https://github.com/fedarko/wotplot/blob/7397b184e8a6dbbc738e1e99f2e2fefd69c9b94f/wotplot/tests/test_make.py
+    dpm = DotPlotMatrix("ACCT", "GGGGG", 1, yorder="BT", binary=False)
+    assert np.array_equal(
+        dpm.mat.toarray(),
+        np.array(
+            [
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+            ]
+        ),
+    )
+
+
 def test_make_palindrome_not_binary():
     # AATCGATC
     # 01234567
     assert BOTH == 2
     dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False)
+    assert np.array_equal(
+        dpm.mat.toarray(),
+        np.array(
+            [
+                [0, 2, 0],
+                [0, 0, 0],
+            ]
+        ),
+    )
+
+
+def test_make_palindrome_not_binary_sa_only():
+    # AATCGATC
+    # 01234567
+    assert BOTH == 2
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False, sa_only=True)
     assert np.array_equal(
         dpm.mat.toarray(),
         np.array(
@@ -151,12 +233,15 @@ def test_make_bad_k():
         assert str(e.value) == "k must be an integer \u2265 1"
 
 
-def test_make_self_dotplot_reuse_suffixarray(capsys):
-    f = pyfastx.Fasta(os.path.join("wotplot", "tests", "inputs", "test.fa"))
-    assert len(f) == 3
-    assert list(f.keys()) == ["r1", "r2", "r3"]
+def test_make_sa_only_self_dotplot_reuse_suffixarray(capsys):
     m = DotPlotMatrix(
-        f["r2"], f["r2"], 1, yorder="BT", binary=False, verbose=True
+        "ACCT",
+        "ACCT",
+        1,
+        yorder="BT",
+        binary=False,
+        sa_only=True,
+        verbose=True,
     )
     assert np.array_equal(
         m.mat.toarray(),
@@ -175,12 +260,15 @@ def test_make_self_dotplot_reuse_suffixarray(capsys):
     )
 
 
-def test_make_nonself_dotplot_dont_reuse_suffixarray(capsys):
-    f = pyfastx.Fasta(os.path.join("wotplot", "tests", "inputs", "test.fa"))
-    assert len(f) == 3
-    assert list(f.keys()) == ["r1", "r2", "r3"]
+def test_make_sa_only_nonself_dotplot_dont_reuse_suffixarray(capsys):
     m = DotPlotMatrix(
-        f["r2"], f["r3"], 1, yorder="BT", binary=False, verbose=True
+        "ACCT",
+        "GGGGG",
+        1,
+        yorder="BT",
+        binary=False,
+        sa_only=True,
+        verbose=True,
     )
     assert np.array_equal(
         m.mat.toarray(),

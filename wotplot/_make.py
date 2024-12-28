@@ -1,4 +1,4 @@
-from pydivsufsort import divsufsort
+import pydivsufsort
 from ._scipy_sm_constructor_getter import get_sm_constructor
 from ._logging import get_logger
 
@@ -61,19 +61,6 @@ def _validate_yorder(yorder):
         raise ValueError("yorder must be 'BT' or 'TB'")
 
 
-def _get_suffix_array(seq):
-    # We convert the seq to bytes (same as done in pydivsufsort here:
-    # https://github.com/louisabraham/pydivsufsort/blob/f4431ee1ea96ee5caf579d9b9e4764636d9cfef1/pydivsufsort/divsufsort.py#L73)
-    # in order to prevent a warning about it having to convert the seq to bytes
-    # for us. Ideally we wouldn't even work with strings at all (or we'd do
-    # this conversion at the start of _make() and use bytes from there on), but
-    # I don't really feel like making that change r/n and I don't think it'll
-    # make a big difference compared to this tool's other inefficiencies.
-    # Although it is still a TODO worth noting (converting both s2 and rc(s2)
-    # to bytes separately makes me feel gross).
-    return divsufsort(seq.encode("ascii") + ENDCHAR)
-
-
 def _get_row(position_in_s2, num_rows, yorder):
     """Converts a position in the sequence s2 to a row index in the matrix.
 
@@ -116,13 +103,29 @@ def _get_row(position_in_s2, num_rows, yorder):
         )
 
 
-def _fill_match_cells(
+def _get_suffix_array(seq):
+    # We convert the seq to bytes (same as done in pydivsufsort here:
+    # https://github.com/louisabraham/pydivsufsort/blob/f4431ee1ea96ee5caf579d9b9e4764636d9cfef1/pydivsufsort/divsufsort.py#L73)
+    # in order to prevent a warning about it having to convert the seq to bytes
+    # for us. Ideally we wouldn't even work with strings at all (or we'd do
+    # this conversion at the start of _make() and use bytes from there on), but
+    # I don't really feel like making that change r/n and I don't think it'll
+    # make a big difference compared to this tool's other inefficiencies.
+    # Although it is still a TODO worth noting (converting both s2 and rc(s2)
+    # to bytes separately makes me feel gross).
+    return pydivsufsort.divsufsort(seq.encode("ascii") + ENDCHAR)
+
+
+def _fill_match_cells_sa_only(
     s1, s2, k, s1_sa, s2_sa, md, yorder="BT", binary=True, s2isrc=False
 ):
     """Finds the start positions of shared k-mers in two strings.
 
     Does this using suffix arrays, which makes this more memory-efficient than
-    a naive approach.
+    a naive approach. --> update: and, surprisingly, apparenlty more
+    memory-efficient than the default method, using
+    pydivsufsort.common_substrings(). Hence why I am keeping this in as an
+    alternative method.
 
     This used to just return the matching positions, but now its main "output"
     is updating md (a dict that maps matrix position --> match types). This is
@@ -279,7 +282,225 @@ def _fill_match_cells(
                 j += 1
 
 
-def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
+def _get_common_substrings(s1, s2, k):
+    """Returns a list of shared regions (with length >= k) of two strings.
+
+    This just calls pydivsufsort.common_substrings(). The main reason I'm
+    putting this in its own function is to make unit testing
+    _fill_match_cells() easier.
+
+    Parameters
+    ----------
+    s1: str
+    s2: str
+        The strings in which we'll search for shared k-mers. We assume that
+        both of these strings have lengths >= k.
+
+    k: int
+        k-mer size.
+
+    Returns
+    -------
+    list of (int, int, int)
+        Each 3-tuple describes an identical region of s1 and s2 of length >= k.
+        The entries in each 3-tuple describe, in order:
+
+            0. The 0-indexed starting position of the identical region in s1.
+            1. The 0-indexed starting position of the identical region in s2.
+            2. The length of the identical region. This will be at least k.
+
+        Given such a 3-tuple "t", we know that
+        s1[t[0] : t[0] + t[2]] == s2[t[1] : t[1] + t[2]].
+
+    Notes
+    -----
+    From what I can tell, the output of pydivsufsort.common_substrings() does
+    not ever describe the same pair of matching positions more than once. For
+    example:
+
+    >>> pydivsufsort.common_substrings("AAAA", "AAA", limit=1)
+    [(0, 0, 3), (0, 1, 2), (0, 2, 1), (1, 0, 3), (2, 0, 2), (3, 0, 1)]
+
+    Label each 3-tuple here as 0, 1, 2, 3, 4, 5, in the order they occur in the
+    above output. The spans of these 3-tuples on the dot plot grid look like:
+
+    A 2|2103
+    A 1|1034
+    A 0|0345
+       +----
+        0123
+        AAAA
+
+    ... That is, each of these 3-tuples is a diagonal line in the dot plot, and
+    none of these 3-tuples intersect with each other.
+    """
+    return pydivsufsort.common_substrings(s1, s2, limit=k)
+
+
+def _fill_match_cells(s1, s2, k, md, yorder="BT", binary=True, s2isrc=False):
+    """Populates a dict describing k-mer matches between two strings.
+
+    Parameters
+    ----------
+    s1: str
+    s2: str
+        The strings in which we'll search for shared k-mers. We assume that
+        both of these strings have lengths >= k.
+
+    k: int
+        k-mer size.
+
+    md: dict of (int, int) --> int
+        We'll update this dict with keys of the format (p2, p1) (indicating
+        that a matching k-mer exists at position p1 in s1 and position p2 in
+        s2); these positions correspond to the (row, col) positions of match
+        cells in a matrix, taking into account yorder. The values of this dict
+        indicate match types (one of {FWD, REV, BOTH, MATCH}).
+
+    yorder: str
+        Either "BT" (bottom-to-top) or "TB" (top-to-bottom). See
+        DotPlotMatrix.__init__().
+
+    binary: bool
+        Either True (only match type used is MATCH) or False (can use FWD, REV,
+        or BOTH). See DotPlotMatrix.__init__().
+
+    s2isrc: bool
+        Either True (s2 is reverse-complemented) or False (s2 is not
+        reverse-complemented). Importantly: if binary is False, you should
+        run the forward check (s1 vs. s2) as the "first pass," and run the
+        reverse-complementary check (s1. vs. RC(s2)) as the "second pass."
+        If you switch up the order, this will break palindrome detection.
+
+    Returns
+    -------
+    None
+        (The main "side effect" of this function is updating md; see above.)
+
+    References
+    ----------
+    This is done using pydivsufsort.common_substrings(), which is quite fast.
+    (Previously, my code used pydivsufsort.divsufsort() to create two suffix
+    arrays for both strings, and then iterated through these arrays to find
+    matches. The common_substrings() algorithm is better.) See
+    https://github.com/louisabraham/pydivsufsort/issues/42 for details.
+    """
+    cs = _get_common_substrings(s1, s2, k)
+    num_rows = len(s2) - k + 1
+    for match_run in cs:
+        num_cells_matched = match_run[2] - k + 1
+        for i in range(num_cells_matched):
+            x = match_run[0] + i
+            s2p = match_run[1] + i
+            if s2isrc:
+                s2p = len(s2) - s2p - k
+            y = _get_row(s2p, num_rows, yorder)
+            pos = (y, x)
+            if not binary:
+                if s2isrc:
+                    # If we somehow see the same position represented multiple
+                    # times in the reverse matches, but this position ONLY has
+                    # this reverse match, then keep it as a reverse match. If
+                    # we say a cell is palindromic ONLY if it has already been
+                    # recorded in md, then if this cell is encountered twice
+                    # during the "reverse-complementary" pass we will
+                    # erroneously label it palindromic.
+                    #
+                    # To fix this, we add the condition "md[pos] != REV". If
+                    # md[pos] == FWD, then since s2isrc is True, we should make
+                    # this cell palindromic (BOTH). And if md[pos] == BOTH then
+                    # we should keep this cell as BOTH. If md[pos] == REV,
+                    # though, then we should keep this cell as REV.
+                    #
+                    # The output of common_substrings() should not represent
+                    # the same position multiple times, but I am being paranoid
+                    # here just in case this changes.
+                    if pos in md and md[pos] != REV:
+                        md[pos] = BOTH
+                    else:
+                        md[pos] = REV
+                else:
+                    md[pos] = FWD
+            else:
+                md[pos] = MATCH
+
+
+def _get_matches_sa_only(s1, s2, k, yorder, binary, _mlog):
+    """Constructs a dict of matches using the suffix-arrays-only method."""
+
+    _mlog("Computing suffix array for s1...")
+    s1_sa = _get_suffix_array(s1)
+
+    if s1 == s2:
+        # Save an unnecessary extra call to _get_suffix_array().
+        # Note that pyfastx.Sequence objects, as of writing, don't work well
+        # with python equality checking (so if "f" is a pyfastx.Fasta object,
+        # f[0] != f[0] for some reason). However, since we've already converted
+        # s1 and s2 to strings in _validate_and_stringify_seq(), this should
+        # not be a problem, so we can take advantage of this speedup.
+        _mlog("s1 and s2 are equal, so reusing s1's suffix array for s2...")
+        s2_sa = s1_sa
+    else:
+        _mlog("Computing suffix array for s2...")
+        s2_sa = _get_suffix_array(s2)
+
+    # Find k-mers that are shared between both strings (not considering
+    # reverse-complementing)
+    matches = {}
+    _mlog("Finding forward matches between s1 and s2...")
+    _fill_match_cells_sa_only(
+        s1, s2, k, s1_sa, s2_sa, matches, yorder=yorder, binary=binary
+    )
+    _mlog(f"Found {len(matches):,} forward match cell(s).")
+    # I'm not sure if this makes a difference (is Python smart enough to
+    # immediately garbage-collect s2_sa at this point?), but we might as
+    # well be very clear that "hey this big chunky suffix array is now
+    # unnecessary please garbage collect it"
+    del s2_sa
+
+    _mlog("Computing ReverseComplement(s2)...")
+    rcs2 = rc(s2)
+    _mlog("Computing suffix array for ReverseComplement(s2)...")
+    rcs2_sa = _get_suffix_array(rcs2)
+
+    _mlog("Finding matches between s1 and ReverseComplement(s2)...")
+    _fill_match_cells_sa_only(
+        s1,
+        rcs2,
+        k,
+        s1_sa,
+        rcs2_sa,
+        matches,
+        yorder=yorder,
+        binary=binary,
+        s2isrc=True,
+    )
+    # Using "del" at the end of a func is probs redundant but may as well
+    del s1_sa
+    del rcs2_sa
+    return matches
+
+
+def _get_matches_common_substrings(s1, s2, k, yorder, binary, _mlog):
+    """Constructs a dict of matches using pydivsufsort.common_substrings()."""
+
+    matches = {}
+
+    _mlog("Finding forward matches between s1 and s2...")
+    _fill_match_cells(s1, s2, k, matches, yorder=yorder, binary=binary)
+    _mlog(f"Found {len(matches):,} forward match cell(s).")
+
+    _mlog("Computing ReverseComplement(s2)...")
+    rcs2 = rc(s2)
+    _mlog("Finding reverse-complementary matches between s1 and s2...")
+    _fill_match_cells(
+        s1, rcs2, k, matches, yorder=yorder, binary=binary, s2isrc=True
+    )
+
+    return matches
+
+
+def _make(s1, s2, k, yorder="BT", binary=True, sa_only=False, verbose=False):
     """Computes a dot plot matrix.
 
     Parameters
@@ -289,6 +510,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     k: int
     yorder: str
     binary: bool
+        sa_only: bool
         See DotPlotMatrix.__init__() for details.
 
     verbose: bool
@@ -304,6 +526,42 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
 
         ss1 and ss2 are versions of s1 and s2, respectively, converted to
         strings.
+
+    Notes
+    -----
+    Rather than create a sparse matrix and iteratively update it as we find
+    matches, we instead iteratively update a dict containing match information
+    and then provide this information all at once to a COO sparse matrix
+    constructor.
+
+    Question 1: why don't we incrementally update a matrix?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    I messed around with creating an empty LIL matrix and incrementally
+    updating that, rather than incrementally updating the "matches" dict,
+    but the LIL matrix approach was really inefficient -- it crashed for
+    the test E. coli example. This is probably because incremental updates
+    on a sparse matrix are inherently kind of slow, at least as of writing;
+    see https://stackoverflow.com/a/27771335 for some context.
+
+    Question 2: why bother with creating a dict of matches?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    The reason we don't just output mat_vals, mat_rows, and mat_cols from
+    _fill_match_cells() (and then pass them into the COO matrix constructor
+    directly) is that we need to be careful about duplicate cells. If we
+    store the results of _fill_match_cells() (comparing s1 vs. s2) in COO
+    format, then merging this with the results of the next run of
+    _fill_match_cells() (comparing s1 vs. RC(s2)) will be tricky.
+
+    Why do we need to do this comparison in the first place? If "binary" is
+    False, then we need to do it to identify palindromes (cells that are
+    both forward and reverse-complementary matches); and even if "binary" is
+    True, we need to do this because including duplicate entries will result in
+    them being summed when creating the matrix (see the SciPy docs link below).
+
+    References
+    ----------
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
     """
     _mlog = get_logger(verbose)
 
@@ -311,84 +569,32 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     smc = get_sm_constructor()
 
     # Then validate the inputs
-    _mlog("validating inputs...")
+    _mlog("Validating inputs...")
     _validate_k(k)
     _validate_yorder(yorder)
     s1 = _validate_and_stringify_seq(s1, k)
     s2 = _validate_and_stringify_seq(s2, k)
 
     # Ok, things seem good.
+    if sa_only:
+        matches = _get_matches_sa_only(s1, s2, k, yorder, binary, _mlog)
+    else:
+        matches = _get_matches_common_substrings(
+            s1, s2, k, yorder, binary, _mlog
+        )
+    _mlog(f"Found {len(matches):,} total (fwd and/or RC) match cell(s).")
 
     # We could remove the "- k + 1" parts here, but then we'd have empty space
     # for all plots where k > 1 (since you can't have e.g. a 2-mer begin in the
     # final row or column). Interestingly, Figure 6.20 in Bioinformatics
     # Algorithms does include this extra empty space, but we'll omit it here
     mat_shape = (len(s2) - k + 1, len(s1) - k + 1)
-
-    _mlog("computing suffix array for s1...")
-    s1_sa = _get_suffix_array(s1)
-
-    if s1 == s2:
-        # Save an unnecessary extra call to _get_suffix_array().
-        # Note that pyfastx.Sequence objects, as of writing, don't work well
-        # with python equality checking (so if "f" is a pyfastx.Fasta object,
-        # f[0] != f[0] for some reason). However, since we've now converted
-        # s1 and s2 to strings in _validate_and_stringify_seq(), this should
-        # not be a problem, so we can take advantage of this speedup.
-        _mlog("s1 and s2 are equal, so reusing s1's suffix array for s2...")
-        s2_sa = s1_sa
-    else:
-        _mlog("computing suffix array for s2...")
-        s2_sa = _get_suffix_array(s2)
-
-    # Find k-mers that are shared between both strings (not considering
-    # reverse-complementing)
-    matches = {}
-    _mlog("finding forward matches between s1 and s2...")
-    _fill_match_cells(
-        s1, s2, k, s1_sa, s2_sa, matches, yorder=yorder, binary=binary
-    )
-    _mlog(f"found {len(matches):,} forward match cell(s).")
-    # I'm not sure if this makes a difference (is Python smart enough to
-    # immediately garbage-collect s2_sa at this point?), but we might as
-    # well be very clear that "hey this big chunky suffix array is now
-    # unnecessary please garbage collect it"
-    del s2_sa
-
-    _mlog("computing ReverseComplement(s2)...")
-    rcs2 = rc(s2)
-    _mlog("computing suffix array for ReverseComplement(s2)...")
-    rcs2_sa = _get_suffix_array(rcs2)
-
-    _mlog("finding matches between s1 and ReverseComplement(s2)...")
-    _fill_match_cells(
-        s1,
-        rcs2,
-        k,
-        s1_sa,
-        rcs2_sa,
-        matches,
-        yorder=yorder,
-        binary=binary,
-        s2isrc=True,
-    )
-    _mlog(f"found {len(matches):,} total match cell(s).")
-    del s1_sa
-    del rcs2_sa
     density = 100 * (len(matches) / (mat_shape[0] * mat_shape[1]))
-    _mlog(f"density = {density:.2f}%.")
+    _mlog(f"Dot plot matrix density = {density:.2f}%.")
 
-    _mlog("converting match information to COO format inputs...")
+    _mlog("Converting match information to COO format inputs...")
 
     # Match the input data format expected by SciPy of (vals, (rows, cols)):
-    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
-    #
-    # The reason we don't just output mat_vals, mat_rows, and mat_cols from
-    # _find_match_cells() is that we need to be careful about duplicate cells.
-    # If binary is False, then we need to do this to identify palindromes; and
-    # even if binary is True, we need to do this because including duplicate
-    # entries will result in them being summed when creating the matrix
-    # (seriously, see the SciPy docs linked above).
     mat_vals = []
     mat_rows = []
     mat_cols = []
@@ -397,7 +603,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
         mat_rows.append(r)
         mat_cols.append(c)
 
-    _mlog("creating sparse matrix from COO format inputs...")
+    _mlog("Creating sparse matrix from COO format inputs...")
     mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
-    _mlog("done creating the matrix.")
+    _mlog("Done creating the matrix.")
     return mat, s1, s2
