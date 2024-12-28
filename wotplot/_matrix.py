@@ -19,18 +19,20 @@ class DotPlotMatrix:
     k (int)
         k-mer size.
 
-    yorder (str):
+    yorder (str)
         Either "BT" or "TB", indicating the direction that s2 is ordered on the
         y-axis. "BT" indicates "bottom-to-top", and "TB" indicates
         "top-to-bottom".
 
-    binary (bool):
+    binary (bool)
         Whether or not mat is binary. If mat is not binary, then it encodes
         forward, reverse-complementary, and palindromic matches separately; if
         mat is binary, then all matches are represented identically.
     """
 
-    def __init__(self, s1, s2, k, yorder="BT", binary=True, verbose=False):
+    def __init__(
+        self, s1, s2, k, yorder="BT", binary=True, sa_only=False, verbose=False
+    ):
         """Initializes the dot plot matrix.
 
         Parameters
@@ -82,6 +84,21 @@ class DotPlotMatrix:
             -  1: k1 == k2, and/or ReverseComplement(k1) == k2
             -  0: k1 != k2, and ReverseComplement(k1) != k2
 
+        sa_only: bool
+            If True, this uses a different method for computing the dot plot
+            matrix than the default. The default method (sa_only=False, which
+            uses pydivsufsort.common_substrings()) is faster but uses more
+            memory; the alternative method (sa_only=True, which uses just
+            pydivsufsort's implementation ofsuffix arrays) is slower but --
+            from testing -- uses less memory.
+
+            From some benchmarking, I think the default method should be fine
+            when your sequences are smaller than ~5 Mbp (i.e. 5 million
+            characters each). When your sequences are longer than that, you
+            may want to use the sa_only=True method (depending on how much
+            memory your system has -- my laptop with 8 GB of RAM can handle
+            sequences of up to ~20 Mbp, but that's a stretch).
+
         verbose: bool
             If True, logs extra information as this computes the matrix. This
             is useful when working with long sequences and/or for performance
@@ -93,7 +110,9 @@ class DotPlotMatrix:
         Bioinformatics Algorithms textbook
         (https://www.bioinformaticsalgorithms.org/) by Compeau & Pevzner.
         """
-        self.mat, self.s1, self.s2 = _make(s1, s2, k, yorder, binary, verbose)
+        self.mat, self.s1, self.s2 = _make(
+            s1, s2, k, yorder, binary, sa_only, verbose
+        )
         self.k = k
         self.yorder = yorder
         self.binary = binary

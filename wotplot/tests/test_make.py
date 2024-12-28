@@ -22,6 +22,22 @@ def test_make_simple_default():
     )
 
 
+def test_make_simple_sa_only():
+    assert MATCH == 1
+    dpm = DotPlotMatrix("ACGTC", "AAGTC", 2, sa_only=True)
+    assert np.array_equal(
+        dpm.mat.toarray(),
+        np.array(
+            [
+                [0, 0, 0, 1],
+                [1, 0, 1, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+            ]
+        ),
+    )
+
+
 def test_make_simple_yorder_TB():
     dpm = DotPlotMatrix("ACGTC", "AAGTC", 2, yorder="TB")
     assert np.array_equal(
@@ -56,6 +72,23 @@ def test_make_simple_not_binary():
 
 def test_make_simple_yorder_TB_and_not_binary():
     dpm = DotPlotMatrix("ACGTC", "AAGTC", 2, yorder="TB", binary=False)
+    assert np.array_equal(
+        dpm.mat.toarray(),
+        np.array(
+            [
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [-1, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]
+        ),
+    )
+
+
+def test_make_simple_yorder_TB_and_not_binary_sa_only():
+    dpm = DotPlotMatrix(
+        "ACGTC", "AAGTC", 2, yorder="TB", binary=False, sa_only=True
+    )
     assert np.array_equal(
         dpm.mat.toarray(),
         np.array(
@@ -120,6 +153,21 @@ def test_make_palindrome_not_binary():
     )
 
 
+def test_make_palindrome_not_binary_sa_only():
+    # AATCGATC
+    # 01234567
+    assert BOTH == 2
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False, sa_only=True)
+    assert np.array_equal(
+        dpm.mat.toarray(),
+        np.array(
+            [
+                [0, 2, 0],
+                [0, 0, 0],
+            ]
+        ),
+    )
+
 def test_make_fancy_not_binary():
     big = "AGCAGAAAGAGATAAACCTGT"
     dpm = DotPlotMatrix(big, big, 2, binary=False)
@@ -182,3 +230,58 @@ def test_make_bad_k():
         with pytest.raises(ValueError) as e:
             DotPlotMatrix("ACGTC", "ACCTC", b)
         assert str(e.value) == "k must be an integer \u2265 1"
+
+
+def test_make_sa_only_self_dotplot_reuse_suffixarray(capsys):
+    m = DotPlotMatrix(
+        "ACCT",
+        "ACCT",
+        1,
+        yorder="BT",
+        binary=False,
+        sa_only=True,
+        verbose=True,
+    )
+    assert np.array_equal(
+        m.mat.toarray(),
+        np.array(
+            [
+                [-1, 0, 0, 1],
+                [0, 1, 1, 0],
+                [0, 1, 1, 0],
+                [1, 0, 0, -1],
+            ]
+        ),
+    )
+    assert (
+        "s1 and s2 are equal, so reusing s1's suffix array for s2..."
+        in capsys.readouterr().out
+    )
+
+
+def test_make_sa_only_nonself_dotplot_dont_reuse_suffixarray(capsys):
+    m = DotPlotMatrix(
+        "ACCT",
+        "GGGGG",
+        1,
+        yorder="BT",
+        binary=False,
+        sa_only=True,
+        verbose=True,
+    )
+    assert np.array_equal(
+        m.mat.toarray(),
+        np.array(
+            [
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+                [0, -1, -1, 0],
+            ]
+        ),
+    )
+    assert (
+        "s1 and s2 are equal, so reusing s1's suffix array for s2..."
+        not in capsys.readouterr().out
+    )

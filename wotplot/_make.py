@@ -103,6 +103,185 @@ def _get_row(position_in_s2, num_rows, yorder):
         )
 
 
+def _get_suffix_array(seq):
+    # We convert the seq to bytes (same as done in pydivsufsort here:
+    # https://github.com/louisabraham/pydivsufsort/blob/f4431ee1ea96ee5caf579d9b9e4764636d9cfef1/pydivsufsort/divsufsort.py#L73)
+    # in order to prevent a warning about it having to convert the seq to bytes
+    # for us. Ideally we wouldn't even work with strings at all (or we'd do
+    # this conversion at the start of _make() and use bytes from there on), but
+    # I don't really feel like making that change r/n and I don't think it'll
+    # make a big difference compared to this tool's other inefficiencies.
+    # Although it is still a TODO worth noting (converting both s2 and rc(s2)
+    # to bytes separately makes me feel gross).
+    return pydivsufsort.divsufsort(seq.encode("ascii") + ENDCHAR)
+
+
+def _fill_match_cells_sa_only(
+    s1, s2, k, s1_sa, s2_sa, md, yorder="BT", binary=True, s2isrc=False
+):
+    """Finds the start positions of shared k-mers in two strings.
+
+    Does this using suffix arrays, which makes this more memory-efficient than
+    a naive approach. --> update: and, surprisingly, apparenlty more
+    memory-efficient than the default method, using
+    pydivsufsort.common_substrings(). Hence why I am keeping this in as an
+    alternative method.
+
+    This used to just return the matching positions, but now its main "output"
+    is updating md (a dict that maps matrix position --> match types). This is
+    faster than outputting things from here in a nice, easy-to-read format and
+    then having to waste time converting that :(
+
+    Parameters
+    ----------
+    s1: str
+    s2: str
+        The strings in which we'll search for shared k-mers. We assume that
+        both of these strings have lengths >= k. These strings should NOT
+        contain the ENDCHAR character.
+
+    k: int
+        k-mer size.
+
+    s1_sa: np.ndarray
+        Suffix array for (s1 + ENDCHAR).
+
+    s2_sa: np.ndarray
+        Suffix array for (s2 + ENDCHAR).
+
+    md: dict of (int, int) --> int
+        We'll update this dict with keys of the format (p2, p1) (indicating
+        that a matching k-mer exists at position p1 in s1 and position p2 in
+        s2); these positions correspond to the (row, col) positions of match
+        cells in a matrix, taking into account yorder. The values of this dict
+        indicate match types (one of {FWD, REV, BOTH, MATCH}).
+
+    yorder: str
+        Either "BT" (bottom-to-top) or "TB" (top-to-bottom). See
+        DotPlotMatrix.__init__().
+
+    binary: bool
+        Either True (only match type used is MATCH) or False (can use FWD, REV,
+        or BOTH). See DotPlotMatrix.__init__().
+
+    s2isrc: bool
+        Either True (s2 is reverse-complemented) or False (s2 is not
+        reverse-complemented).
+
+    Returns
+    -------
+    None
+        (The main "side effect" of this function is updating md; see above.)
+
+    Notes
+    -----
+    See wotplot/tests/test_make_utils.py for an example of using this function.
+
+    Historical context: I used to have a doctest here, but then numpy 2
+    changed how np.int32 types (present in pydivsufsort's output suffix arrays)
+    were represented from "7" to "np.int32(7)", which broke the doctest for
+    systems running numpy 2. I couldn't find a good general doctest solution
+    that worked for both numpy < 2 and numpy 2 (and wasn't ugly).
+
+    Just for reference, this sort of problem w/r/t numpy 2 is documented in
+    https://github.com/OSGeo/grass/issues/4100, and the general brittleness
+    inherent to doctests is discussed at https://stackoverflow.com/q/13473971.
+    """
+    # i and j are indices in the two suffix arrays. we'll set them to 1 in
+    # order to skip the first entry in the suffix array (which will always
+    # correspond to the suffix of just ENDCHAR, i.e. "$").
+    i = 1
+    j = 1
+    last_kmer_index_1 = len(s1) - k
+    last_kmer_index_2 = len(s2) - k
+    num_rows = len(s2) - k + 1
+    while i < len(s1_sa) and j < len(s2_sa):
+        p1 = s1_sa[i]
+        p2 = s2_sa[j]
+        # Since there are only n - k + 1 k-mers in a string of length n, we can
+        # ignore the last (k - 1) positions in the string -- there are suffixes
+        # that start here, but these suffixes have length < k so we don't care
+        # about them.
+        if p1 > last_kmer_index_1:
+            i += 1
+            continue
+        if p2 > last_kmer_index_2:
+            j += 1
+            continue
+        # if we've made it here, then we know that both i and j correspond to
+        # indices of suffixes in the two strings that each contain at least k
+        # characters
+        k1 = s1[p1 : p1 + k]
+        k2 = s2[p2 : p2 + k]
+        if k1 == k2:
+            # "Descend" through s1 and s2, identifying all suffixes where the
+            # beginning k-mer matches k1 (and k2, but now we know k1 == k2 so I
+            # just use k1 for clarity's sake).
+            #
+            # NOTE: In the second checks that these while loops make (looking
+            # at the beginning k-mer of next_i or next_j), there's the
+            # possibility that the positions given by s1_sa[next_i] or
+            # s2_sa[next_j] occur after last_kmer_index_1 or last_kmer_index_2,
+            # respectively. In these cases, the beginning "k-mer" will be cut
+            # off by the end of the string, and will thus by definition be
+            # unequal to k1. We could add more explicit checks here, but I'm
+            # not sure that the added clarity would be worth the potential
+            # slight performance hit. (In big sequences, most positions are ...
+            # not near the end of the sequence. damn they should give me a
+            # fields medal for that Math Wisdom i just brought into the world.)
+            next_i = i + 1
+            while (
+                next_i < len(s1_sa)
+                and s1[s1_sa[next_i] : s1_sa[next_i] + k] == k1
+            ):
+                next_i += 1
+
+            next_j = j + 1
+            while (
+                next_j < len(s2_sa)
+                and s2[s2_sa[next_j] : s2_sa[next_j] + k] == k1
+            ):
+                next_j += 1
+
+            # Ok, now we know the "span" of this k-mer in both strings' suffix
+            # arrays -- in s1_sa, it's range(i, next_i).
+            # (If this k-mer only occurs once in s1, then next_i = i + 1: so
+            # list(range(i, next_i)) == [i].)
+            #
+            # We'll add each match to matches, then jump to just past the ends
+            # of these "spans."
+            for mi in range(i, next_i):
+                x = s1_sa[mi]
+                for mj in range(j, next_j):
+                    if s2isrc:
+                        s2p = len(s2) - s2_sa[mj] - k
+                    else:
+                        s2p = s2_sa[mj]
+                    y = _get_row(s2p, num_rows, yorder)
+                    pos = (y, x)
+                    if not binary:
+                        if s2isrc:
+                            if pos in md:
+                                md[pos] = BOTH
+                            else:
+                                md[pos] = REV
+                        else:
+                            md[pos] = FWD
+                    else:
+                        md[pos] = MATCH
+            i = next_i
+            j = next_j
+        else:
+            # find lexicographically smaller suffix
+            # (We can safely make this comparison using k1 and k2 as proxies
+            # for their entire suffix, because we will only end up in this
+            # branch if k1 != k2)
+            if k1 < k2:
+                i += 1
+            else:
+                j += 1
+
+
 def _get_common_substrings(s1, s2, k):
     """Returns a list of shared regions (with length >= k) of two strings.
 
@@ -246,7 +425,82 @@ def _fill_match_cells(s1, s2, k, md, yorder="BT", binary=True, s2isrc=False):
                 md[pos] = MATCH
 
 
-def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
+def _get_matches_sa_only(s1, s2, k, yorder, binary, _mlog):
+    """Constructs a dict of matches using the suffix-arrays-only method."""
+
+    _mlog("Computing suffix array for s1...")
+    s1_sa = _get_suffix_array(s1)
+
+    if s1 == s2:
+        # Save an unnecessary extra call to _get_suffix_array().
+        # Note that pyfastx.Sequence objects, as of writing, don't work well
+        # with python equality checking (so if "f" is a pyfastx.Fasta object,
+        # f[0] != f[0] for some reason). However, since we've already converted
+        # s1 and s2 to strings in _validate_and_stringify_seq(), this should
+        # not be a problem, so we can take advantage of this speedup.
+        _mlog("s1 and s2 are equal, so reusing s1's suffix array for s2...")
+        s2_sa = s1_sa
+    else:
+        _mlog("Computing suffix array for s2...")
+        s2_sa = _get_suffix_array(s2)
+
+    # Find k-mers that are shared between both strings (not considering
+    # reverse-complementing)
+    matches = {}
+    _mlog("Finding forward matches between s1 and s2...")
+    _fill_match_cells_sa_only(
+        s1, s2, k, s1_sa, s2_sa, matches, yorder=yorder, binary=binary
+    )
+    _mlog(f"Found {len(matches):,} forward match cell(s).")
+    # I'm not sure if this makes a difference (is Python smart enough to
+    # immediately garbage-collect s2_sa at this point?), but we might as
+    # well be very clear that "hey this big chunky suffix array is now
+    # unnecessary please garbage collect it"
+    del s2_sa
+
+    _mlog("Computing ReverseComplement(s2)...")
+    rcs2 = rc(s2)
+    _mlog("Computing suffix array for ReverseComplement(s2)...")
+    rcs2_sa = _get_suffix_array(rcs2)
+
+    _mlog("Finding matches between s1 and ReverseComplement(s2)...")
+    _fill_match_cells_sa_only(
+        s1,
+        rcs2,
+        k,
+        s1_sa,
+        rcs2_sa,
+        matches,
+        yorder=yorder,
+        binary=binary,
+        s2isrc=True,
+    )
+    # Using "del" at the end of a func is probs redundant but may as well
+    del s1_sa
+    del rcs2_sa
+    return matches
+
+
+def _get_matches_common_substrings(s1, s2, k, yorder, binary, _mlog):
+    """Constructs a dict of matches using pydivsufsort.common_substrings()."""
+
+    matches = {}
+
+    _mlog("Finding forward matches between s1 and s2...")
+    _fill_match_cells(s1, s2, k, matches, yorder=yorder, binary=binary)
+    _mlog(f"Found {len(matches):,} forward match cell(s).")
+
+    _mlog("Computing ReverseComplement(s2)...")
+    rcs2 = rc(s2)
+    _mlog("Finding reverse-complementary matches between s1 and s2...")
+    _fill_match_cells(
+        s1, rcs2, k, matches, yorder=yorder, binary=binary, s2isrc=True
+    )
+
+    return matches
+
+
+def _make(s1, s2, k, yorder="BT", binary=True, sa_only=False, verbose=False):
     """Computes a dot plot matrix.
 
     Parameters
@@ -256,6 +510,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     k: int
     yorder: str
     binary: bool
+        sa_only: bool
         See DotPlotMatrix.__init__() for details.
 
     verbose: bool
@@ -321,26 +576,19 @@ def _make(s1, s2, k, yorder="BT", binary=True, verbose=False):
     s2 = _validate_and_stringify_seq(s2, k)
 
     # Ok, things seem good.
+    if sa_only:
+        matches = _get_matches_sa_only(s1, s2, k, yorder, binary, _mlog)
+    else:
+        matches = _get_matches_common_substrings(
+            s1, s2, k, yorder, binary, _mlog
+        )
+    _mlog(f"Found {len(matches):,} total (fwd and/or RC) match cell(s).")
 
     # We could remove the "- k + 1" parts here, but then we'd have empty space
     # for all plots where k > 1 (since you can't have e.g. a 2-mer begin in the
     # final row or column). Interestingly, Figure 6.20 in Bioinformatics
     # Algorithms does include this extra empty space, but we'll omit it here
     mat_shape = (len(s2) - k + 1, len(s1) - k + 1)
-    matches = {}
-
-    _mlog("Finding forward matches between s1 and s2...")
-    _fill_match_cells(s1, s2, k, matches, yorder=yorder, binary=binary)
-    _mlog(f"Found {len(matches):,} forward match cell(s).")
-
-    _mlog("Computing ReverseComplement(s2)...")
-    rcs2 = rc(s2)
-    _mlog("Finding reverse-complementary matches between s1 and s2...")
-    _fill_match_cells(
-        s1, rcs2, k, matches, yorder=yorder, binary=binary, s2isrc=True
-    )
-    _mlog(f"Found {len(matches):,} total (fwd and/or RC) match cell(s).")
-
     density = 100 * (len(matches) / (mat_shape[0] * mat_shape[1]))
     _mlog(f"Dot plot matrix density = {density:.2f}%.")
 
