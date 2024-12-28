@@ -131,7 +131,7 @@ if you'd like to speed it up ;)
 As of writing, wotplot supports two methods for finding shared _k_-mers in order to
 create the dot plot matrix:
 
-1. **`pydivsufsort.common_substrings()` (default)**: faster, but requires more memory
+1. **[`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42) (default)**: faster, but requires more memory
 
 2. **`pydivsufsort.divsufsort()`** only: slower, but requires less memory
 
