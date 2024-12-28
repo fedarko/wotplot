@@ -143,21 +143,24 @@ _k_-mers. It's less sophisticated (and, for long sequences, noticeably slower) t
 `common_substrings()`, but it works. (This was previously the only method wotplot
 supported for finding shared _k_-mers.)
 
-I'm leaving it in here because, from the simple benchmarking I've done so far (see below),
-this method requires less memory than the default method. It can thus be useful if you
-are working with long sequences on low-memory systems.
+I'm leaving it as an option because, from the simple benchmarking I've done so far
+(see below), this method requires less memory than the default method. It can thus be
+useful if you are working with long sequences on low-memory systems.
 
 You can use the suff-only method by passing `suff_only=True` to the `DotPlotMatrix()`
 constructor.
 
 #### When should I use one method or another?
 
-In general, the default method should be fine up until your sequences are ~5 Mbp each.
-At that point, if you are using a system with relatively low memory (less than ~8 GB RAM) and are okay
-with taking a longer time to create your dot plots, you may want to use the suff-only method.
+It depends on how much memory your system has and how long your sequences are. Speaking
+very generally, assuming you are on a system with ~8 GB RAM, the default method should be
+fine up until your sequences are ~5 Mbp each. At that point, if you are okay with taking a
+longer time to create your dot plots, you may want to use the suff-only method (or at least
+think about it, in case you eventually start running out of memory).
 
 (If you need to create dot plots of (i) very long sequences (ii) on a low-memory system and (iii) you
-need to do it as quickly as possible, this library might not be ideal.)
+need to do it as quickly as possible, this library might not be ideal -- since it is creating the
+exact dot plot matrix. Using a tool that creates a less granular dot plot might better meet your needs.)
 
 ### Informal benchmarking
 
