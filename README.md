@@ -131,9 +131,9 @@ if you'd like to speed it up ;)
 As of writing, wotplot supports two methods for finding shared _k_-mers in order to
 create the dot plot matrix:
 
-1. **Default**: Use **[`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)** (faster, but requires more memory)
+1. **default**: Use **[`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)** (faster, but requires more memory)
 
-2. **Suff-only:** Use **`pydivsufsort.divsufsort()`** to compute suffix arrays, then iterate through them (slower, but requires less memory)
+2. **suff-only:** Use **`pydivsufsort.divsufsort()`** to compute suffix arrays, then iterate through them (slower, but requires less memory)
 
 #### The "suff-only" method
 
@@ -144,34 +144,38 @@ _k_-mers. It's less sophisticated (and, for long sequences, noticeably slower) t
 supported for finding shared _k_-mers.)
 
 I'm leaving it in here because, from the simple benchmarking I've done so far (see below),
-this method requires much less memory. It can thus be useful if you are working with
-long sequences on low-memory systems.
+this method requires less memory than the default method. It can thus be useful if you
+are working with long sequences on low-memory systems.
 
-You can use this alternative method by passing `suff_only=True` to the `DotPlotMatrix()`
+You can use the suff-only method by passing `suff_only=True` to the `DotPlotMatrix()`
 constructor.
 
 #### When should I use one method or another?
 
 In general, the default method should be fine up until your sequences are ~5 Mbp each.
-At that point, if you are using a system with low memory (less than ~8 GB RAM) and are okay
-with taking a longer time to computer your dot plots, you may want to use the suff-only method.
+At that point, if you are using a system with relatively low memory (less than ~8 GB RAM) and are okay
+with taking a longer time to create your dot plots, you may want to use the suff-only method.
+
+(If you need to create dot plots of (i) very long sequences (ii) on a low-memory system and (iii) you
+need to do it as quickly as possible, this library might not be ideal.)
 
 ### Informal benchmarking
 
-Here I show very informal benchmarking notebooks that use:
+Here I show very informal benchmarking notebooks that use the two shared-_k_-mer-finding methods:
 
-1. [The default shared-_k_-mer-finding method](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb)
+1. [default](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb)
 
-2. [The suff-only shared-_k_-mer-finding method](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking_7397b18.ipynb)
+2. [suff-only](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking_7397b18.ipynb)
 
 Both of the benchmarking notebooks linked above use a laptop with 8 GB of RAM.
-Even on this system, wotplot can handle reasonably large sequences. Using the
+Even on this machine, wotplot can handle reasonably large sequences. Using the
 default method, wotplot can create the dot plot of two random 20 Mbp sequences (_k_ = 20)
 in 74 seconds; using the suff-only method, wotplot can create the dot plot of two random
-100 Mbp (!) sequences (_k_ = 20) in ~45 minutes (!!).
+100 Mbp sequences (_k_ = 20) in ~45 minutes.
 
 ... That all being said, dot plots of shorter sequences (e.g. 100 kbp or less) usually
-take only a few seconds to compute with either methods, at least for reasonably large values of _k_.
+take only a few seconds to compute with either method, at least for reasonably large
+values of _k_.
 
 ## Why does this library exist?
 
