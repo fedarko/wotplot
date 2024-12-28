@@ -131,22 +131,33 @@ if you'd like to speed it up ;)
 As of writing, wotplot supports two methods for finding shared _k_-mers in order to
 create the dot plot matrix:
 
-1. **`pydivsufsort.common_substrings()` (default)**: faster, but requires more memory ([benchmarking](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb))
+1. **`pydivsufsort.common_substrings()` (default)**: faster, but requires more memory
 
-2. **`pydivsufsort.divsufsort()`** only: slower, but requires less memory ([benchmarking](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking_7397b18.ipynb))
+2. **`pydivsufsort.divsufsort()`** only: slower, but requires less memory
 
-  - This alternative method (herein referred to as "SA-only") computes suffix arrays for
-    each of the input strings, then iterates through them to identify shared matches.
-    It's less sophisticated than `common_substrings()`, but it works.
+#### The "suffix-array-only" method
 
-  - You can use this alternative method by passing `sa_only=True` to the `DotPlotMatrix()`
-    constructor.
+The second method mentioned above (herein referred to as "SA-only") computes suffix
+arrays for each of the input strings, then iterates through them to identify shared
+_k_-mers. It's less sophisticated than `common_substrings()`, but it works. (This
+was previously the only method wotplot supported for finding shared _k_-mers.)
+
+You can use this alternative method by passing `sa_only=True` to the `DotPlotMatrix()`
+constructor.
+
+#### When should I use one method or another?
 
 In general, the default method should be fine up until your sequences are ~5 Mbp each.
 At that point, if you are using a system with low memory (less than ~8 GB RAM) and are okay
 with taking a longer time to computer your dot plots, you may want to use the SA-only method.
 
-#### Informal benchmarking
+### Informal benchmarking
+
+Here I show very informal benchmarking notebooks that use:
+
+1. [The default shared-_k_-mer-finding method](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb)
+
+2. [The SA-only shared-_k_-mer-finding method](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking_7397b18.ipynb)
 
 Both of the benchmarking notebooks linked above use a laptop with 8 GB of RAM.
 Even on this system, wotplot can handle reasonably large sequences. Using the
