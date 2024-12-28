@@ -168,6 +168,7 @@ def test_make_palindrome_not_binary_sa_only():
         ),
     )
 
+
 def test_make_fancy_not_binary():
     big = "AGCAGAAAGAGATAAACCTGT"
     dpm = DotPlotMatrix(big, big, 2, binary=False)
