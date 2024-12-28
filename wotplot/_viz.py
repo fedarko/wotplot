@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot
-from ._make import FWD, REV, BOTH
+from ._make import FWD, REV, BOTH, MATCH
 from ._logging import get_logger
 
 # Colormaps based on Figure 6.20 in Chapter 6 of Bioinformatics Algorithms
@@ -301,7 +301,11 @@ def viz_imshow(
         ax.imshow(dense_mat, **kwargs)
     else:
         _mlog("Calling imshow()...")
-        ax.imshow(dense_mat, cmap=cmap, **kwargs)
+        # explicitly set vmin / vmax. This accounts for the corner case where
+        # the matrix is binary and entirely full of MATCHes; in this case,
+        # the matrix should be drawn correctly as all full, not all empty
+        # (see https://github.com/fedarko/wotplot/issues/19)
+        ax.imshow(dense_mat, vmin=0, vmax=MATCH, cmap=cmap, **kwargs)
     _mlog("Slightly restyling the visualization...")
     style_viz_ax(ax, m, title)
     _mlog("Done.")
