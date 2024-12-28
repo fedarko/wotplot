@@ -131,15 +131,16 @@ if you'd like to speed it up ;)
 As of writing, wotplot supports two methods for finding shared _k_-mers in order to
 create the dot plot matrix:
 
-1. **[`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42) (default)**: faster, but requires more memory
+1. Use **[`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42) (default)**: faster, but requires more memory
 
-2. **`pydivsufsort.divsufsort()`** only: slower, but requires less memory
+2. Use **`pydivsufsort.divsufsort()`** to compute suffix arrays, then iterate through them: slower, but requires less memory
 
 #### The "suffix-array-only" method
 
 The second method mentioned above (herein referred to as "suff-only") computes suffix
 arrays for each of the input strings, then iterates through them to identify shared
-_k_-mers. It's less sophisticated than `common_substrings()`, but it works. (This
+_k_-mers. It's less sophisticated than `common_substrings()`, but it works. I'm leaving
+it in here because it can be useful for long sequences on low-memory systems. (This
 was previously the only method wotplot supported for finding shared _k_-mers.)
 
 You can use this alternative method by passing `suff_only=True` to the `DotPlotMatrix()`
