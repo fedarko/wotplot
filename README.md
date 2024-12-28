@@ -137,19 +137,19 @@ create the dot plot matrix:
 
 #### The "suffix-array-only" method
 
-The second method mentioned above (herein referred to as "SA-only") computes suffix
+The second method mentioned above (herein referred to as "suff-only") computes suffix
 arrays for each of the input strings, then iterates through them to identify shared
 _k_-mers. It's less sophisticated than `common_substrings()`, but it works. (This
 was previously the only method wotplot supported for finding shared _k_-mers.)
 
-You can use this alternative method by passing `sa_only=True` to the `DotPlotMatrix()`
+You can use this alternative method by passing `suff_only=True` to the `DotPlotMatrix()`
 constructor.
 
 #### When should I use one method or another?
 
 In general, the default method should be fine up until your sequences are ~5 Mbp each.
 At that point, if you are using a system with low memory (less than ~8 GB RAM) and are okay
-with taking a longer time to computer your dot plots, you may want to use the SA-only method.
+with taking a longer time to computer your dot plots, you may want to use the suff-only method.
 
 ### Informal benchmarking
 
@@ -157,12 +157,12 @@ Here I show very informal benchmarking notebooks that use:
 
 1. [The default shared-_k_-mer-finding method](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb)
 
-2. [The SA-only shared-_k_-mer-finding method](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking_7397b18.ipynb)
+2. [The suff-only shared-_k_-mer-finding method](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking_7397b18.ipynb)
 
 Both of the benchmarking notebooks linked above use a laptop with 8 GB of RAM.
 Even on this system, wotplot can handle reasonably large sequences. Using the
 default method, wotplot can create the dot plot of two random 20 Mbp sequences (_k_ = 20)
-in 74 seconds; using the SA-only method, wotplot can create the dot plot of two random
+in 74 seconds; using the suff-only method, wotplot can create the dot plot of two random
 100 Mbp (!) sequences (_k_ = 20) in ~45 minutes (!!).
 
 ... That all being said, dot plots of shorter sequences (e.g. 100 kbp or less) usually

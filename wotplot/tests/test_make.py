@@ -22,9 +22,9 @@ def test_make_simple_default():
     )
 
 
-def test_make_simple_sa_only():
+def test_make_simple_suff_only():
     assert MATCH == 1
-    dpm = DotPlotMatrix("ACGTC", "AAGTC", 2, sa_only=True)
+    dpm = DotPlotMatrix("ACGTC", "AAGTC", 2, suff_only=True)
     assert np.array_equal(
         dpm.mat.toarray(),
         np.array(
@@ -85,9 +85,9 @@ def test_make_simple_yorder_TB_and_not_binary():
     )
 
 
-def test_make_simple_yorder_TB_and_not_binary_sa_only():
+def test_make_simple_yorder_TB_and_not_binary_suff_only():
     dpm = DotPlotMatrix(
-        "ACGTC", "AAGTC", 2, yorder="TB", binary=False, sa_only=True
+        "ACGTC", "AAGTC", 2, yorder="TB", binary=False, suff_only=True
     )
     assert np.array_equal(
         dpm.mat.toarray(),
@@ -153,11 +153,11 @@ def test_make_palindrome_not_binary():
     )
 
 
-def test_make_palindrome_not_binary_sa_only():
+def test_make_palindrome_not_binary_suff_only():
     # AATCGATC
     # 01234567
     assert BOTH == 2
-    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False, sa_only=True)
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False, suff_only=True)
     assert np.array_equal(
         dpm.mat.toarray(),
         np.array(
@@ -233,14 +233,14 @@ def test_make_bad_k():
         assert str(e.value) == "k must be an integer \u2265 1"
 
 
-def test_make_sa_only_self_dotplot_reuse_suffixarray(capsys):
+def test_make_suff_only_self_dotplot_reuse_suffixarray(capsys):
     m = DotPlotMatrix(
         "ACCT",
         "ACCT",
         1,
         yorder="BT",
         binary=False,
-        sa_only=True,
+        suff_only=True,
         verbose=True,
     )
     assert np.array_equal(
@@ -260,14 +260,14 @@ def test_make_sa_only_self_dotplot_reuse_suffixarray(capsys):
     )
 
 
-def test_make_sa_only_nonself_dotplot_dont_reuse_suffixarray(capsys):
+def test_make_suff_only_nonself_dotplot_dont_reuse_suffixarray(capsys):
     m = DotPlotMatrix(
         "ACCT",
         "GGGGG",
         1,
         yorder="BT",
         binary=False,
-        sa_only=True,
+        suff_only=True,
         verbose=True,
     )
     assert np.array_equal(

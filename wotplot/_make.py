@@ -116,7 +116,7 @@ def _get_suffix_array(seq):
     return pydivsufsort.divsufsort(seq.encode("ascii") + ENDCHAR)
 
 
-def _fill_match_cells_sa_only(
+def _fill_match_cells_suff_only(
     s1, s2, k, s1_sa, s2_sa, md, yorder="BT", binary=True, s2isrc=False
 ):
     """Finds the start positions of shared k-mers in two strings.
@@ -425,7 +425,7 @@ def _fill_match_cells(s1, s2, k, md, yorder="BT", binary=True, s2isrc=False):
                 md[pos] = MATCH
 
 
-def _get_matches_sa_only(s1, s2, k, yorder, binary, _mlog):
+def _get_matches_suff_only(s1, s2, k, yorder, binary, _mlog):
     """Constructs a dict of matches using the suffix-arrays-only method."""
 
     _mlog("Computing suffix array for s1...")
@@ -448,7 +448,7 @@ def _get_matches_sa_only(s1, s2, k, yorder, binary, _mlog):
     # reverse-complementing)
     matches = {}
     _mlog("Finding forward matches between s1 and s2...")
-    _fill_match_cells_sa_only(
+    _fill_match_cells_suff_only(
         s1, s2, k, s1_sa, s2_sa, matches, yorder=yorder, binary=binary
     )
     _mlog(f"Found {len(matches):,} forward match cell(s).")
@@ -464,7 +464,7 @@ def _get_matches_sa_only(s1, s2, k, yorder, binary, _mlog):
     rcs2_sa = _get_suffix_array(rcs2)
 
     _mlog("Finding matches between s1 and ReverseComplement(s2)...")
-    _fill_match_cells_sa_only(
+    _fill_match_cells_suff_only(
         s1,
         rcs2,
         k,
@@ -500,7 +500,7 @@ def _get_matches_common_substrings(s1, s2, k, yorder, binary, _mlog):
     return matches
 
 
-def _make(s1, s2, k, yorder="BT", binary=True, sa_only=False, verbose=False):
+def _make(s1, s2, k, yorder="BT", binary=True, suff_only=False, verbose=False):
     """Computes a dot plot matrix.
 
     Parameters
@@ -510,7 +510,7 @@ def _make(s1, s2, k, yorder="BT", binary=True, sa_only=False, verbose=False):
     k: int
     yorder: str
     binary: bool
-        sa_only: bool
+    suff_only: bool
         See DotPlotMatrix.__init__() for details.
 
     verbose: bool
@@ -576,8 +576,8 @@ def _make(s1, s2, k, yorder="BT", binary=True, sa_only=False, verbose=False):
     s2 = _validate_and_stringify_seq(s2, k)
 
     # Ok, things seem good.
-    if sa_only:
-        matches = _get_matches_sa_only(s1, s2, k, yorder, binary, _mlog)
+    if suff_only:
+        matches = _get_matches_suff_only(s1, s2, k, yorder, binary, _mlog)
     else:
         matches = _get_matches_common_substrings(
             s1, s2, k, yorder, binary, _mlog
