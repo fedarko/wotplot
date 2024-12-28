@@ -105,8 +105,8 @@ I've tried to make this library reasonably performant. The main optimizations
 include:
 
 - We use the [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort)
-  library's [`common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)
-  algorithm to find _k_-mers that are shared between two sequences.
+  library -- either its [`common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)
+  algorithm, or just the `divsufsort()` algorithm for computing suffix arrays -- to find shared _k_-mers.
 
 - We store the dot plot matrix in sparse format (courtesy of
   [SciPy](https://docs.scipy.org/doc/scipy/reference/sparse.html)) in order to
@@ -126,16 +126,36 @@ This library could be made a lot more efficient (I've been documenting ideas in
 but right now it's good enough for my purposes. Feel free to open an issue / make a pull request
 if you'd like to speed it up ;)
 
-### Informal benchmarking
+### Two methods for finding shared _k_-mers
 
-See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/blob/main/docs/Benchmarking.ipynb)
-for some very informal benchmarking results performed on a laptop with ~8 GB of RAM.
+As of writing, wotplot supports two methods for finding shared _k_-mers in order to
+create the dot plot matrix:
 
-Even on this system, the library can handle reasonably large sequences: in the biggest example,
-the notebook demonstrates computing the dot plot of two random 100 Mbp sequences
-(using _k_ = 20) in ~50 minutes. **TODO UPDATE RE FIXES**
-Dot plots of shorter sequences (e.g. 100 kbp or less) usually take only a few seconds to
-compute, at least for reasonably large values of _k_.
+1. **`pydivsufsort.common_substrings()` (default)**: faster, but requires more memory ([benchmarking](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb))
+
+2. **`pydivsufsort.divsufsort()`** only: slower, but requires less memory ([benchmarking](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking_7397b18.ipynb))
+
+  - This alternative method (herein referred to as "SA-only") computes suffix arrays for
+    each of the input strings, then iterates through them to identify shared matches.
+    It's less sophisticated than `common_substrings()`, but it works.
+
+  - You can use this alternative method by passing `sa_only=True` to the `DotPlotMatrix()`
+    constructor.
+
+In general, the default method should be fine up until your sequences are ~5 Mbp each.
+At that point, if you are using a system with low memory (less than ~8 GB RAM) and are okay
+with taking a longer time to computer your dot plots, you may want to use the SA-only method.
+
+#### Informal benchmarking
+
+Both of the benchmarking notebooks linked above use a laptop with 8 GB of RAM.
+Even on this system, wotplot can handle reasonably large sequences. Using the
+default method, wotplot can create the dot plot of two random 20 Mbp sequences (_k_ = 20)
+in 74 seconds; using the SA-only method, wotplot can create the dot plot of two random
+100 Mbp (!) sequences (_k_ = 20) in ~45 minutes (!!).
+
+... That all being said, dot plots of shorter sequences (e.g. 100 kbp or less) usually
+take only a few seconds to compute with either methods, at least for reasonably large values of _k_.
 
 ## Why does this library exist?
 

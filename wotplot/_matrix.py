@@ -85,11 +85,11 @@ class DotPlotMatrix:
             -  0: k1 != k2, and ReverseComplement(k1) != k2
 
         sa_only: bool
-            If True, this uses a different method for computing the dot plot
-            matrix than the default. The default method (sa_only=False, which
-            uses pydivsufsort.common_substrings()) is faster but uses more
-            memory; the alternative method (sa_only=True, which uses just
-            pydivsufsort's implementation ofsuffix arrays) is slower but --
+            If True, this uses a different method for identifying shared k-mers
+            than the default. The default method (sa_only=False, which uses
+            pydivsufsort.common_substrings()) is faster but uses more memory;
+            the alternative method (sa_only=True, which uses just
+            pydivsufsort's implementation of suffix arrays) is slower but --
             from testing -- uses less memory.
 
             From some benchmarking, I think the default method should be fine
