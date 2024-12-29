@@ -564,9 +564,7 @@ def _make(s1, s2, k, yorder="BT", suff_only=False, verbose=False):
     if suff_only:
         matches = _get_matches_suff_only(s1, s2, k, yorder, _mlog)
     else:
-        matches = _get_matches_common_substrings(
-            s1, s2, k, yorder, _mlog
-        )
+        matches = _get_matches_common_substrings(s1, s2, k, yorder, _mlog)
     _mlog(f"Found {len(matches):,} total (fwd and/or RC) match cell(s).")
 
     # We could remove the "- k + 1" parts here, but then we'd have empty space
