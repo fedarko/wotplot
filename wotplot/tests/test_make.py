@@ -4,6 +4,11 @@ from wotplot import DotPlotMatrix, MATCH, FWD, REV, BOTH
 
 
 def test_make_simple_default():
+    # Okay, look, MAYBE we could change these if needed. But that's gonna be
+    # such a pain. Why would we even do that
+    assert FWD == 1
+    assert REV == -1
+    assert BOTH == 2
     assert MATCH == 1
     dpm = DotPlotMatrix("ACGTC", "AAGTC", 2)
     assert np.array_equal(
@@ -14,7 +19,7 @@ def test_make_simple_default():
         np.array(
             [
                 [0, 0, 0, 1],
-                [1, 0, 1, 0],
+                [-1, 0, 1, 0],
                 [0, 0, 0, 0],
                 [0, 0, 0, 0],
             ]
@@ -23,14 +28,13 @@ def test_make_simple_default():
 
 
 def test_make_simple_suff_only():
-    assert MATCH == 1
     dpm = DotPlotMatrix("ACGTC", "AAGTC", 2, suff_only=True)
     assert np.array_equal(
         dpm.mat.toarray(),
         np.array(
             [
                 [0, 0, 0, 1],
-                [1, 0, 1, 0],
+                [-1, 0, 1, 0],
                 [0, 0, 0, 0],
                 [0, 0, 0, 0],
             ]
@@ -46,38 +50,6 @@ def test_make_simple_yorder_TB():
             [
                 [0, 0, 0, 0],
                 [0, 0, 0, 0],
-                [1, 0, 1, 0],
-                [0, 0, 0, 1],
-            ]
-        ),
-    )
-
-
-def test_make_simple_not_binary():
-    assert FWD == 1
-    assert REV == -1
-    dpm = DotPlotMatrix("ACGTC", "AAGTC", 2, binary=False)
-    assert np.array_equal(
-        dpm.mat.toarray(),
-        np.array(
-            [
-                [0, 0, 0, 1],
-                [-1, 0, 1, 0],
-                [0, 0, 0, 0],
-                [0, 0, 0, 0],
-            ]
-        ),
-    )
-
-
-def test_make_simple_yorder_TB_and_not_binary():
-    dpm = DotPlotMatrix("ACGTC", "AAGTC", 2, yorder="TB", binary=False)
-    assert np.array_equal(
-        dpm.mat.toarray(),
-        np.array(
-            [
-                [0, 0, 0, 0],
-                [0, 0, 0, 0],
                 [-1, 0, 1, 0],
                 [0, 0, 0, 1],
             ]
@@ -85,10 +57,8 @@ def test_make_simple_yorder_TB_and_not_binary():
     )
 
 
-def test_make_simple_yorder_TB_and_not_binary_suff_only():
-    dpm = DotPlotMatrix(
-        "ACGTC", "AAGTC", 2, yorder="TB", binary=False, suff_only=True
-    )
+def test_make_simple_yorder_TB_suff_only():
+    dpm = DotPlotMatrix("ACGTC", "AAGTC", 2, yorder="TB", suff_only=True)
     assert np.array_equal(
         dpm.mat.toarray(),
         np.array(
@@ -105,7 +75,7 @@ def test_make_simple_yorder_TB_and_not_binary_suff_only():
 def test_make_simple_acct():
     # was initially going to be loaded from a FASTA file:
     # https://github.com/fedarko/wotplot/blob/7397b184e8a6dbbc738e1e99f2e2fefd69c9b94f/wotplot/tests/test_make.py
-    dpm = DotPlotMatrix("ACCT", "ACCT", 1, yorder="BT", binary=False)
+    dpm = DotPlotMatrix("ACCT", "ACCT", 1, yorder="BT")
     assert np.array_equal(
         dpm.mat.toarray(),
         np.array(
@@ -122,7 +92,7 @@ def test_make_simple_acct():
 def test_make_simple_acct_ggggg():
     # was initially going to be loaded from a FASTA file:
     # https://github.com/fedarko/wotplot/blob/7397b184e8a6dbbc738e1e99f2e2fefd69c9b94f/wotplot/tests/test_make.py
-    dpm = DotPlotMatrix("ACCT", "GGGGG", 1, yorder="BT", binary=False)
+    dpm = DotPlotMatrix("ACCT", "GGGGG", 1, yorder="BT")
     assert np.array_equal(
         dpm.mat.toarray(),
         np.array(
@@ -137,11 +107,11 @@ def test_make_simple_acct_ggggg():
     )
 
 
-def test_make_palindrome_not_binary():
+def test_make_palindrome():
     # AATCGATC
     # 01234567
     assert BOTH == 2
-    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False)
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
     assert np.array_equal(
         dpm.mat.toarray(),
         np.array(
@@ -153,11 +123,11 @@ def test_make_palindrome_not_binary():
     )
 
 
-def test_make_palindrome_not_binary_suff_only():
+def test_make_palindrome_suff_only():
     # AATCGATC
     # 01234567
     assert BOTH == 2
-    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False, suff_only=True)
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, suff_only=True)
     assert np.array_equal(
         dpm.mat.toarray(),
         np.array(
@@ -169,9 +139,9 @@ def test_make_palindrome_not_binary_suff_only():
     )
 
 
-def test_make_fancy_not_binary():
+def test_make_fancy():
     big = "AGCAGAAAGAGATAAACCTGT"
-    dpm = DotPlotMatrix(big, big, 2, binary=False)
+    dpm = DotPlotMatrix(big, big, 2)
     # This expected output was produced by writing str(m.mat.toarray()) (from
     # an earlier version of wotplot that didn't use the suffix array method,
     # so I had more confidence in it being correct) to a file, and then
@@ -239,7 +209,6 @@ def test_make_suff_only_self_dotplot_reuse_suffixarray(capsys):
         "ACCT",
         1,
         yorder="BT",
-        binary=False,
         suff_only=True,
         verbose=True,
     )
@@ -266,7 +235,6 @@ def test_make_suff_only_nonself_dotplot_dont_reuse_suffixarray(capsys):
         "GGGGG",
         1,
         yorder="BT",
-        binary=False,
         suff_only=True,
         verbose=True,
     )
