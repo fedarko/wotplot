@@ -18,9 +18,9 @@ optimizations to make the creation and visualization of the
 exact dot plot matrix feasible even for entire prokaryotic genomes. Having this
 exact matrix can be useful for a variety of downstream analyses.
 
-## Quick examples
+## 1. Quick examples
 
-### Small dataset
+### 1.1. Small dataset
 
 This example is adapted from Figure 6.20 (bottom right) in
 [_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org), edition 2.
@@ -51,7 +51,7 @@ blue cells (🟦) indicate reverse-complementary matches,
 purple cells (🟪) indicate palindromic matches,
 and white cells (⬜) indicate no matches.
 
-### Larger dataset: comparing two _E. coli_ genomes
+### 1.2. Larger dataset: comparing two _E. coli_ genomes
 
 Using _E. coli_ K-12 ([from this assembly](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000005845.2/))
 and _E. coli_ O157:H7 ([from this assembly](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000008865.2/)).
@@ -77,11 +77,11 @@ fig.set_size_inches(8, 8)
 
 ![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/img/ecoli_example_dotplot.png)
 
-## More detailed tutorial
+## 2. More detailed tutorial
 
 Please see [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/blob/main/docs/Tutorial.ipynb).
 
-## Installation
+## 3. Installation
 
 wotplot supports Python ≥ 3.6. You can install it and its dependencies using
 [pip](https://pip.pypa.io):
@@ -90,16 +90,17 @@ wotplot supports Python ≥ 3.6. You can install it and its dependencies using
 pip install wotplot
 ```
 
-## Performance
+## 4. Performance
 
-### Optimizations made so far
+### 4.1. Optimizations made so far
 
 I've tried to make this library reasonably performant. The main optimizations
 include:
 
 - We use the [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort)
   library -- either its [`common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)
-  algorithm, or just the `divsufsort()` algorithm for computing suffix arrays -- to find shared _k_-mers.
+  algorithm, or just the `divsufsort()` algorithm for computing suffix arrays -- to find
+  shared _k_-mers (corresponding to filled-in cells in the dot plot matrix).
 
 - We store the dot plot matrix in sparse format (courtesy of
   [SciPy](https://docs.scipy.org/doc/scipy/reference/sparse.html)) in order to
@@ -112,26 +113,20 @@ include:
   dense format and visualizing it with something like
   [`imshow()`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.imshow.html).
 
-### That being said...
+### 4.2. Two methods for finding shared _k_-mers
 
-This library could be made a lot more efficient (I've been documenting ideas in
-[issue #2](https://github.com/fedarko/wotplot/issues/2)),
-but right now it's good enough for my purposes. Feel free to open an issue / make a pull request
-if you'd like to speed it up ;)
+Creating an exact dot plot comparing two sequences (let's call these sequences
+_n_ and _m_) requires that we identify all pairs of shared _k_-mers between
+these sequences, and the location(s) of the shared _k_-mers in question.
+Doing this in a time- and space-efficient way is tricky.
 
-### Two methods for finding shared _k_-mers
-
-When creating an exact dot plot comparing two sequences, the main challenge is
-identifying all shared _k_-mers between these sequences (and their location(s)). For
-long sequences, doing this naïvely will have unreasonably large space and/or time requirements.
-
-As of writing, wotplot supports two methods for finding shared _k_-mers:
+ wotplot supports two methods for finding shared _k_-mers:
 
 1. **Default**: uses **[`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)** (faster, but requires more memory)
 
 2. **"suff-only":** uses **`pydivsufsort.divsufsort()`** to compute suffix arrays, then iterates through them (slower, but requires less memory)
 
-#### The "suff-only" method
+#### 4.2.1. The "suff-only" method
 
 The second method mentioned above (herein referred to as "suff-only") computes suffix
 arrays for each of the input strings, then iterates through them to identify shared
@@ -146,7 +141,7 @@ useful if you are working with long sequences on low-memory systems.
 You can use the suff-only method by passing `suff_only=True` to the `DotPlotMatrix()`
 constructor.
 
-#### When should I use one method or another?
+#### 4.2.2. When should I use one method or another?
 
 It depends on how much memory your system has and how long your sequences are. Speaking
 very generally, assuming you are on a system with ~8 GB RAM, the default method should be
@@ -158,34 +153,42 @@ think about it, in case you eventually start running out of memory).
 need to do it as quickly as possible, this library might not be ideal -- since it is creating the
 exact dot plot matrix. Using a tool that creates a less granular dot plot might better meet your needs.)
 
-### Informal benchmarking
+### 4.3. Informal benchmarking
 
 See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb).
 
-## Why does this library exist?
+### 4.4. Plans for the future
+
+This library could be made a lot more efficient (I've been documenting ideas in
+[issue #2](https://github.com/fedarko/wotplot/issues/2)),
+but right now it's good enough for my purposes. Feel free to open an issue / make a pull request
+if you'd like to speed it up :)
+
+## 5. Okay but like why does this library exist?
 
 1. This library separates the creation and visualization of dot plot matrices. Other tools that I tried produced pretty visualizations, but didn't give me easy access to the underlying matrix.
 
 2. I wanted something that worked well with [matplotlib](https://matplotlib.org), so that I could create and tile lots of dotplots at once in complicated ways.
 
-## Limitations
+## 6. Limitations
 
-- **Performance:** Although I've tried to optimize this tool (see the
-  "Performance" section above), it isn't the fastest or the most
-  memory-efficient way to visualize dot plots. The two obvious reasons for
-  this are that (1) this is written in Python, and (2) this is creating the
-  exact dot plot matrix rather than a subset of it.
+- **Performance:** Although I've tried to optimize this tool (see above),
+  it definitely isn't the fastest or the most memory-efficient way to
+  visualize dot plots. The two obvious reasons for this are that (1) this
+  is written in Python, and (2) this is creating the exact dot plot matrix
+  rather than a subset of it.
 
 - **Only static visualizations:** The visualization methods included in the
   tool only support the creation of static plots. There are
   [ways to make matplotlib visualizations interactive](https://matplotlib.org/stable/users/explain/interactive.html) (e.g. using
   [`%matplotlib notebook`](https://stackoverflow.com/a/41125787) within a
-  Jupyter Notebook), but (1) I don't currently know enough about these methods
-  to "officially" support them and (2) these visualizations will still probably
-  pale in comparison to the outputs of dedicated interactive visualization
-  software (e.g. [ModDotPlot](https://github.com/marbl/ModDotPlot)).
+  Jupyter Notebook, or with the `pyplot.show()` GUI), but (1) I don't
+  know enough about these methods to "officially" support them and (2) these
+  visualizations will still probably pale in comparison to the outputs of
+  dedicated interactive visualization software
+  (e.g. [ModDotPlot](https://github.com/marbl/ModDotPlot)).
 
-## Setting up a development environment
+## 7. Setting up a development environment
 
 First, fork wotplot -- this will make it easy to submit a pull request later.
 
@@ -207,7 +210,7 @@ by running its test suite:
 make test
 ```
 
-## Acknowledgements
+## 8. Acknowledgements
 
 The small example given above, and my initial implementation of an algorithm
 for computing dot plots, were based on Chapter 6 of
@@ -221,14 +224,14 @@ is also used in [Gepard](https://cube.univie.ac.at/gepard)
 `pydivsufsort.common_substrings()` algorithm, at least as the default algorithm; although
 that is still [using a suffix array under the hood](https://github.com/louisabraham/pydivsufsort/blob/2869020c26022e0f88592e85cdc480856e9856d5/pydivsufsort/wonderstring.py#L128-L157) :)
 
-### Dependencies
+### 8.1. Dependencies
 
 - [NumPy](https://numpy.org)
 - [SciPy](https://scipy.org)
 - [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort)
 - [matplotlib](https://matplotlib.org)
 
-### Testing dependencies
+### 8.3. Testing dependencies
 
 - [pytest](https://docs.pytest.org)
 - [pytest-cov](https://github.com/pytest-dev/pytest-cov)
@@ -236,7 +239,7 @@ that is still [using a suffix array under the hood](https://github.com/louisabra
 - [flake8](https://flake8.pycqa.org)
 - [black](https://github.com/psf/black)
 
-## Contact
+## 9. Contact
 
 Feel free to [open an issue](https://github.com/fedarko/wotplot/issues) if you
 have questions, suggestions, comments, etc.
