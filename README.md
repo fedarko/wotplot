@@ -98,9 +98,8 @@ I've tried to make this library reasonably performant. The main optimizations
 include:
 
 - We use the [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort)
-  library -- either its [`common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)
-  algorithm, or just the `divsufsort()` algorithm for computing suffix arrays -- to find
-  shared _k_-mers (corresponding to filled-in cells in the dot plot matrix).
+  library to find shared _k_-mers (corresponding to filled-in cells in the
+  dot plot matrix). See below for details.
 
 - We store the dot plot matrix in sparse format (courtesy of
   [SciPy](https://docs.scipy.org/doc/scipy/reference/sparse.html)) in order to
@@ -115,30 +114,47 @@ include:
 
 ### 4.2. Two methods for finding shared _k_-mers
 
-Creating an exact dot plot comparing two sequences (let's call these sequences
-_n_ and _m_) requires that we identify all pairs of shared _k_-mers between
-these sequences, and the location(s) of the shared _k_-mers in question.
+In order to create an exact dot plot comparing two sequences, we need to
+identify all pairs of shared _k_-mers between these sequences and their
+locations within these sequences.
 Doing this in a time- and space-efficient way is tricky.
 
- wotplot supports two methods for finding shared _k_-mers:
+wotplot supports two methods for finding shared _k_-mers, both of which rely on
+the excellent [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort) library:
 
-1. **Default**: uses **[`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)** (faster, but requires more memory)
+1. **Default**: just uses **[`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)** (faster, but requires more memory)
 
 2. **"suff-only":** uses **`pydivsufsort.divsufsort()`** to compute suffix arrays, then iterates through them (slower, but requires less memory)
 
-#### 4.2.1. The "suff-only" method
+#### 4.2.1. Details about these methods
 
-The second method mentioned above (herein referred to as "suff-only") computes suffix
-arrays for each of the input strings, then iterates through them to identify shared
-_k_-mers. This approach is less sophisticated (and, for long sequences, noticeably
-slower) than `common_substrings()`, but it works. (This was previously the only
-method wotplot supported for finding shared _k_-mers.)
+So, I implemented the second method ("suff-only") first, way back in 2023. This method
+uses `pydivsufsort.divsufsort()` to compute suffix arrays for each of the input strings,
+then iterates through these suffix arrays simultaneously to identify shared _k_-mers. It's
+a relatively simple approach, and could be made much more efficient.
 
-I'm leaving this as an option because, from the simple benchmarking I've done so far
-(see below), this method requires less memory than the default method. It can thus be
-useful if you are working with long sequences on low-memory systems.
+More recently, I switched to using
+[`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)
+as the default method for identifying shared _k_-mers. It's much faster than the "suff-only"
+method -- for example, computing the dot plot of the _E. coli_ example shown above takes
+~3 minutes with the suff-only method, but ~35 seconds with the `common_substrings()` method!
 
-You can use the suff-only method by passing `suff_only=True` to the `DotPlotMatrix()`
+Howeever, I've noticed from benchmarking (see below) that the `common_substrings()` method
+has higher memory requirements for long sequences than the suff-only method. For example,
+on my laptop with 8 GB of RAM, wotplot using the `common_substrings()` method sometimes crashes when
+creating dot plots of two 20 Mbp sequences (although, when it doesn't crash, it can create such
+a dot plot in about 62 seconds). The peak memory usage from such a successful run
+is ~5,823.75 MiB (aka ~6.11 GB).
+
+The suff-only method, for comparison, can create a dot plot of two 150 Mbp (!!!) sequences
+on the same laptop -- with peak memory usage of ~2,318.79 MiB (aka ~2.43 GB). The
+downside is that it is slow; creating this massive dot plot takes over an hour.
+
+Anyway -- for most use cases, I think `common_substrings()` will be a better choice, so
+I'm leaving it as the default. However, if you are working with long sequeneces on
+low-memory systems, you may need to use the suff-only method.
+
+You can choose which method to use by adjusting the `suff_only` parameter of the `DotPlotMatrix()`
 constructor.
 
 #### 4.2.2. When should I use one method or another?
@@ -164,7 +180,7 @@ This library could be made a lot more efficient (I've been documenting ideas in
 but right now it's good enough for my purposes. Feel free to open an issue / make a pull request
 if you'd like to speed it up :)
 
-## 5. Okay but like why does this library exist?
+## 5. Okay but like why does this library exist
 
 1. This library separates the creation and visualization of dot plot matrices. Other tools that I tried produced pretty visualizations, but didn't give me easy access to the underlying matrix.
 
