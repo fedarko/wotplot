@@ -22,8 +22,8 @@ test:
 
 stylecheck:
 	@# Ignoring E203 per https://github.com/psf/black/issues/315
-	flake8 --ignore=W503,E203 wotplot/ setup.py
-	black --check -l 79 wotplot/ setup.py
+	flake8 --ignore=W503,E203 wotplot/ setup.py docs/*.py
+	black --check -l 79 wotplot/ setup.py docs/*.py
 
 style:
-	black -l 79 wotplot/ setup.py
+	black -l 79 wotplot/ setup.py docs/*.py
