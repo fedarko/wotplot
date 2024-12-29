@@ -31,23 +31,11 @@ def run(s1, s2, k, suff_only, markersize, ax):
     return t2 - t0
 
 
-def print_sep():
-    print("-" * 79, flush=True)
-
-
-def sim(n, k, markersize=0.5, fig_size_inches=(10, 7)):
-    print("Generating sequences & prepping before benchmarking...")
-    # Generate a grid of dot plot visualizations for two randomly-generated
-    # sequences of length n, given a k-mer size k.
-    s1 = genseq(n)
-    s2 = genseq(n)
-
-    fig, (axD, axS) = pyplot.subplots(1, 2)
-
-    print_sep()
+def profile_run(s1, s2, k, suff_only, markersize, ax):
+    # returns 2-tuple of (max memory usage, time taken)
     # get memory usage -- https://stackoverflow.com/a/75407972
-    memD, tD = memory_usage(
-        (run, (s1, s2, k, False, markersize, axD), {}),
+    return memory_usage(
+        (run, (s1, s2, k, suff_only, markersize, ax), {}),
         # get the return value from run(), which is the duration
         retval=True,
         # only run once (otherwise the function could be run multiple times if
@@ -57,22 +45,33 @@ def sim(n, k, markersize=0.5, fig_size_inches=(10, 7)):
         # For now, only consider the maximum memory use
         max_usage=True,
     )
-    print_sep()
-    memS, tS = memory_usage(
-        (run, (s1, s2, k, True, markersize, axS), {}),
-        # get the return value from run(), which is the duration
-        retval=True,
-        max_iterations=1,
-        max_usage=True,
-    )
 
+
+def print_sep():
+    print("-" * 79, flush=True)
+
+
+def sim(n, k, markersize=0.5, fig_size_inches=(10, 7)):
+    # Generate dot plot visualizations for two randomly-generated
+    # sequences of length n, given a k-mer size k. Profile two runs of
+    # wotplot on these sequences (comparing the two shared-k-mer-finding
+    # methods, configurable via the suff_only parameter of DotPlotMatrix()).
+
+    print("Generating sequences & prepping before benchmarking...")
+    s1 = genseq(n)
+    s2 = genseq(n)
+    fig, (axD, axS) = pyplot.subplots(1, 2)
+    print_sep()
+    memD, tD = profile_run(s1, s2, k, False, markersize, axD)
+    print_sep()
+    memS, tS = profile_run(s1, s2, k, True, markersize, axS)
     print_sep()
     axD.set_title(
         f"common_substrings()\n{tD:,.2f} sec; max mem {memD:,.2f} MiB",
-        fontsize=18,
+        fontsize=15,
     )
     axS.set_title(
-        f"suff-only\n{tS:,.2f} sec; max mem {memS:,.2f} MiB", fontsize=18
+        f"suff-only\n{tS:,.2f} sec; max mem {memS:,.2f} MiB", fontsize=15
     )
     print(f"Total time taken: {tD + tS:,.2f} sec.", flush=True)
     fig.suptitle(f"$n$ = {n:,}; $k$ = {k:,}", fontsize=22, x=0.51, y=0.9)
