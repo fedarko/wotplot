@@ -51,28 +51,54 @@ def print_sep():
     print("-" * 79, flush=True)
 
 
-def sim(n, k, markersize=0.5, fig_size_inches=(10, 7)):
+def sim(n, k, markersize=0.5, so_vals=[False, True], fig_size_inches=(10, 7)):
     # Generate dot plot visualizations for two randomly-generated
-    # sequences of length n, given a k-mer size k. Profile two runs of
-    # wotplot on these sequences (comparing the two shared-k-mer-finding
+    # sequences of length n, given a k-mer size k. Profile run(s) of
+    # wotplot on these sequences (one for each entry in so_vals).
     # methods, configurable via the suff_only parameter of DotPlotMatrix()).
 
-    print("Generating sequences & prepping before benchmarking...")
+    print("Generating sequences & prepping before benchmarking...", flush=True)
     s1 = genseq(n)
     s2 = genseq(n)
-    fig, (axD, axS) = pyplot.subplots(1, 2)
+
+    if len(so_vals) == 1:
+        fig, ax = pyplot.subplots()
+        # This is a silly hack but I can't think of a better way to write this
+        # atm. granted: i am tired
+        if so_vals == [False]:
+            axD = ax
+        elif so_vals == [True]:
+            axS = ax
+        else:
+            raise ValueError("so_vals has 1 value that isn't a bool? huh.")
+    elif len(so_vals) == 2:
+        assert len(set(so_vals)) == len(so_vals), "why aren't so_vals unique"
+        fig, (axD, axS) = pyplot.subplots(1, 2)
+    else:
+        raise ValueError("no, stop it, so_vals should have 1 or 2 elements")
+
+    tD = tS = 0
     print_sep()
-    memD, tD = profile_run(s1, s2, k, False, markersize, axD)
-    print_sep()
-    memS, tS = profile_run(s1, s2, k, True, markersize, axS)
-    print_sep()
-    axD.set_title(
-        f"common_substrings()\n{tD:,.2f} sec; max mem {memD:,.2f} MiB",
-        fontsize=15,
-    )
-    axS.set_title(
-        f"suff-only\n{tS:,.2f} sec; max mem {memS:,.2f} MiB", fontsize=15
-    )
+
+    if False in so_vals:
+        memD, tD = profile_run(s1, s2, k, False, markersize, axD)
+        axD.set_title(
+            f"common_substrings()\n{tD:,.2f} sec; max mem {memD:,.2f} MiB",
+            fontsize=15,
+        )
+        print_sep()
+
+    if True in so_vals:
+        memS, tS = profile_run(s1, s2, k, True, markersize, axS)
+        axS.set_title(
+            f"suff-only\n{tS:,.2f} sec; max mem {memS:,.2f} MiB", fontsize=15
+        )
+        print_sep()
+
     print(f"Total time taken: {tD + tS:,.2f} sec.", flush=True)
-    fig.suptitle(f"$n$ = {n:,}; $k$ = {k:,}", fontsize=22, x=0.51, y=0.9)
+    if len(so_vals) == 2:
+        suptitley = 0.9
+    else:
+        suptitley = 1.02
+    fig.suptitle(f"$n$ = {n:,}; $k$ = {k:,}", fontsize=22, x=0.51, y=suptitley)
     fig.set_size_inches(fig_size_inches)
