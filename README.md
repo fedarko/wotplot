@@ -239,4 +239,4 @@ that is still [using a suffix array under the hood](https://github.com/louisabra
 ## Contact
 
 Feel free to [open an issue](https://github.com/fedarko/wotplot/issues) if you
-have questions, suggestions, comments, or anything else.
+have questions, suggestions, comments, etc.
