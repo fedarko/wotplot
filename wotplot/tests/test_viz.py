@@ -11,8 +11,8 @@ from wotplot._viz import viz_spy, viz_imshow
 
 
 def test_viz_spy_notbinary_bad_draw_order():
-    # same example as test_make.test_make_palindrome_not_binary()
-    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False)
+    # same example as test_make.test_make_palindrome()
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
     exp_err = (
         f"draw_order must include exactly 3 elements ({FWD}, {REV}, and "
         f"{BOTH} in any order)."
@@ -42,9 +42,10 @@ def _check_logging_output(exp_lines, out_lines):
 def test_viz_spy_notbinary_verbose(capsys):
     # It's hard to actually check the matplotlib graphical output, so for the
     # time being we just check here that the logging is done correctly.
-    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False)
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
     viz_spy(dpm, verbose=True)
     exp_lines = (
+        f"binary is not True, so we'll draw matches in different colors.\n"
         f'Visualizing "{FWD}" cells with spy()...\n'
         f'Done visualizing "{FWD}" cells.\n'
         f'Visualizing "{REV}" cells with spy()...\n'
@@ -59,7 +60,7 @@ def test_viz_spy_notbinary_verbose(capsys):
 
 
 def test_viz_spy_notbinary_verbose_diff_bgcolor(capsys):
-    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False)
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
     # this is actually the worst color scheme known to man, but it works for
     # this test (i wanna make sure that my code recognizes that the requested
     # bg color isn't white and accordingly updates it)
@@ -67,6 +68,7 @@ def test_viz_spy_notbinary_verbose_diff_bgcolor(capsys):
         dpm, nbcmap={0: "#000", 1: "#ff0", -1: "#f0f", 2: "#fff"}, verbose=True
     )
     exp_lines = (
+        f"binary is not True, so we'll draw matches in different colors.\n"
         f"Setting background color to #000...\n"
         f"Done setting background color.\n"
         f'Visualizing "{FWD}" cells with spy()...\n'
@@ -84,9 +86,9 @@ def test_viz_spy_notbinary_verbose_diff_bgcolor(capsys):
 
 def test_viz_spy_binary_verbose(capsys):
     dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
-    viz_spy(dpm, verbose=True)
+    viz_spy(dpm, verbose=True, binary=True)
     exp_lines = (
-        "Visualizing all match cells with spy()...\n"
+        "binary is True; visualizing all match cells with spy()...\n"
         "Done visualizing all match cells.\n"
         "Slightly restyling the visualization...\n"
         "Done.\n"
@@ -97,9 +99,10 @@ def test_viz_spy_binary_verbose(capsys):
 
 def test_viz_imshow_binary_verbose(capsys):
     dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
-    viz_imshow(dpm, verbose=True)
+    viz_imshow(dpm, verbose=True, binary=True)
     exp_lines = (
         "Converting the matrix to dense format...\n"
+        "Binarizing the dense-format matrix...\n"
         "Calling imshow()...\n"
         "Slightly restyling the visualization...\n"
         "Done.\n"
@@ -109,11 +112,11 @@ def test_viz_imshow_binary_verbose(capsys):
 
 
 def test_viz_imshow_notbinary_verbose(capsys):
-    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6, binary=False)
+    dpm = DotPlotMatrix("AATCGATC", "TATCGAT", 6)
     viz_imshow(dpm, verbose=True)
     exp_lines = (
         "Converting the matrix to dense format...\n"
-        "Converting the matrix from numbers to colors...\n"
+        "Converting the dense-format matrix from numbers to colors...\n"
         "Calling imshow()...\n"
         "Slightly restyling the visualization...\n"
         "Done.\n"
