@@ -125,6 +125,9 @@ the excellent [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort) lib
 
 2. **"suff-only":** uses **`pydivsufsort.divsufsort()`** to compute suffix arrays, then iterates through them (slower, but requires less memory)
 
+If you want to use the suff-only method, you can set `suff_only=`True` when creating a
+`DotPlotMatrix` object.
+
 #### 4.2.1. Details about these methods
 
 So, I implemented the second method ("suff-only") first, way back in 2023. This method
@@ -148,16 +151,12 @@ a dot plot in about 62 seconds). The peak memory usage from such a successful ru
 is ~5,823.75 MiB (aka ~6.11 GB).
 
 wotplot using the suff-only method, for comparison, can create a dot plot of two
-150 Mbp (!!!) sequences on the same laptop -- with peak memory usage of ~2,318.79 MiB
-(aka ~2.43 GB). The downside is that it is slow; creating this massive dot plot takes over an
-hour.
+150 Mbp (!) sequences on the same laptop -- with peak memory usage of ~2,318.79 MiB
+(aka ~2.43 GB). The downside is that it is slow; creating this massive dot plot takes over an hour.
 
 Anyway -- for most use cases, I think `common_substrings()` will be a better choice, so
 I'm leaving it as the default. However, if you are working with long sequences on
 low-memory systems, you may need to use the suff-only method.
-
-You can specify that you want to use the suff-only method by setting `suff_only=True` when
-creating a `DotPlotMatrix` object.
 
 #### 4.2.2. When should I use one method or another?
 
