@@ -215,11 +215,10 @@ for computing dot plots, were based on Chapter 6 of
 (Compeau & Pevzner).
 
 The idea of using suffix arrays to speed up dot plot computation is not new; it
-is also implemented in
-[Gepard](https://cube.univie.ac.at/gepard)
+is also used in [Gepard](https://cube.univie.ac.at/gepard)
 ([Krumsiek _et al._ 2007](https://academic.oup.com/bioinformatics/article/23/8/1026/198110)).
 (Eventually I moved from directly using suffix arrays to just using the
-`pydivsufsort.common_substrings()` algorithm, at least as the default. Although
+`pydivsufsort.common_substrings()` algorithm, at least as the default algorithm; although
 that is still [using a suffix array under the hood](https://github.com/louisabraham/pydivsufsort/blob/2869020c26022e0f88592e85cdc480856e9856d5/pydivsufsort/wonderstring.py#L128-L157) :)
 
 ### Dependencies
