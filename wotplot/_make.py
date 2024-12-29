@@ -122,7 +122,7 @@ def _fill_match_cells_suff_only(
     """Finds the start positions of shared k-mers in two strings.
 
     Does this using suffix arrays, which makes this more memory-efficient than
-    a naive approach. --> update: and, surprisingly, apparenlty more
+    a naive approach. --> update: and, surprisingly, apparently more
     memory-efficient than the default method, using
     pydivsufsort.common_substrings(). Hence why I am keeping this in as an
     alternative method.
