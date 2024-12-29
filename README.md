@@ -125,7 +125,7 @@ the excellent [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort) lib
 
 2. **"suff-only":** uses **`pydivsufsort.divsufsort()`** to compute suffix arrays, then iterates through them (slower, but requires less memory)
 
-If you want to use the suff-only method, you can set `suff_only=`True` when creating a
+If you want to use the suff-only method, you can set `suff_only=True` when creating a
 `DotPlotMatrix` object.
 
 #### 4.2.1. Details about these methods
