@@ -131,7 +131,8 @@ So, I implemented the second method ("suff-only") first, way back in 2023. This 
 uses `pydivsufsort.divsufsort()` (which in turn uses
 [`libdivsufsort`](https://github.com/y-256/libdivsufsort)) to compute suffix arrays for
 each of the input strings, then iterates through these suffix arrays simultaneously to
-identify shared _k_-mers. It's a relatively simple approach, and could be made much more efficient.
+identify shared _k_-mers. The iterating-through-suffix-arrays part of this method (aka
+the stuff that I wrote) is relatively simple, and could probably be made much more efficient.
 
 More recently, I switched to using
 [`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)
@@ -146,16 +147,17 @@ creating dot plots of two 20 Mbp sequences (although, when it doesn't crash, it 
 a dot plot in about 62 seconds). The peak memory usage from such a successful run
 is ~5,823.75 MiB (aka ~6.11 GB).
 
-The suff-only method, for comparison, can create a dot plot of two 150 Mbp (!!!) sequences
-on the same laptop -- with peak memory usage of ~2,318.79 MiB (aka ~2.43 GB). The
-downside is that it is slow; creating this massive dot plot takes over an hour.
+wotplot using the suff-only method, for comparison, can create a dot plot of two
+150 Mbp (!!!) sequences on the same laptop -- with peak memory usage of ~2,318.79 MiB
+(aka ~2.43 GB). The downside is that it is slow; creating this massive dot plot takes over an
+hour.
 
 Anyway -- for most use cases, I think `common_substrings()` will be a better choice, so
-I'm leaving it as the default. However, if you are working with long sequeneces on
+I'm leaving it as the default. However, if you are working with long sequences on
 low-memory systems, you may need to use the suff-only method.
 
-You can choose which method to use by adjusting the `suff_only` parameter of the `DotPlotMatrix()`
-constructor.
+You can specify that you want to use the suff-only method by setting `suff_only=True` when
+creating a `DotPlotMatrix` object.
 
 #### 4.2.2. When should I use one method or another?
 
@@ -173,7 +175,7 @@ exact dot plot matrix. Using a tool that creates a less granular dot plot might 
 
 See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb).
 
-### 4.4. Plans for the future
+### 4.4. Future plans for improving performance?
 
 This library could be made a lot more efficient (I've been documenting ideas in
 [issue #2](https://github.com/fedarko/wotplot/issues/2)),
