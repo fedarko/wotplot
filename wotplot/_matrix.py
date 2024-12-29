@@ -67,14 +67,7 @@ class DotPlotMatrix:
             pydivsufsort.common_substrings()) is faster but uses more memory;
             the alternative method (suff_only=True, which uses just
             pydivsufsort's implementation of suffix arrays) is slower but --
-            from testing -- uses less memory.
-
-            From some benchmarking, I think the default method should be fine
-            when your sequences are smaller than ~5 Mbp (i.e. 5 million
-            characters each). When your sequences are longer than that, you
-            may want to use the suff_only=True method (depending on how much
-            memory your system has -- my laptop with 8 GB of RAM can handle
-            sequences of up to ~20 Mbp, but that's a stretch).
+            from testing -- uses less memory. See wotplot's README for details.
 
         verbose: bool
             If True, logs extra information as this computes the matrix. This
