@@ -33,13 +33,15 @@ def _get_yarr(yorder):
     return yarr
 
 
-def style_viz_ax(ax, m, title=None):
+def style_viz_ax(ax, m, s1_name, s2_name, title=None):
     """Adjusts the styling of a matplotlib Axes object to make it look nice.
 
     Parameters
     ----------
     ax: matplotlib.axes.Axes
     m: wotplot.DotPlotMatrix
+    s1_name: str
+    s2_name: str
     title: str or None
 
     Description
@@ -49,7 +51,8 @@ def style_viz_ax(ax, m, title=None):
     - Hides ticks and tick labels.
 
     - Adds axis labels formatted like "s1 (x nt)" and "s2 (y nt)", with arrows
-      indicating sequence directionality relative to the axis.
+      indicating sequence directionality relative to the axis. (The names of s1
+      and s2 are controlled by the s1_name and s2_name parameters.)
 
     - If a title is provided, sets it as the title of the object.
     """
@@ -59,9 +62,9 @@ def style_viz_ax(ax, m, title=None):
     ax.set_xticklabels([])
     ax.set_yticklabels([])
 
-    ax.set_xlabel(f"$s_1$ ({len(m.s1):,} nt) \u2192", fontsize=18)
+    ax.set_xlabel(f"{s1_name} ({len(m.s1):,} nt) \u2192", fontsize=18)
     yarr = _get_yarr(m.yorder)
-    ax.set_ylabel(f"$s_2$ ({len(m.s2):,} nt) {yarr}", fontsize=18)
+    ax.set_ylabel(f"{s2_name} ({len(m.s2):,} nt) {yarr}", fontsize=18)
 
     if title is not None:
         ax.set_title(title, fontsize=18)
@@ -80,6 +83,8 @@ def viz_spy(
     color="black",
     nbcmap=NBCMAP_HEX,
     draw_order=DRAW_ORDER,
+    s1_name="$s_1$",
+    s2_name="$s_2$",
     title=None,
     ax=None,
     verbose=False,
@@ -129,6 +134,12 @@ def viz_spy(
         parameter (the default draws forward matches, then
         reverse-complementary matches, then palindromic matches). I don't think
         this should make a big difference in most cases.
+
+    s1_name: str
+        Will be used as the name of the sequence on the x-axis.
+
+    s2_name: str
+        Will be used as the name of the sequence on the y-axis.
 
     title: str or None
         If this is not None, then it'll be set as the title of the plot.
@@ -212,7 +223,7 @@ def viz_spy(
         ax.spy(m.mat, markersize=markersize, color=color, **kwargs)
         _mlog("Done visualizing all match cells.")
     _mlog("Slightly restyling the visualization...")
-    style_viz_ax(ax, m, title)
+    style_viz_ax(ax, m, s1_name, s2_name, title)
     _mlog("Done.")
     if fig is not None:
         return fig, ax
@@ -236,6 +247,8 @@ def viz_imshow(
     binary=False,
     cmap="gray_r",
     nbcmap=NBCMAP_255,
+    s1_name="$s_1$",
+    s2_name="$s_2$",
     title=None,
     ax=None,
     verbose=False,
@@ -268,6 +281,12 @@ def viz_imshow(
     nbcmap: dict
         Maps 0, 1, -1, and 2 to colors in RGB triplet format (e.g. red is
         [255, 0, 0]). Only used if "binary" is False.
+
+    s1_name: str
+        Will be used as the name of the sequence on the x-axis.
+
+    s2_name: str
+        Will be used as the name of the sequence on the y-axis.
 
     title: str or None
         If this is not None, then it'll be set as the title of the plot.
@@ -318,7 +337,7 @@ def viz_imshow(
         # https://github.com/fedarko/wotplot/issues/19)
         ax.imshow(dense_mat, vmin=0, vmax=MATCH, cmap=cmap, **kwargs)
     _mlog("Slightly restyling the visualization...")
-    style_viz_ax(ax, m, title)
+    style_viz_ax(ax, m, s1_name, s2_name, title)
     _mlog("Done.")
 
     # Only return fig and ax if _create_fig_and_ax_if_needed() created them
