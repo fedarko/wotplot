@@ -121,22 +121,25 @@ if you'd like to speed it up ;)
 
 ### Two methods for finding shared _k_-mers
 
-As of writing, wotplot supports two methods for finding shared _k_-mers in order to
-create the dot plot matrix:
+When creating an exact dot plot comparing two sequences, the main challenge is
+identifying all shared _k_-mers between these sequences (and their location(s)). For
+long sequences, doing this naïvely will have unreasonably large space and/or time requirements.
 
-1. **default**: Use **[`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)** (faster, but requires more memory)
+As of writing, wotplot supports two methods for finding shared _k_-mers:
 
-2. **suff-only:** Use **`pydivsufsort.divsufsort()`** to compute suffix arrays, then iterate through them (slower, but requires less memory)
+1. **Default**: uses **[`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)** (faster, but requires more memory)
+
+2. **"suff-only":** uses **`pydivsufsort.divsufsort()`** to compute suffix arrays, then iterates through them (slower, but requires less memory)
 
 #### The "suff-only" method
 
 The second method mentioned above (herein referred to as "suff-only") computes suffix
 arrays for each of the input strings, then iterates through them to identify shared
-_k_-mers. It's less sophisticated (and, for long sequences, noticeably slower) than
-`common_substrings()`, but it works. (This was previously the only method wotplot
-supported for finding shared _k_-mers.)
+_k_-mers. This approach is less sophisticated (and, for long sequences, noticeably
+slower) than `common_substrings()`, but it works. (This was previously the only
+method wotplot supported for finding shared _k_-mers.)
 
-I'm leaving it as an option because, from the simple benchmarking I've done so far
+I'm leaving this as an option because, from the simple benchmarking I've done so far
 (see below), this method requires less memory than the default method. It can thus be
 useful if you are working with long sequences on low-memory systems.
 
