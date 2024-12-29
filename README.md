@@ -33,9 +33,8 @@ s1 = "AGCAGGAGATAAACCTGT"
 s2 = "AGCAGGTTATCTACCTGT"
 k = 3
 
-# Create the matrix (setting binary=False means we'll distinguish forward,
-# reverse-complementary, and palindromic matching k-mers from each other)
-m = wp.DotPlotMatrix(s1, s2, k, binary=False)
+# Create the matrix
+m = wp.DotPlotMatrix(s1, s2, k)
 
 # Convert the matrix to dense format and visualize it using matplotlib's
 # imshow() function (for large matrices where dense representations are
@@ -64,12 +63,12 @@ from matplotlib import pyplot
 
 # (skipping the part where I loaded the genomes into memory as e1s and e2s...)
 
-# Create the matrix (leaving binary=True by default)
-# This takes about 30 seconds on a laptop with 8 GB of RAM
+# Create the matrix
+# This takes ~30 seconds on a laptop with 8 GB of RAM
 em = wp.DotPlotMatrix(e1s, e2s, 20, verbose=True)
 
 # Visualize the matrix using matplotlib's spy() function
-# This takes < 1 second on a laptop with 8 GB of RAM
+# This takes ~1 second on a laptop with 8 GB of RAM
 fig, ax = pyplot.subplots()
 wp.viz_spy(em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax)
 ax.set_xlabel(f"$E. coli$ K-12 substr. MG1655 ({len(e1s)/1e6:.2f} Mbp) \u2192")
@@ -78,11 +77,6 @@ fig.set_size_inches(8, 8)
 ```
 
 ![Output dotplot from the above example](https://github.com/fedarko/wotplot/raw/main/docs/img/ecoli_example_dotplot.png)
-
-When visualizing a binary matrix, the default
-colorscheme uses black cells (⬛) to indicate matches (forward,
-reverse-complementary, or palindromic)
-and white cells (⬜) to indicate no matches.
 
 ## More detailed tutorial
 
