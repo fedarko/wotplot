@@ -69,8 +69,7 @@ em = wp.DotPlotMatrix(e1s, e2s, 20, verbose=True)
 
 # Visualize the matrix using matplotlib's spy() function
 # This takes ~1 second on a laptop with 8 GB of RAM
-fig, ax = pyplot.subplots()
-wp.viz_spy(em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)", ax=ax)
+fig, ax = wp.viz_spy(em, markersize=0.01, title="Comparison of two $E. coli$ genomes ($k$ = 20)")
 ax.set_xlabel(f"$E. coli$ K-12 substr. MG1655 ({len(e1s)/1e6:.2f} Mbp) \u2192")
 ax.set_ylabel(f"$E. coli$ O157:H7 str. Sakai ({len(e2s)/1e6:.2f} Mbp) \u2192")
 fig.set_size_inches(8, 8)
