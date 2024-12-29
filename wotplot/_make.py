@@ -414,7 +414,10 @@ def _fill_match_cells(s1, s2, k, md, yorder="BT", s2isrc=False):
 def _get_matches_suff_only(s1, s2, k, yorder, _mlog):
     """Constructs a dict of matches using the suffix-arrays-only method."""
 
-    _mlog("Computing suffix array for s1...")
+    _mlog(
+        "Will find matches using the suff-only method; computing suffix array "
+        "for s1..."
+    )
     s1_sa = _get_suffix_array(s1)
 
     if s1 == s2:
@@ -469,6 +472,7 @@ def _get_matches_suff_only(s1, s2, k, yorder, _mlog):
 def _get_matches_common_substrings(s1, s2, k, yorder, _mlog):
     """Constructs a dict of matches using pydivsufsort.common_substrings()."""
 
+    _mlog("Will find matches using common_substrings().")
     matches = {}
 
     _mlog("Finding forward matches between s1 and s2...")
