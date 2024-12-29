@@ -128,9 +128,10 @@ the excellent [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort) lib
 #### 4.2.1. Details about these methods
 
 So, I implemented the second method ("suff-only") first, way back in 2023. This method
-uses `pydivsufsort.divsufsort()` to compute suffix arrays for each of the input strings,
-then iterates through these suffix arrays simultaneously to identify shared _k_-mers. It's
-a relatively simple approach, and could be made much more efficient.
+uses `pydivsufsort.divsufsort()` (which in turn uses
+[`libdivsufsort`](https://github.com/y-256/libdivsufsort)) to compute suffix arrays for
+each of the input strings, then iterates through these suffix arrays simultaneously to
+identify shared _k_-mers. It's a relatively simple approach, and could be made much more efficient.
 
 More recently, I switched to using
 [`pydivsufsort.common_substrings()`](https://github.com/louisabraham/pydivsufsort/issues/42)
