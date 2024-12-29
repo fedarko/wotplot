@@ -76,7 +76,7 @@ def _create_fig_and_ax_if_needed(ax=None):
 def viz_spy(
     m,
     markersize=0.5,
-    force_binary=False,
+    binary=False,
     color="black",
     nbcmap=NBCMAP_HEX,
     draw_order=DRAW_ORDER,
@@ -100,35 +100,35 @@ def viz_spy(
         Size of the markers drawn to represent each match cell. You may want to
         adjust this depending on the size of your matrix.
 
-    force_binary: bool
-        If the input matrix is not binary, you can set this parameter to True
-        to force the visualization of it as a binary matrix (i.e. with each
-        match cell being the same color). For large matrices, this can save a
-        few seconds.
+    binary: bool
+        You can set this parameter to True to force the visualization of it as
+        a binary matrix (i.e. with forward, reverse-complementary, and
+        palindromic match cells all being the same color -- see the "color"
+        parameter of this function). For large matrices, this can make the
+        visualization step slightly faster.
 
     color: color
-        The color to use for each match cell. Must be in a format accepted by
-        matplotlib; see
+        The color to use for each match cell, if the "binary" parameter is
+        True. Must be in a format accepted by matplotlib; see
         https://matplotlib.org/stable/gallery/color/color_demo.html for
         details. (Unlike the colors we use in imshow(), RGB triplets where the
-        entries range from 0 to 255 are not allowed here.) Only used if
-        visualizing a binary matrix and/or if force_binary is True.
+        entries range from 0 to 255 are not allowed here.) If the "binary"
+        parameter is False, this is unused.
 
     nbcmap: dict
         Maps 0, 1, -1, and 2 to colors (of the same possible formats as the
-        above "color" parameter). Only used if visualizing a matrix that is
-        not binary and if force_binary is False.
+        above "color" parameter). Only used if "binary" is False.
 
     draw_order: iterable
-        If the input matrix is not binary, we will draw the matrix's match
-        cells as distinct colors by calling spy() multiple times (once per
-        match type). If your markersize is large enough that adjacent cells
-        in the matrix can overlap, then the order in which we call spy()
-        will impact which colors are drawn "on top" of others in the
-        visualization (with later colors ending up on top). You can change the
-        drawing order by adjusting this parameter (the default draws forward
-        matches, then reverse-complementary matches, then palindromic matches).
-        I don't think this should make a big difference in most cases.
+        If "binary" is False, we will draw the matrix's match cells as distinct
+        colors by calling spy() multiple times (once per match type). If your
+        markersize is large enough that adjacent cells in the matrix can
+        overlap, then the order in which we call spy() will impact which colors
+        are drawn "on top" of others in the visualization (with later colors
+        ending up on top). You can change the drawing order by adjusting this
+        parameter (the default draws forward matches, then
+        reverse-complementary matches, then palindromic matches). I don't think
+        this should make a big difference in most cases.
 
     title: str or None
         If this is not None, then it'll be set as the title of the plot.
@@ -155,7 +155,8 @@ def viz_spy(
     _mlog = get_logger(verbose)
 
     fig, ax = _create_fig_and_ax_if_needed(ax)
-    if not m.binary and not force_binary:
+    if not binary:
+        _mlog("binary is not True, so we'll draw matches in different colors.")
         if len(draw_order) != 3 or set(draw_order) != set(DRAW_ORDER):
             raise ValueError(
                 f"draw_order must include exactly 3 elements ({FWD}, {REV}, "
@@ -207,7 +208,7 @@ def viz_spy(
             )
             _mlog(f'Done visualizing "{val}" cells.')
     else:
-        _mlog("Visualizing all match cells with spy()...")
+        _mlog("binary is True; visualizing all match cells with spy()...")
         ax.spy(m.mat, markersize=markersize, color=color, **kwargs)
         _mlog("Done visualizing all match cells.")
     _mlog("Slightly restyling the visualization...")
@@ -232,6 +233,7 @@ def _convert_to_colors(dm, nbcmap):
 
 def viz_imshow(
     m,
+    binary=False,
     cmap="gray_r",
     nbcmap=NBCMAP_255,
     title=None,
@@ -252,15 +254,20 @@ def viz_imshow(
     m: wotplot.DotPlotMatrix
         Matrix object to visualize.
 
+    binary: bool
+        You can set this parameter to True to force the visualization of it as
+        a binary matrix (i.e. with forward, reverse-complementary, and
+        palindromic match cells all being the same color). If this is set,
+        we'll use the "cmap" parameter to assign colors to the matrix.
+
     cmap: str
         matplotlib colormap; the default of "gray_r" uses white to represent
         0 (empty cells in the dot plot matrix) and black to represent 1
-        (match cells in the dot plot matrix). Only used if visualizing a binary
-        matrix.
+        (match cells in the dot plot matrix). Only used if "binary" is True.
 
     nbcmap: dict
         Maps 0, 1, -1, and 2 to colors in RGB triplet format (e.g. red is
-        [255, 0, 0]). Only used if visualizing a matrix that is not binary.
+        [255, 0, 0]). Only used if "binary" is False.
 
     title: str or None
         If this is not None, then it'll be set as the title of the plot.
@@ -294,17 +301,21 @@ def viz_imshow(
 
     _mlog("Converting the matrix to dense format...")
     dense_mat = m.mat.toarray()
-    if not m.binary:
-        _mlog("Converting the matrix from numbers to colors...")
+    if not binary:
+        _mlog("Converting the dense-format matrix from numbers to colors...")
         dense_mat = _convert_to_colors(dense_mat, nbcmap)
         _mlog("Calling imshow()...")
         ax.imshow(dense_mat, **kwargs)
     else:
+        _mlog("Binarizing the dense-format matrix...")
+        # I also tried out np.nonzero(), but it looks like the method here
+        # (using masks) is faster.
+        dense_mat[dense_mat != 0] = MATCH
         _mlog("Calling imshow()...")
         # explicitly set vmin / vmax. This accounts for the corner case where
-        # the matrix is binary and entirely full of MATCHes; in this case,
-        # the matrix should be drawn correctly as all full, not all empty
-        # (see https://github.com/fedarko/wotplot/issues/19)
+        # the matrix consists entirely of MATCH cells; in this case, the matrix
+        # should be drawn correctly as all full, not all empty (see
+        # https://github.com/fedarko/wotplot/issues/19)
         ax.imshow(dense_mat, vmin=0, vmax=MATCH, cmap=cmap, **kwargs)
     _mlog("Slightly restyling the visualization...")
     style_viz_ax(ax, m, title)

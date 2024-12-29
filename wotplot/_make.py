@@ -117,7 +117,7 @@ def _get_suffix_array(seq):
 
 
 def _fill_match_cells_suff_only(
-    s1, s2, k, s1_sa, s2_sa, md, yorder="BT", binary=True, s2isrc=False
+    s1, s2, k, s1_sa, s2_sa, md, yorder="BT", s2isrc=False
 ):
     """Finds the start positions of shared k-mers in two strings.
 
@@ -154,15 +154,11 @@ def _fill_match_cells_suff_only(
         that a matching k-mer exists at position p1 in s1 and position p2 in
         s2); these positions correspond to the (row, col) positions of match
         cells in a matrix, taking into account yorder. The values of this dict
-        indicate match types (one of {FWD, REV, BOTH, MATCH}).
+        indicate match types (one of {FWD, REV, BOTH}).
 
     yorder: str
         Either "BT" (bottom-to-top) or "TB" (top-to-bottom). See
         DotPlotMatrix.__init__().
-
-    binary: bool
-        Either True (only match type used is MATCH) or False (can use FWD, REV,
-        or BOTH). See DotPlotMatrix.__init__().
 
     s2isrc: bool
         Either True (s2 is reverse-complemented) or False (s2 is not
@@ -259,16 +255,13 @@ def _fill_match_cells_suff_only(
                         s2p = s2_sa[mj]
                     y = _get_row(s2p, num_rows, yorder)
                     pos = (y, x)
-                    if not binary:
-                        if s2isrc:
-                            if pos in md:
-                                md[pos] = BOTH
-                            else:
-                                md[pos] = REV
+                    if s2isrc:
+                        if pos in md:
+                            md[pos] = BOTH
                         else:
-                            md[pos] = FWD
+                            md[pos] = REV
                     else:
-                        md[pos] = MATCH
+                        md[pos] = FWD
             i = next_i
             j = next_j
         else:
@@ -337,7 +330,7 @@ def _get_common_substrings(s1, s2, k):
     return pydivsufsort.common_substrings(s1, s2, limit=k)
 
 
-def _fill_match_cells(s1, s2, k, md, yorder="BT", binary=True, s2isrc=False):
+def _fill_match_cells(s1, s2, k, md, yorder="BT", s2isrc=False):
     """Populates a dict describing k-mer matches between two strings.
 
     Parameters
@@ -355,22 +348,18 @@ def _fill_match_cells(s1, s2, k, md, yorder="BT", binary=True, s2isrc=False):
         that a matching k-mer exists at position p1 in s1 and position p2 in
         s2); these positions correspond to the (row, col) positions of match
         cells in a matrix, taking into account yorder. The values of this dict
-        indicate match types (one of {FWD, REV, BOTH, MATCH}).
+        indicate match types (one of {FWD, REV, BOTH}).
 
     yorder: str
         Either "BT" (bottom-to-top) or "TB" (top-to-bottom). See
         DotPlotMatrix.__init__().
 
-    binary: bool
-        Either True (only match type used is MATCH) or False (can use FWD, REV,
-        or BOTH). See DotPlotMatrix.__init__().
-
     s2isrc: bool
         Either True (s2 is reverse-complemented) or False (s2 is not
-        reverse-complemented). Importantly: if binary is False, you should
-        run the forward check (s1 vs. s2) as the "first pass," and run the
-        reverse-complementary check (s1. vs. RC(s2)) as the "second pass."
-        If you switch up the order, this will break palindrome detection.
+        reverse-complemented). Importantly: you should run the forward check
+        (s1 vs. s2) as the "first pass," and run the reverse-complementary
+        check (s1. vs. RC(s2)) as the "second pass." If you switch up the
+        order, this will break palindrome detection.
 
     Returns
     -------
@@ -396,36 +385,33 @@ def _fill_match_cells(s1, s2, k, md, yorder="BT", binary=True, s2isrc=False):
                 s2p = len(s2) - s2p - k
             y = _get_row(s2p, num_rows, yorder)
             pos = (y, x)
-            if not binary:
-                if s2isrc:
-                    # If we somehow see the same position represented multiple
-                    # times in the reverse matches, but this position ONLY has
-                    # this reverse match, then keep it as a reverse match. If
-                    # we say a cell is palindromic ONLY if it has already been
-                    # recorded in md, then if this cell is encountered twice
-                    # during the "reverse-complementary" pass we will
-                    # erroneously label it palindromic.
-                    #
-                    # To fix this, we add the condition "md[pos] != REV". If
-                    # md[pos] == FWD, then since s2isrc is True, we should make
-                    # this cell palindromic (BOTH). And if md[pos] == BOTH then
-                    # we should keep this cell as BOTH. If md[pos] == REV,
-                    # though, then we should keep this cell as REV.
-                    #
-                    # The output of common_substrings() should not represent
-                    # the same position multiple times, but I am being paranoid
-                    # here just in case this changes.
-                    if pos in md and md[pos] != REV:
-                        md[pos] = BOTH
-                    else:
-                        md[pos] = REV
+            if s2isrc:
+                # If we somehow see the same position represented multiple
+                # times in the reverse matches, but this position ONLY has
+                # this reverse match, then keep it as a reverse match. If
+                # we say a cell is palindromic ONLY if it has already been
+                # recorded in md, then if this cell is encountered twice
+                # during the "reverse-complementary" pass we will
+                # erroneously label it palindromic.
+                #
+                # To fix this, we add the condition "md[pos] != REV". If
+                # md[pos] == FWD, then since s2isrc is True, we should make
+                # this cell palindromic (BOTH). And if md[pos] == BOTH then
+                # we should keep this cell as BOTH. If md[pos] == REV,
+                # though, then we should keep this cell as REV.
+                #
+                # The output of common_substrings() should not represent
+                # the same position multiple times, but I am being paranoid
+                # here just in case this changes.
+                if pos in md and md[pos] != REV:
+                    md[pos] = BOTH
                 else:
-                    md[pos] = FWD
+                    md[pos] = REV
             else:
-                md[pos] = MATCH
+                md[pos] = FWD
 
 
-def _get_matches_suff_only(s1, s2, k, yorder, binary, _mlog):
+def _get_matches_suff_only(s1, s2, k, yorder, _mlog):
     """Constructs a dict of matches using the suffix-arrays-only method."""
 
     _mlog("Computing suffix array for s1...")
@@ -449,7 +435,7 @@ def _get_matches_suff_only(s1, s2, k, yorder, binary, _mlog):
     matches = {}
     _mlog("Finding forward matches between s1 and s2...")
     _fill_match_cells_suff_only(
-        s1, s2, k, s1_sa, s2_sa, matches, yorder=yorder, binary=binary
+        s1, s2, k, s1_sa, s2_sa, matches, yorder=yorder
     )
     _mlog(f"Found {len(matches):,} forward match cell(s).")
     # I'm not sure if this makes a difference (is Python smart enough to
@@ -472,7 +458,6 @@ def _get_matches_suff_only(s1, s2, k, yorder, binary, _mlog):
         rcs2_sa,
         matches,
         yorder=yorder,
-        binary=binary,
         s2isrc=True,
     )
     # Using "del" at the end of a func is probs redundant but may as well
@@ -481,26 +466,24 @@ def _get_matches_suff_only(s1, s2, k, yorder, binary, _mlog):
     return matches
 
 
-def _get_matches_common_substrings(s1, s2, k, yorder, binary, _mlog):
+def _get_matches_common_substrings(s1, s2, k, yorder, _mlog):
     """Constructs a dict of matches using pydivsufsort.common_substrings()."""
 
     matches = {}
 
     _mlog("Finding forward matches between s1 and s2...")
-    _fill_match_cells(s1, s2, k, matches, yorder=yorder, binary=binary)
+    _fill_match_cells(s1, s2, k, matches, yorder=yorder)
     _mlog(f"Found {len(matches):,} forward match cell(s).")
 
     _mlog("Computing ReverseComplement(s2)...")
     rcs2 = rc(s2)
     _mlog("Finding reverse-complementary matches between s1 and s2...")
-    _fill_match_cells(
-        s1, rcs2, k, matches, yorder=yorder, binary=binary, s2isrc=True
-    )
+    _fill_match_cells(s1, rcs2, k, matches, yorder=yorder, s2isrc=True)
 
     return matches
 
 
-def _make(s1, s2, k, yorder="BT", binary=True, suff_only=False, verbose=False):
+def _make(s1, s2, k, yorder="BT", suff_only=False, verbose=False):
     """Computes a dot plot matrix.
 
     Parameters
@@ -509,7 +492,6 @@ def _make(s1, s2, k, yorder="BT", binary=True, suff_only=False, verbose=False):
     s2: str or other str-like object
     k: int
     yorder: str
-    binary: bool
     suff_only: bool
         See DotPlotMatrix.__init__() for details.
 
@@ -552,11 +534,10 @@ def _make(s1, s2, k, yorder="BT", binary=True, suff_only=False, verbose=False):
     format, then merging this with the results of the next run of
     _fill_match_cells() (comparing s1 vs. RC(s2)) will be tricky.
 
-    Why do we need to do this comparison in the first place? If "binary" is
-    False, then we need to do it to identify palindromes (cells that are
-    both forward and reverse-complementary matches); and even if "binary" is
-    True, we need to do this because including duplicate entries will result in
-    them being summed when creating the matrix (see the SciPy docs link below).
+    Why do we need to do this comparison in the first place? First, to
+    identify palindromic matches; and second, even if we were to not care about
+    palindromic matches, including duplicate entries would result in them being
+    summed when creating the matrix (see the SciPy docs link below).
 
     References
     ----------
@@ -577,10 +558,10 @@ def _make(s1, s2, k, yorder="BT", binary=True, suff_only=False, verbose=False):
 
     # Ok, things seem good.
     if suff_only:
-        matches = _get_matches_suff_only(s1, s2, k, yorder, binary, _mlog)
+        matches = _get_matches_suff_only(s1, s2, k, yorder, _mlog)
     else:
         matches = _get_matches_common_substrings(
-            s1, s2, k, yorder, binary, _mlog
+            s1, s2, k, yorder, _mlog
         )
     _mlog(f"Found {len(matches):,} total (fwd and/or RC) match cell(s).")
 

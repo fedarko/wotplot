@@ -23,11 +23,6 @@ class DotPlotMatrix:
         Either "BT" or "TB", indicating the direction that s2 is ordered on the
         y-axis. "BT" indicates "bottom-to-top", and "TB" indicates
         "top-to-bottom".
-
-    binary (bool)
-        Whether or not mat is binary. If mat is not binary, then it encodes
-        forward, reverse-complementary, and palindromic matches separately; if
-        mat is binary, then all matches are represented identically.
     """
 
     def __init__(
@@ -36,7 +31,6 @@ class DotPlotMatrix:
         s2,
         k,
         yorder="BT",
-        binary=True,
         suff_only=False,
         verbose=False,
     ):
@@ -67,30 +61,6 @@ class DotPlotMatrix:
             draws dot plots); "TB" means that s2 will be ordered from top to
             bottom (like how Gepard draws dot plots).
 
-        binary: bool
-            If True, then the matrix won't distinguish between forward and
-            reverse-complementary matches; if False, it will.
-
-            Some definitions: a cell in the c-th column and r-th row of the
-            matrix describes the relationship between the k-mer starting at
-            position c in s1 and the k-mer starting at position r in s2
-            (although if yorder == "BT" then the positions in s2 will be
-            flipped). Let's refer to these k-mers as k1 and k2, respectively.
-
-            If binary is False, then each cell (c, r) in the matrix can have
-            one of four possible values:
-
-            -  2: k1 == k2, and ReverseComplement(k1) == k2
-            -  1: k1 == k2, and ReverseComplement(k1) != k2
-            - -1: k1 != k2, and ReverseComplement(k1) == k2
-            -  0: k1 != k2, and ReverseComplement(k1) != k2
-
-            If binary is True, then (c, r) can only have two possible values
-            (2, 1, and -1 are all all labelled as 1):
-
-            -  1: k1 == k2, and/or ReverseComplement(k1) == k2
-            -  0: k1 != k2, and ReverseComplement(k1) != k2
-
         suff_only: bool
             If True, this uses a different method for identifying shared k-mers
             than the default. The default method (suff_only=False, which uses
@@ -118,22 +88,18 @@ class DotPlotMatrix:
         (https://www.bioinformaticsalgorithms.org/) by Compeau & Pevzner.
         """
         self.mat, self.s1, self.s2 = _make(
-            s1, s2, k, yorder, binary, suff_only, verbose
+            s1, s2, k, yorder, suff_only, verbose
         )
         self.k = k
         self.yorder = yorder
-        self.binary = binary
 
     def __str__(self):
-        bs = ""
-        if self.binary:
-            bs = ", binary"
         if self.yorder == "TB":
-            bs += ", top \u2192 bottom"
+            ds = ", top \u2192 bottom"
         else:
-            bs += ", bottom \u2192 top"
+            ds = ", bottom \u2192 top"
         return (
-            f"DotPlotMatrix(k = {self.k:,}{bs}): "
+            f"DotPlotMatrix(k = {self.k:,}{ds}): "
             f"{self.mat.shape[0]:,} x {self.mat.shape[1]:,}"
         )
 
@@ -145,5 +111,5 @@ class DotPlotMatrix:
         # the output of this.
         return (
             f"DotPlotMatrix(mat={repr(self.mat)}, "
-            f'k={self.k}, yorder="{self.yorder}", binary={self.binary})'
+            f'k={self.k}, yorder="{self.yorder}")'
         )
