@@ -174,12 +174,11 @@ exact dot plot matrix. Using a tool that creates a less granular dot plot might 
 
 See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb).
 
-### 4.4. Future plans for improving performance?
+### 4.4. Some ideas for improving performance
 
-This library could be made a lot more efficient (I've been documenting ideas in
-[issue #2](https://github.com/fedarko/wotplot/issues/2)),
-but right now it's good enough for my purposes. Feel free to open an issue / make a pull request
-if you'd like to speed it up :)
+I've documented a few ideas in [issue #2](https://github.com/fedarko/wotplot/issues/2).
+Right now this library is fast enough for my purposes, but feel free to open an
+issue / make a pull request if you'd like to speed it up :)
 
 ## 5. Okay but like why does this library exist
 
