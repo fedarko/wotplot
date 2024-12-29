@@ -150,7 +150,7 @@ constructor.
 
 It depends on how much memory your system has and how long your sequences are. Speaking
 very generally, assuming you are on a system with ~8 GB RAM, the default method should be
-fine up until your sequences are ~5 Mbp each. At that point, if you are okay with taking a
+fine up until your sequences are ~5-10 Mbp each. At that point, if you are okay with taking a
 longer time to create your dot plots, you may want to use the suff-only method (or at least
 think about it, in case you eventually start running out of memory).
 
