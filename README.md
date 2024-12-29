@@ -160,21 +160,7 @@ exact dot plot matrix. Using a tool that creates a less granular dot plot might 
 
 ### Informal benchmarking
 
-Here I show very informal benchmarking notebooks that use the two shared-_k_-mer-finding methods:
-
-1. [default](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb)
-
-2. [suff-only](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking_7397b18.ipynb)
-
-Both of the benchmarking notebooks linked above use a laptop with 8 GB of RAM.
-Even on this machine, wotplot can handle reasonably large sequences. Using the
-default method, wotplot can create the dot plot of two random 20 Mbp sequences (_k_ = 20)
-in 74 seconds; using the suff-only method, wotplot can create the dot plot of two random
-100 Mbp sequences (_k_ = 20) in ~45 minutes.
-
-... That all being said, dot plots of shorter sequences (e.g. 100 kbp or less) usually
-take only a few seconds to compute with either method, at least for reasonably large
-values of _k_.
+See [this Jupyter Notebook](https://nbviewer.org/github/fedarko/wotplot/tree/main/docs/Benchmarking.ipynb).
 
 ## Why does this library exist?
 
