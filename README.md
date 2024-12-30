@@ -234,7 +234,7 @@ for computing dot plots, were based on Chapter 6 of
 (Compeau & Pevzner).
 
 The idea of using suffix arrays to speed up dot plot computation is not new; it
-is also used in [Gepard](https://cube.univie.ac.at/gepard)
+is also used in [Gepard](https://genskew.csb.univie.ac.at/gepard)
 ([Krumsiek _et al._ 2007](https://academic.oup.com/bioinformatics/article/23/8/1026/198110)).
 (Eventually I moved from directly using suffix arrays to just using the
 `pydivsufsort.common_substrings()` algorithm, at least as the default algorithm; although
