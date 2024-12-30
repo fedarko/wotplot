@@ -247,7 +247,7 @@ that is still [using a suffix array under the hood](https://github.com/louisabra
 - [`pydivsufsort`](https://github.com/louisabraham/pydivsufsort)
 - [matplotlib](https://matplotlib.org)
 
-### 8.3. Testing dependencies
+### 8.2. Testing dependencies
 
 - [pytest](https://docs.pytest.org)
 - [pytest-cov](https://github.com/pytest-dev/pytest-cov)
