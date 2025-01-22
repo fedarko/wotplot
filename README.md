@@ -22,7 +22,7 @@ exact matrix can be useful for a variety of downstream analyses.
 
 ### 1.1. Small dataset
 
-This example is adapted from Figure 6.20 (bottom right) in
+This dataset is adapted from Figure 6.20 (bottom right) in
 [_Bioinformatics Algorithms_](https://www.bioinformaticsalgorithms.org), edition 2.
 
 ```python
