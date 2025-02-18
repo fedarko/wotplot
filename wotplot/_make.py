@@ -358,7 +358,7 @@ def _fill_match_cells(s1, s2, k, md, yorder="BT", s2isrc=False):
         Either True (s2 is reverse-complemented) or False (s2 is not
         reverse-complemented). Importantly: you should run the forward check
         (s1 vs. s2) as the "first pass," and run the reverse-complementary
-        check (s1. vs. RC(s2)) as the "second pass." If you switch up the
+        check (s1 vs. RC(s2)) as the "second pass." If you switch up the
         order, this will break palindrome detection.
 
     Returns
