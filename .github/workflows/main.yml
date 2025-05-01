@@ -9,16 +9,23 @@ name: wotplot CI
 on: [push, pull_request]
 jobs:
   build:
-    # Pinning OS to Ubuntu 20.04, since "ubuntu-latest" (22.04, as of writing)
-    # dropped support for Python 3.6. Ideally we'd conditionally set the OS
-    # based on the Python version but I can't figure out how to do that :|
-    # shouldn't make a big difference for now, esp. since we're not doing any
-    # crazy systems-level stuff here
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    # https://github.com/conda-incubator/setup-miniconda#use-a-default-shell
+    # Use the same shell for all commands here, preserving the "context" of the
+    # conda environment we set up. (This is a lot nicer-looking than prefixing
+    # all of these commands with "conda run -n menv".)
+    #
+    # See https://stackoverflow.com/q/69070754 and 'bash -c "help set"' for details
+    # about what the "-el {0}" means here.
+    # ^^^ copied from metaLJA GH Actions workflow
+    defaults:
+      run:
+        shell: bash -el {0}
 
     steps:
 
@@ -27,10 +34,12 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      # https://github.com/conda-incubator/setup-miniconda#example-3-other-options
+      # From Qurro's "standalone-oldpython" GH Actions workflow
+      - name: Set up a conda environment using Python ${{ matrix.python-version }}
+        uses: conda-incubator/setup-miniconda@v3
         with:
+          activate-environment: wenv
           python-version: ${{ matrix.python-version }}
 
       - name: Sanity check echo python version
