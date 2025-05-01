@@ -29,8 +29,8 @@ This dataset is adapted from Figure 6.20 (bottom right) in
 import wotplot as wp
 
 # Define our dataset
-s1 = "AGCAGGAGATAAACCTGT"
-s2 = "AGCAGGTTATCTACCTGT"
+s1 = "AGCAGGTTATCTACCTGT"
+s2 = "AGCAGGAGATAAACCTGT"
 k = 3
 
 # Create the matrix
