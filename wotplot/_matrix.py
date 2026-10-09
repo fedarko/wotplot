@@ -10,12 +10,6 @@ class DotPlotMatrix:
         Representation of the dot plot matrix. The exact type will depend on
         the version of SciPy installed.
 
-    s1 (str)
-        Sequence shown on the horizontal axis of the matrix.
-
-    s2 (str)
-        Sequence shown on the vertical axis of the matrix.
-
     k (int)
         k-mer size.
 
@@ -23,6 +17,19 @@ class DotPlotMatrix:
         Either "BT" or "TB", indicating the direction that s2 is ordered on the
         y-axis. "BT" indicates "bottom-to-top", and "TB" indicates
         "top-to-bottom".
+
+    grid (bool)
+        If True, indicates that the matrix was constructed from collections of
+        sequences (rather than from just one sequence on the x-axis and one
+        on the y-axis).
+
+    xdim (int)
+        If grid is False, this will be 1. If grid is True, this will be the
+        number of sequences in s1.
+
+    ydim (int)
+        If grid is False, this will be 1. If grid is True, this will be the
+        number of sequences in s2.
     """
 
     def __init__(
@@ -32,15 +39,16 @@ class DotPlotMatrix:
         k,
         yorder="BT",
         suff_only=False,
+        grid=False,
         verbose=False,
     ):
         """Initializes the dot plot matrix.
 
         Parameters
         ----------
-        s1: str or other str-like object
+        s1: str or other str-like object; OR (if grid) collection of these
 
-        s2: str or other str-like object
+        s2: str or other str-like object; OR (if grid) collection of these
             The sequences from which we'll create a dot plot. s1 will be on the
             horizontal axis (left to right) and s2 will be on the vertical axis
             (either bottom to top or top to bottom; the order is determined by
@@ -51,6 +59,9 @@ class DotPlotMatrix:
             their converted-to-str forms -- only contain DNA nucleotides (A, C,
             G, T). We'll always store these sequences as string attributes of
             the newly initialized object.
+
+            If grid is set to True, then we expect s1 and s2 to now be
+            collections (lists, tuples, ...) of str or str-like objects.
 
         k: int
             k-mer size to use when creating the dot plot.
@@ -69,6 +80,11 @@ class DotPlotMatrix:
             pydivsufsort's implementation of suffix arrays) is slower but --
             from testing -- uses less memory. See wotplot's README for details.
 
+        grid: bool
+            If True, then we will assume that s1 and s2 are collections of
+            sequences (rather than individual sequences) -- for example,
+            paths of contigs.
+
         verbose: bool
             If True, logs extra information as this computes the matrix. This
             is useful when working with long sequences and/or for performance
@@ -80,17 +96,23 @@ class DotPlotMatrix:
         Bioinformatics Algorithms textbook
         (https://www.bioinformaticsalgorithms.org/) by Compeau & Pevzner.
         """
-        self.mat, self.s1, self.s2 = _make(
-            s1, s2, k, yorder, suff_only, verbose
-        )
+        self.mat = _make(s1, s2, k, yorder, suff_only, verbose, grid=grid)
         self.k = k
         self.yorder = yorder
+        self.grid = grid
+        if self.grid:
+            self.xdim = len(s1)
+            self.ydim = len(s2)
+        else:
+            self.xdim = self.ydim = 1
 
     def __str__(self):
         if self.yorder == "TB":
             ds = ", top \u2192 bottom"
         else:
             ds = ", bottom \u2192 top"
+        if self.grid:
+            ds += ", {self.xdim:,} x {self.ydim:,} seqs"
         return (
             f"DotPlotMatrix(k = {self.k:,}{ds}): "
             f"{self.mat.shape[0]:,} x {self.mat.shape[1]:,}"
@@ -104,5 +126,5 @@ class DotPlotMatrix:
         # the output of this.
         return (
             f"DotPlotMatrix(mat={repr(self.mat)}, "
-            f'k={self.k}, yorder="{self.yorder}")'
+            f'k={self.k}, yorder="{self.yorder}", grid={self.grid})'
         )

@@ -487,13 +487,15 @@ def _get_matches_common_substrings(s1, s2, k, yorder, _mlog):
     return matches
 
 
-def _make(s1, s2, k, yorder="BT", suff_only=False, verbose=False):
+def _make(
+    s1, s2, k, yorder="BT", suff_only=False, verbose=False, grid=False
+):
     """Computes a dot plot matrix.
 
     Parameters
     ----------
-    s1: str or other str-like object
-    s2: str or other str-like object
+    s1: str or other str-like object; OR (if grid) collection of these
+    s2: str or other str-like object; OR (if grid) collection of these
     k: int
     yorder: str
     suff_only: bool
@@ -502,6 +504,9 @@ def _make(s1, s2, k, yorder="BT", suff_only=False, verbose=False):
     verbose: bool
         If True, prints a lot of information as this computes the matrix.
         Useful for performance benchmarking.
+
+    grid: bool
+        If True, we'll treat s1 and s2 as collections of sequences.
 
     Returns
     -------
@@ -557,8 +562,11 @@ def _make(s1, s2, k, yorder="BT", suff_only=False, verbose=False):
     _mlog("Validating inputs...")
     _validate_k(k)
     _validate_yorder(yorder)
-    s1 = _validate_and_stringify_seq(s1, k)
-    s2 = _validate_and_stringify_seq(s2, k)
+    if path_grid:
+        raise NotImplementedError
+    else:
+        s1 = _validate_and_stringify_seq(s1, k)
+        s2 = _validate_and_stringify_seq(s2, k)
 
     # Ok, things seem good.
     if suff_only:
@@ -589,4 +597,4 @@ def _make(s1, s2, k, yorder="BT", suff_only=False, verbose=False):
     _mlog("Creating sparse matrix from COO format inputs...")
     mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
     _mlog("Done creating the matrix.")
-    return mat, s1, s2
+    return mat
