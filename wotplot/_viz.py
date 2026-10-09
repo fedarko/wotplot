@@ -62,9 +62,9 @@ def style_viz_ax(ax, m, s1_name, s2_name, title=None):
     ax.set_xticklabels([])
     ax.set_yticklabels([])
 
-    ax.set_xlabel(f"{s1_name} ({len(m.s1):,} nt) \u2192", fontsize=18)
+    ax.set_xlabel(f"{s1_name} ({m.xlen:,} nt) \u2192", fontsize=18)
     yarr = _get_yarr(m.yorder)
-    ax.set_ylabel(f"{s2_name} ({len(m.s2):,} nt) {yarr}", fontsize=18)
+    ax.set_ylabel(f"{s2_name} ({m.ylen:,} nt) {yarr}", fontsize=18)
 
     if title is not None:
         ax.set_title(title, fontsize=18)

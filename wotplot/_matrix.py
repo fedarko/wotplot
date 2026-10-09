@@ -23,13 +23,19 @@ class DotPlotMatrix:
         sequences (rather than from just one sequence on the x-axis and one
         on the y-axis).
 
-    xdim (int)
+    xseqct (int)
         If grid is False, this will be 1. If grid is True, this will be the
         number of sequences in s1.
 
-    ydim (int)
+    yseqct (int)
         If grid is False, this will be 1. If grid is True, this will be the
         number of sequences in s2.
+
+    xlen (int)
+        The total length of the sequence(s) along the x-axis.
+
+    ylen (int)
+        The total length of the sequence(s) along the y-axis.
     """
 
     def __init__(
@@ -96,15 +102,17 @@ class DotPlotMatrix:
         Bioinformatics Algorithms textbook
         (https://www.bioinformaticsalgorithms.org/) by Compeau & Pevzner.
         """
-        self.mat = _make(s1, s2, k, yorder, suff_only, verbose, grid=grid)
+        self.mat, self.xlen, self.ylen = _make(
+            s1, s2, k, yorder, suff_only, verbose, grid=grid
+        )
         self.k = k
         self.yorder = yorder
         self.grid = grid
         if self.grid:
-            self.xdim = len(s1)
-            self.ydim = len(s2)
+            self.xseqct = len(s1)
+            self.yseqct = len(s2)
         else:
-            self.xdim = self.ydim = 1
+            self.xseqct = self.yseqct = 1
 
     def __str__(self):
         if self.yorder == "TB":
@@ -112,7 +120,7 @@ class DotPlotMatrix:
         else:
             ds = ", bottom \u2192 top"
         if self.grid:
-            ds += ", {self.xdim:,} x {self.ydim:,} seqs"
+            ds += f", {self.xseqct:,} x {self.yseqct:,} seqs"
         return (
             f"DotPlotMatrix(k = {self.k:,}{ds}): "
             f"{self.mat.shape[0]:,} x {self.mat.shape[1]:,}"
@@ -124,7 +132,8 @@ class DotPlotMatrix:
         # matrix now means that it doesn't. Also, I removed s1 and s2 in their
         # entirety from this, since when these strings are large it overwhelms
         # the output of this.
+        g = f", {self.xseqct}x{self.yseqct} seqs" if self.grid else ""
         return (
             f"DotPlotMatrix(mat={repr(self.mat)}, "
-            f'k={self.k}, yorder="{self.yorder}", grid={self.grid})'
+            f'k={self.k}, yorder="{self.yorder}"{g})'
         )

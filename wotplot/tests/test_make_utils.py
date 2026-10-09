@@ -2,6 +2,7 @@ import pytest
 from wotplot._make import (
     rc,
     _validate_and_stringify_seq,
+    _validate_and_stringify_multiple_seqs,
     _validate_k,
     _validate_yorder,
     _get_row,
@@ -33,18 +34,19 @@ def test_rc_badchar():
 
 
 def test_validate_and_stringify_good():
-    _validate_and_stringify_seq("A", 1)
-    _validate_and_stringify_seq("CTG", 2)
+    assert _validate_and_stringify_seq("A", 1) == "A"
+    assert _validate_and_stringify_seq("CTG", 2) == "CTG"
+    assert _validate_and_stringify_seq("cTg", 2) == "CTG"
 
 
 def test_validate_and_stringify_badlen():
     with pytest.raises(ValueError) as ei:
         _validate_and_stringify_seq("", 1)
-    assert str(ei.value) == "Input sequence must have length \u2265 k = 1"
+    assert str(ei.value) == "Input sequence must have length \u2265 k = 1."
 
     with pytest.raises(ValueError) as ei:
         _validate_and_stringify_seq("CCTGAC", 5678)
-    assert str(ei.value) == "Input sequence must have length \u2265 k = 5,678"
+    assert str(ei.value) == "Input sequence must have length \u2265 k = 5,678."
 
 
 def test_validate_and_stringify_badchar():
@@ -53,6 +55,18 @@ def test_validate_and_stringify_badchar():
     assert str(ei.value) == (
         "Input sequence contains character -; only DNA nucleotides (A, C, G, "
         "T) are currently allowed."
+    )
+
+
+def test_validate_and_stringify_multi():
+    assert (
+        _validate_and_stringify_multiple_seqs(["AAAAA", "CCCC", "gg"], 2, "1")
+        == "AAAAA1CCCC1GG"
+    )
+    assert _validate_and_stringify_multiple_seqs(["AAAAA"], 2, "1") == "AAAAA"
+    assert (
+        _validate_and_stringify_multiple_seqs(["AAAAA", "t"], 1, "1")
+        == "AAAAA1T"
     )
 
 

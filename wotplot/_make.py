@@ -31,9 +31,12 @@ def rc(seq):
 
 def _validate_and_stringify_seq(seq, k):
     if len(seq) < k:
-        raise ValueError(f"Input sequence must have length \u2265 k = {k:,}")
-    strseq = str(seq)
-    for c in strseq:
+        raise ValueError(f"Input sequence must have length \u2265 k = {k:,}.")
+    if type(seq) is not str:
+        seq = str(seq)
+    # allow lowercase nucleotides
+    seq = seq.upper()
+    for c in seq:
         # We cooould get fancy and allow e.g. Uracil, but then that raises the
         # silly question of what if a string contains both T and U??? It's
         # easiest to just mandate that we only take in A/C/G/T strings -- this
@@ -43,7 +46,18 @@ def _validate_and_stringify_seq(seq, k):
                 f"Input sequence contains character {c}; only DNA nucleotides "
                 "(A, C, G, T) are currently allowed."
             )
-    return str(seq)
+    return seq
+
+
+def _validate_and_stringify_multiple_seqs(seqs, k, sentinel):
+    full = ""
+    for si, seq in enumerate(seqs, 1):
+        if si > 1:
+            full += sentinel
+        # in theory we could only just care about the total length being >= k,
+        # but may as well be conservative imo
+        full += _validate_and_stringify_seq(seq, k)
+    return full
 
 
 def _validate_k(k):
@@ -487,9 +501,7 @@ def _get_matches_common_substrings(s1, s2, k, yorder, _mlog):
     return matches
 
 
-def _make(
-    s1, s2, k, yorder="BT", suff_only=False, verbose=False, grid=False
-):
+def _make(s1, s2, k, yorder="BT", suff_only=False, verbose=False, grid=False):
     """Computes a dot plot matrix.
 
     Parameters
@@ -562,8 +574,14 @@ def _make(
     _mlog("Validating inputs...")
     _validate_k(k)
     _validate_yorder(yorder)
-    if path_grid:
-        raise NotImplementedError
+    if grid:
+        # use different sentinels to prevent matches. We don't use "$" since
+        # that is already used as the end character.
+        # Anyway, after running these functions, s1 and s2 will be strings
+        # containing the concantenates of their input sequences:
+        # e.g. "ACGTAA1AAAA1CCCC1GG" and "TTTTT2GGG"
+        s1 = _validate_and_stringify_multiple_seqs(s1, k, "1")
+        s2 = _validate_and_stringify_multiple_seqs(s2, k, "2")
     else:
         s1 = _validate_and_stringify_seq(s1, k)
         s2 = _validate_and_stringify_seq(s2, k)
@@ -597,4 +615,4 @@ def _make(
     _mlog("Creating sparse matrix from COO format inputs...")
     mat = smc((mat_vals, (mat_rows, mat_cols)), shape=mat_shape)
     _mlog("Done creating the matrix.")
-    return mat
+    return mat, len(s1), len(s2)
