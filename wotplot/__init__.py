@@ -2,7 +2,7 @@
 
 from ._matrix import DotPlotMatrix
 from ._make import MATCH, FWD, REV, BOTH
-from ._viz import viz_spy, viz_imshow
+from ._viz import viz_spy, viz_imshow, style_viz_ax
 from ._version import __version__
 
 __all__ = [
